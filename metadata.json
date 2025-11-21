@@ -1,0 +1,7 @@
+{
+  "name": "Boutique 360",
+  "description": "A unified commerce platform for boutique businesses, featuring modules for customer and order management, inventory, billing, a virtual try-on feature powered by Gemini, and a business dashboard.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
