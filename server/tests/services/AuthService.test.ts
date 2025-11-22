@@ -1,10 +1,10 @@
-import { AuthService } from '../AuthService';
-import { UserRepository } from '../../repositories/UserRepository';
+import { AuthService } from '../../src/services/AuthService';
+import { UserRepository } from '../../src/repositories/UserRepository';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 // Mock dependencies
-jest.mock('../../repositories/UserRepository');
+jest.mock('../../src/repositories/UserRepository');
 jest.mock('bcrypt');
 jest.mock('jsonwebtoken');
 

@@ -1,8 +1,8 @@
-import { InventoryService } from '../InventoryService';
-import { InventoryRepository } from '../../repositories/InventoryRepository';
+import { InventoryService } from '../../src/services/InventoryService';
+import { InventoryRepository } from '../../src/repositories/InventoryRepository';
 
 // Mock dependencies
-jest.mock('../../repositories/InventoryRepository');
+jest.mock('../../src/repositories/InventoryRepository');
 
 describe('InventoryService', () => {
     let inventoryService: InventoryService;
