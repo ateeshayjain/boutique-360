@@ -80,12 +80,39 @@ struct SignInView: View {
             }
 
             Spacer()
-            Text("Plan 2 · Foundation")
+
+            // DEV: one-tap demo sign-in (remove before production)
+            Button {
+                Task {
+                    _ = await auth.signInWithPassword(
+                        email: "demo@boutique360.test",
+                        password: "demo-password-123"
+                    )
+                }
+            } label: {
+                Label("Continue as demo (dev)", systemImage: "person.badge.shield.checkmark")
+                    .font(.caption)
+            }
+            .buttonStyle(.bordered)
+            .controlSize(.small)
+
+            Text("Plan 3 · CRM Core")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
         }
         .padding(40)
-        .onAppear { emailFocused = true }
+        .onAppear {
+            emailFocused = true
+            // DEV: launch with -auto-demo to auto-sign-in to demo user
+            if CommandLine.arguments.contains("-auto-demo") {
+                Task {
+                    _ = await auth.signInWithPassword(
+                        email: "demo@boutique360.test",
+                        password: "demo-password-123"
+                    )
+                }
+            }
+        }
     }
 
     private func isValidEmail(_ s: String) -> Bool {

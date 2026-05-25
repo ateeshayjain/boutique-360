@@ -49,10 +49,30 @@ final class AuthService: ObservableObject {
 
     /// Process a magic-link callback URL.
     func handleAuthCallback(url: URL) async {
+        // DEV escape hatch: boutique360://demo-signin → password sign-in for demo user
+        if url.scheme == "boutique360" && url.host == "demo-signin" {
+            _ = await signInWithPassword(email: "demo@boutique360.test", password: "demo-password-123")
+            return
+        }
         do {
             try await SupabaseService.client.auth.session(from: url)
         } catch {
             lastError = "Sign-in callback failed: \(error.localizedDescription)"
+        }
+    }
+
+    /// DEV ONLY: sign in with email + password (for the seeded demo user).
+    /// Remove this method before production.
+    func signInWithPassword(email: String, password: String) async -> Bool {
+        isLoading = true
+        defer { isLoading = false }
+        do {
+            try await SupabaseService.client.auth.signIn(email: email, password: password)
+            self.session = try? await SupabaseService.client.auth.session
+            return true
+        } catch {
+            lastError = error.localizedDescription
+            return false
         }
     }
 

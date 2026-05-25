@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
-    case dashboard, designs, customers, fabrics, catalog, settings
+    case dashboard, designs, customers, inquiries, fabrics, catalog, settings
     var id: String { rawValue }
 
     var title: String {
@@ -9,6 +9,7 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
         case .dashboard: "Dashboard"
         case .designs:   "Designs"
         case .customers: "Customers"
+        case .inquiries: "Inquiries"
         case .fabrics:   "Fabrics"
         case .catalog:   "Catalog"
         case .settings:  "Settings"
@@ -20,6 +21,7 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
         case .dashboard: "rectangle.grid.2x2"
         case .designs:   "pencil.and.scribble"
         case .customers: "person.2"
+        case .inquiries: "envelope.open"
         case .fabrics:   "square.grid.3x3.square"
         case .catalog:   "tag"
         case .settings:  "gearshape"
@@ -28,7 +30,15 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
 }
 
 struct AppShellView: View {
-    @State private var selection: SidebarSection? = .dashboard
+    @State private var selection: SidebarSection? = {
+        // DEV: -start-section <name> overrides default landing tab
+        let args = CommandLine.arguments
+        if let i = args.firstIndex(of: "-start-section"), i + 1 < args.count,
+           let s = SidebarSection(rawValue: args[i + 1]) {
+            return s
+        }
+        return .dashboard
+    }()
 
     var body: some View {
         NavigationSplitView {
@@ -42,10 +52,11 @@ struct AppShellView: View {
             NavigationStack {
                 switch selection {
                 case .dashboard:  DashboardView()
-                case .designs:    ComingSoonView(title: "Designs",   subtitle: "Plan 3 — PencilKit canvas")
-                case .customers:  ComingSoonView(title: "Customers", subtitle: "Plan 5")
-                case .fabrics:    ComingSoonView(title: "Fabrics",   subtitle: "Plan 3")
-                case .catalog:    ComingSoonView(title: "Catalog",   subtitle: "Plan 5")
+                case .customers:  CustomersListView()
+                case .inquiries:  InquiriesListView()
+                case .designs:    ComingSoonView(title: "Designs",   subtitle: "Plan 4 — PencilKit canvas")
+                case .fabrics:    ComingSoonView(title: "Fabrics",   subtitle: "Plan 4")
+                case .catalog:    ComingSoonView(title: "Catalog",   subtitle: "Plan 6")
                 case .settings:   SettingsView()
                 case .none:       DashboardView()
                 }
