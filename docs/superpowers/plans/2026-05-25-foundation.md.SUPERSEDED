@@ -1,0 +1,10 @@
+# SUPERSEDED
+
+This plan was superseded on 2026-05-25 after the iPad app addendum was approved.
+The web-centric foundation is no longer Plan 1 — it becomes Plans 6-8 once the
+iPad app and shared backend are in place.
+
+See: `2026-05-25-plan-01-backend-foundation.md` for the new Plan 1.
+See: `../specs/2026-05-25-boutique-360-ipad-addendum.md` for the addendum.
+
+Original content preserved in git history at commit 416a469.
