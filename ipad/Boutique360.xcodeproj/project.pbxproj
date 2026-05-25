@@ -1,0 +1,573 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		1B87E7C081BAB5D8BDC61BBC /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF745E6724DE0A69610EC6FE /* SignInView.swift */; };
+		2A56907FBE2F2C4AA2239340 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 8D863245ED5ACE74EB5C9AB8 /* Assets.xcassets */; };
+		491C46CD7DD3C8FB990BE716 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562812B13F7D90510B109E44 /* AppShellView.swift */; };
+		5ABA0C7F23F05BAE1CDDF0C8 /* ConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E18ED923174A4F69A02A4C12 /* ConfigTests.swift */; };
+		631A2B06BAA7191CB4DDB8AC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF947ADCF9CBE3A06D5C8C5 /* SettingsView.swift */; };
+		763BAB6C879BB592CC9A5023 /* Boutique.swift in Sources */ = {isa = PBXBuildFile; fileRef = 789DE6A8A8FAB2334510972E /* Boutique.swift */; };
+		8FFAFB40924BC16D12DC0E38 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */; };
+		99A2F8172F28BA91A525D238 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE9B6823C2C38656FC4E0D5D /* AuthService.swift */; };
+		A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3B8F4DAA8944A162925136 /* RootView.swift */; };
+		B4F0016F512542D8A62182EE /* Boutique360App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89EC55AD960A6888307EF31B /* Boutique360App.swift */; };
+		C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 745AFC98ADFD99D1BFBED28F /* SupabaseService.swift */; };
+		C8E2551C217BFF528F3ED4CA /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D169D90967E0A6EC89F9B /* Config.swift */; };
+		CA7A8FD6F054BB00F00EBC09 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6FE16090EB97CBE5A71BBAC7 /* Supabase */; };
+		E8B6DE3121AB658DAECB34BB /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98D3635D547A3831FD95F341 /* DashboardView.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		8B54BAFD5F76D4C5D9028174 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = D29EB973534641DE52A3D564 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2924B8D3E2FA404E722450F6;
+			remoteInfo = Boutique360;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		00692156B845A7BDFB655E60 /* Boutique360.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Boutique360.entitlements; sourceTree = "<group>"; };
+		0930E86CFA3C99E14B5DE528 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		0BF947ADCF9CBE3A06D5C8C5 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		0C3B8F4DAA8944A162925136 /* RootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootView.swift; sourceTree = "<group>"; };
+		562812B13F7D90510B109E44 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
+		6669C7AA8782C9C2119D0FA0 /* Boutique360Tests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = Boutique360Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		745AFC98ADFD99D1BFBED28F /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		789DE6A8A8FAB2334510972E /* Boutique.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boutique.swift; sourceTree = "<group>"; };
+		7B5D169D90967E0A6EC89F9B /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
+		7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
+		89EC55AD960A6888307EF31B /* Boutique360App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boutique360App.swift; sourceTree = "<group>"; };
+		8D863245ED5ACE74EB5C9AB8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		93025C03E14A1542CC2A5238 /* Env.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Env.xcconfig; sourceTree = "<group>"; };
+		98D3635D547A3831FD95F341 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		BE9B6823C2C38656FC4E0D5D /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
+		BF745E6724DE0A69610EC6FE /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		C33B3B4DCF4C747688BBF407 /* Boutique360.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Boutique360.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E18ED923174A4F69A02A4C12 /* ConfigTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfigTests.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		5F519E0A4AA9D8684D9AA7D1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CA7A8FD6F054BB00F00EBC09 /* Supabase in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		005EAAF302FFB8881E7D7155 /* Boutique360Tests */ = {
+			isa = PBXGroup;
+			children = (
+				E18ED923174A4F69A02A4C12 /* ConfigTests.swift */,
+			);
+			path = Boutique360Tests;
+			sourceTree = "<group>";
+		};
+		01E96A677841C7B497DFFC71 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				7B5D169D90967E0A6EC89F9B /* Config.swift */,
+				93025C03E14A1542CC2A5238 /* Env.xcconfig */,
+			);
+			name = Configuration;
+			path = Boutique360/Configuration;
+			sourceTree = "<group>";
+		};
+		16C2EABE75BAC562D75E241F /* Shell */ = {
+			isa = PBXGroup;
+			children = (
+				562812B13F7D90510B109E44 /* AppShellView.swift */,
+			);
+			path = Shell;
+			sourceTree = "<group>";
+		};
+		2FCCD54F7C86F759306B6069 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C33B3B4DCF4C747688BBF407 /* Boutique360.app */,
+				6669C7AA8782C9C2119D0FA0 /* Boutique360Tests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		494DCB5BF3A3484B94473404 = {
+			isa = PBXGroup;
+			children = (
+				7DB9412FBF16C3B71E0BEDD5 /* Boutique360 */,
+				005EAAF302FFB8881E7D7155 /* Boutique360Tests */,
+				01E96A677841C7B497DFFC71 /* Configuration */,
+				2FCCD54F7C86F759306B6069 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		7DB9412FBF16C3B71E0BEDD5 /* Boutique360 */ = {
+			isa = PBXGroup;
+			children = (
+				8D863245ED5ACE74EB5C9AB8 /* Assets.xcassets */,
+				00692156B845A7BDFB655E60 /* Boutique360.entitlements */,
+				89EC55AD960A6888307EF31B /* Boutique360App.swift */,
+				0930E86CFA3C99E14B5DE528 /* Info.plist */,
+				01E96A677841C7B497DFFC71 /* Configuration */,
+				8334D3C96731273FD7A0D2B3 /* Features */,
+				AE368C4D4EEC4FB3131C828D /* Models */,
+				CFC80E972BA274337FE5F63E /* Services */,
+			);
+			path = Boutique360;
+			sourceTree = "<group>";
+		};
+		8334D3C96731273FD7A0D2B3 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				EE2202EDC86DA888419A2F8B /* Auth */,
+				E8A7B701636333CBA7439B73 /* Dashboard */,
+				FDF61BE227BEFF0C4BD40AF8 /* Root */,
+				E1A457669F8FC083B6A200CB /* Settings */,
+				16C2EABE75BAC562D75E241F /* Shell */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		AE368C4D4EEC4FB3131C828D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				789DE6A8A8FAB2334510972E /* Boutique.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		CFC80E972BA274337FE5F63E /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				BE9B6823C2C38656FC4E0D5D /* AuthService.swift */,
+				7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */,
+				745AFC98ADFD99D1BFBED28F /* SupabaseService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		E1A457669F8FC083B6A200CB /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				0BF947ADCF9CBE3A06D5C8C5 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		E8A7B701636333CBA7439B73 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				98D3635D547A3831FD95F341 /* DashboardView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		EE2202EDC86DA888419A2F8B /* Auth */ = {
+			isa = PBXGroup;
+			children = (
+				BF745E6724DE0A69610EC6FE /* SignInView.swift */,
+			);
+			path = Auth;
+			sourceTree = "<group>";
+		};
+		FDF61BE227BEFF0C4BD40AF8 /* Root */ = {
+			isa = PBXGroup;
+			children = (
+				0C3B8F4DAA8944A162925136 /* RootView.swift */,
+			);
+			path = Root;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		2924B8D3E2FA404E722450F6 /* Boutique360 */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E36FBC1A1E6EC07803F0467C /* Build configuration list for PBXNativeTarget "Boutique360" */;
+			buildPhases = (
+				17692C1F90C293F9C46EB389 /* Sources */,
+				B2F73748C57A79A0A57A7B0A /* Resources */,
+				5F519E0A4AA9D8684D9AA7D1 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Boutique360;
+			packageProductDependencies = (
+				6FE16090EB97CBE5A71BBAC7 /* Supabase */,
+			);
+			productName = Boutique360;
+			productReference = C33B3B4DCF4C747688BBF407 /* Boutique360.app */;
+			productType = "com.apple.product-type.application";
+		};
+		4A5978A418C5F57E120923E5 /* Boutique360Tests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E7C76DFD63ECC9EA7298C5E3 /* Build configuration list for PBXNativeTarget "Boutique360Tests" */;
+			buildPhases = (
+				5E11CC8A1262332735C9D442 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				09EB0DCB666B9460D3D03053 /* PBXTargetDependency */,
+			);
+			name = Boutique360Tests;
+			packageProductDependencies = (
+			);
+			productName = Boutique360Tests;
+			productReference = 6669C7AA8782C9C2119D0FA0 /* Boutique360Tests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		D29EB973534641DE52A3D564 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					2924B8D3E2FA404E722450F6 = {
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = 86114DBE1F11D810DB398EE9 /* Build configuration list for PBXProject "Boutique360" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 494DCB5BF3A3484B94473404;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4B4E051F9F69938B8038B9B9 /* XCRemoteSwiftPackageReference "supabase-swift" */,
+			);
+			preferredProjectObjectVersion = 77;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2924B8D3E2FA404E722450F6 /* Boutique360 */,
+				4A5978A418C5F57E120923E5 /* Boutique360Tests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B2F73748C57A79A0A57A7B0A /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2A56907FBE2F2C4AA2239340 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		17692C1F90C293F9C46EB389 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				491C46CD7DD3C8FB990BE716 /* AppShellView.swift in Sources */,
+				99A2F8172F28BA91A525D238 /* AuthService.swift in Sources */,
+				763BAB6C879BB592CC9A5023 /* Boutique.swift in Sources */,
+				B4F0016F512542D8A62182EE /* Boutique360App.swift in Sources */,
+				C8E2551C217BFF528F3ED4CA /* Config.swift in Sources */,
+				E8B6DE3121AB658DAECB34BB /* DashboardView.swift in Sources */,
+				8FFAFB40924BC16D12DC0E38 /* KeychainStore.swift in Sources */,
+				A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */,
+				631A2B06BAA7191CB4DDB8AC /* SettingsView.swift in Sources */,
+				1B87E7C081BAB5D8BDC61BBC /* SignInView.swift in Sources */,
+				C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5E11CC8A1262332735C9D442 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				5ABA0C7F23F05BAE1CDDF0C8 /* ConfigTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		09EB0DCB666B9460D3D03053 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2924B8D3E2FA404E722450F6 /* Boutique360 */;
+			targetProxy = 8B54BAFD5F76D4C5D9028174 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		264B0B9A9E8B1B59EBD359D6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 93025C03E14A1542CC2A5238 /* Env.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		5CD2DE5CEF661D4A1ECB21C9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Boutique360/Boutique360.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = Boutique360/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.boutique360.designer.ipad;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		5F58D5E575E80539B2143F7A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.boutique360.designer.Boutique360Tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Boutique360.app/Boutique360";
+			};
+			name = Release;
+		};
+		63C502D6406E27C72C4E0C5B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.boutique360.designer.Boutique360Tests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Boutique360.app/Boutique360";
+			};
+			name = Debug;
+		};
+		9D789BA6871C25EBB3269E23 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = Boutique360/Boutique360.entitlements;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				CODE_SIGN_STYLE = Automatic;
+				INFOPLIST_FILE = Boutique360/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.boutique360.designer.ipad;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A36B7CCF365BBB6670FECCF7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 93025C03E14A1542CC2A5238 /* Env.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = NO;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		86114DBE1F11D810DB398EE9 /* Build configuration list for PBXProject "Boutique360" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				264B0B9A9E8B1B59EBD359D6 /* Debug */,
+				A36B7CCF365BBB6670FECCF7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E36FBC1A1E6EC07803F0467C /* Build configuration list for PBXNativeTarget "Boutique360" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9D789BA6871C25EBB3269E23 /* Debug */,
+				5CD2DE5CEF661D4A1ECB21C9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		E7C76DFD63ECC9EA7298C5E3 /* Build configuration list for PBXNativeTarget "Boutique360Tests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				63C502D6406E27C72C4E0C5B /* Debug */,
+				5F58D5E575E80539B2143F7A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4B4E051F9F69938B8038B9B9 /* XCRemoteSwiftPackageReference "supabase-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/supabase/supabase-swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 2.20.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6FE16090EB97CBE5A71BBAC7 /* Supabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4B4E051F9F69938B8038B9B9 /* XCRemoteSwiftPackageReference "supabase-swift" */;
+			productName = Supabase;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = D29EB973534641DE52A3D564 /* Project object */;
+}
