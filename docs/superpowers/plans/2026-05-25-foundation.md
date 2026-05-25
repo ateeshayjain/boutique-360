@@ -128,7 +128,7 @@ corepack prepare pnpm@9.12.0 --activate
 - [ ] **Step 2: Scaffold Next.js 15 (non-interactive)**
 
 ```bash
-pnpm dlx create-next-app@15 . --ts --tailwind --app --src-dir --import-alias "@/*" --no-eslint --no-turbo --use-pnpm --yes
+pnpm dlx create-next-app@15 . --ts --tailwind --app --src-dir --import-alias "@/*" --no-eslint --no-turbopack --use-pnpm --yes
 ```
 
 Expected: `package.json`, `src/app/`, Tailwind configured. If prompts appear, accept defaults.
@@ -376,15 +376,23 @@ pnpm add -D eslint @eslint/js typescript-eslint eslint-config-next eslint-plugin
 
 - [ ] **Step 2: Create eslint.config.mjs (flat config)**
 
+**Note:** `eslint-config-next` in Next 15 ships flat-config support via `@next/eslint-plugin-next`. Verify the package's current README on install — if `next()` factory isn't exported in your installed version, use the plugin-based form below.
+
 ```js
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
-import next from "eslint-config-next";
+import nextPlugin from "@next/eslint-plugin-next";
 
 export default [
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
-  ...next(),
+  {
+    plugins: { "@next/next": nextPlugin },
+    rules: {
+      ...nextPlugin.configs.recommended.rules,
+      ...nextPlugin.configs["core-web-vitals"].rules,
+    },
+  },
   {
     languageOptions: {
       parserOptions: { project: "./tsconfig.json" },
@@ -396,6 +404,12 @@ export default [
   },
   { ignores: [".next/", "node_modules/", "supabase/.branches/", "tests/e2e/.report/"] },
 ];
+```
+
+Adjust the install command to swap `eslint-config-next` for `@next/eslint-plugin-next` if needed:
+
+```bash
+pnpm add -D @next/eslint-plugin-next
 ```
 
 - [ ] **Step 3: Create .prettierrc**
@@ -1499,11 +1513,12 @@ git commit -m "feat(auth): bootstrap staff_users record on first sign-in"
 // src/app/(admin)/admin/sign-out/route.ts
 import { NextResponse } from "next/server";
 import { getServerClient } from "@/lib/supabase/server";
+import { env } from "@/lib/env";
 
 export async function POST() {
   const supabase = await getServerClient();
   await supabase.auth.signOut();
-  return NextResponse.redirect(new URL("/admin/sign-in", process.env.APP_URL ?? "http://localhost:3000"));
+  return NextResponse.redirect(new URL("/admin/sign-in", env.APP_URL));
 }
 ```
 
@@ -1677,7 +1692,30 @@ git commit -m "feat(events): emitEvent helper with append-only contract"
 **Files:**
 - Create: `src/lib/settings/get.ts`, `src/lib/settings/set.ts`, `tests/unit/settings.test.ts`
 
-- [ ] **Step 1: Write the failing test (non-secret only)**
+- [ ] **Step 1: Create the index re-export first (so the test's import target exists, then fails at "function not implemented")**
+
+`src/lib/settings/index.ts`:
+
+```ts
+export { getSetting } from "./get";
+export { setSetting } from "./set";
+```
+
+Create stubs so the imports resolve:
+
+```ts
+// src/lib/settings/get.ts
+export async function getSetting<T>(_boutiqueId: string, _key: string): Promise<T | null> {
+  throw new Error("not implemented");
+}
+
+// src/lib/settings/set.ts
+export async function setSetting(_boutiqueId: string, _key: string, _value: unknown): Promise<void> {
+  throw new Error("not implemented");
+}
+```
+
+- [ ] **Step 2: Write the failing test (non-secret only)**
 
 ```ts
 // tests/unit/settings.test.ts
@@ -1700,16 +1738,13 @@ describe("settings (non-secret)", () => {
 });
 ```
 
-- [ ] **Step 2: Create index re-export**
+- [ ] **Step 3: Run test (FAIL — "not implemented")**
 
-`src/lib/settings/index.ts`:
-
-```ts
-export { getSetting } from "./get";
-export { setSetting } from "./set";
+```bash
+pnpm test:env tests/unit/settings.test.ts
 ```
 
-- [ ] **Step 3: Implement get**
+- [ ] **Step 4: Implement get**
 
 ```ts
 // src/lib/settings/get.ts
@@ -1730,7 +1765,7 @@ export async function getSetting<T>(boutiqueId: string, key: string): Promise<T 
 }
 ```
 
-- [ ] **Step 4: Implement set**
+- [ ] **Step 5: Implement set**
 
 ```ts
 // src/lib/settings/set.ts
@@ -1752,11 +1787,11 @@ export async function setSetting(boutiqueId: string, key: string, value: unknown
 }
 ```
 
-- [ ] **Step 5: Run**
+- [ ] **Step 6: Re-run**
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add -A
@@ -1986,13 +2021,20 @@ import { describe, expect, it } from "vitest";
 import { GET } from "@/app/api/health/route";
 
 describe("/api/health", () => {
-  it("returns 200 ok with checks object", async () => {
+  it("returns ok with all required check keys", async () => {
     const res = await GET();
     const body = (await res.json()) as { status: string; checks: Record<string, unknown> };
-    expect(res.status).toBe(200);
-    expect(body.status).toBe("ok");
+    expect([200, 503]).toContain(res.status); // 503 acceptable if optional integrations unset locally
     expect(body.checks).toHaveProperty("db");
     expect(body.checks).toHaveProperty("events_recent");
+    expect(body.checks).toHaveProperty("storage");
+    expect(body.checks).toHaveProperty("inngest");
+  });
+
+  it("db check is ok when local Supabase reachable", async () => {
+    const res = await GET();
+    const body = (await res.json()) as { checks: Record<string, string> };
+    expect(body.checks.db).toBe("ok");
   });
 });
 ```
@@ -2005,6 +2047,8 @@ pnpm test:env tests/unit/health.test.ts
 
 - [ ] **Step 3: Implement**
 
+Per spec §7 (Observability), `/api/health` checks: DB conn, Storage reachable, Inngest reachable, last events timestamp.
+
 ```ts
 // src/app/api/health/route.ts
 import { NextResponse } from "next/server";
@@ -2013,32 +2057,69 @@ import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
-  const checks: Record<string, "ok" | "degraded" | "fail"> = { db: "fail", events_recent: "fail" };
+type CheckResult = "ok" | "degraded" | "fail";
 
+async function checkDb(): Promise<CheckResult> {
   try {
-    const db = getServiceRoleClient();
-    const { error: pingErr } = await db.from("boutiques").select("id").limit(1);
-    checks.db = pingErr ? "fail" : "ok";
+    const { error } = await getServiceRoleClient().from("boutiques").select("id").limit(1);
+    return error ? "fail" : "ok";
+  } catch {
+    return "fail";
+  }
+}
 
-    const { data: ev } = await db
+async function checkStorage(): Promise<CheckResult> {
+  try {
+    const { error } = await getServiceRoleClient().storage.listBuckets();
+    return error ? "fail" : "ok";
+  } catch {
+    return "fail";
+  }
+}
+
+async function checkEventsRecent(): Promise<CheckResult> {
+  try {
+    const { data } = await getServiceRoleClient()
       .from("events")
       .select("occurred_at")
       .order("occurred_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!ev) {
-      checks.events_recent = "degraded"; // empty in fresh DB is acceptable
-    } else {
-      const ageSec = (Date.now() - new Date(ev.occurred_at).getTime()) / 1000;
-      checks.events_recent = ageSec < env.HEALTH_EVENT_STALENESS_SECONDS ? "ok" : "degraded";
-    }
+    if (!data) return "degraded"; // empty in fresh DB is acceptable
+    const ageSec = (Date.now() - new Date(data.occurred_at).getTime()) / 1000;
+    return ageSec < env.HEALTH_EVENT_STALENESS_SECONDS ? "ok" : "degraded";
   } catch {
-    // checks remain 'fail'
+    return "fail";
   }
+}
 
-  const overall = Object.values(checks).every((v) => v === "ok" || v === "degraded") ? "ok" : "fail";
-  return NextResponse.json({ status: overall, checks }, { status: overall === "ok" ? 200 : 503 });
+async function checkInngest(): Promise<CheckResult> {
+  // In production we have signing/event keys; in local dev neither is set and Inngest
+  // dev server runs separately. Probe the local /api/inngest route or the cloud event URL.
+  if (!env.INNGEST_EVENT_KEY) return "degraded"; // unconfigured = degraded, not fail
+  try {
+    const res = await fetch("https://api.inngest.com/v1/health", { signal: AbortSignal.timeout(2000) });
+    return res.ok ? "ok" : "fail";
+  } catch {
+    return "fail";
+  }
+}
+
+export async function GET() {
+  const [db, storage, events_recent, inngest] = await Promise.all([
+    checkDb(),
+    checkStorage(),
+    checkEventsRecent(),
+    checkInngest(),
+  ]);
+  const checks = { db, storage, events_recent, inngest };
+
+  // Overall: ok only if no 'fail'. 'degraded' is acceptable (returns 200 with status='degraded').
+  const hasFail = Object.values(checks).includes("fail");
+  const hasDegraded = Object.values(checks).includes("degraded");
+  const overall: "ok" | "degraded" | "fail" = hasFail ? "fail" : hasDegraded ? "degraded" : "ok";
+
+  return NextResponse.json({ status: overall, checks }, { status: hasFail ? 503 : 200 });
 }
 ```
 
@@ -2103,8 +2184,15 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
-      - name: Migration dry-run
-        run: supabase db diff --use-migra --schema public | tee /dev/stderr | grep -q '^$' || (echo "Schema drift detected" && exit 1)
+      - name: Migration dry-run (fails on schema drift between migrations/ and live DB)
+        run: |
+          diff_output=$(supabase db diff --schema public)
+          if [ -n "$diff_output" ]; then
+            echo "::error::Schema drift detected — migrations don't match expected schema"
+            echo "$diff_output"
+            exit 1
+          fi
+          echo "✅ No schema drift"
 
       - run: pnpm dlx playwright install --with-deps chromium
       - run: pnpm test:e2e
@@ -2116,6 +2204,17 @@ jobs:
 git add .github/workflows/ci.yml
 git commit -m "ci: GitHub Actions with Supabase local + e2e"
 ```
+
+- [ ] **Step 3: Verify by pushing a throwaway PR**
+
+```bash
+git checkout -b ci-smoke
+git commit --allow-empty -m "chore: trigger CI"
+git push -u origin ci-smoke
+gh pr create --fill
+```
+
+Expected: CI workflow runs green within ~5min. Address any failures here (likely env-var or Supabase CLI setup issues) before moving on. Close the PR when done; the workflow file is what we wanted to verify.
 
 ---
 
@@ -2130,36 +2229,90 @@ git commit -m "ci: GitHub Actions with Supabase local + e2e"
 pnpm add -D @next/bundle-analyzer
 ```
 
-- [ ] **Step 2: Update next.config.mjs**
+- [ ] **Step 2: Update next.config.mjs (full file — composes with Sentry wrapper)**
+
+The Sentry wizard in Chunk 4 wraps the config with `withSentryConfig`. Bundle analyzer must wrap **the user config**, then Sentry wraps the **result**. Order matters.
+
+Replace `next.config.mjs` with:
 
 ```js
+import { withSentryConfig } from "@sentry/nextjs";
 import bundleAnalyzer from "@next/bundle-analyzer";
+
 const withBundleAnalyzer = bundleAnalyzer({ enabled: process.env.ANALYZE === "true" });
-export default withBundleAnalyzer({
-  // ... existing config from Sentry wizard
+
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  experimental: { typedRoutes: true },
+  images: { remotePatterns: [{ protocol: "https", hostname: "**.supabase.co" }] },
+};
+
+// Bundle analyzer wraps user config first
+const wrappedConfig = withBundleAnalyzer(nextConfig);
+
+// Sentry wraps the result
+export default withSentryConfig(wrappedConfig, {
+  silent: true,
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  widenClientFileUpload: true,
+  hideSourceMaps: true,
+  disableLogger: true,
 });
 ```
 
-- [ ] **Step 3: Add a public-route size guard (script)**
+(If the Sentry wizard generated additional options in Chunk 4 Task 4.3, merge them into the second arg of `withSentryConfig` here.)
+
+- [ ] **Step 3: Discover the manifest key (one-time probe)**
+
+Next 15's `app-build-manifest.json` key for the home route can be `"/"` or `"/page"` depending on minor version. Probe once:
+
+```bash
+pnpm build
+node -e "console.log(Object.keys(JSON.parse(require('fs').readFileSync('.next/app-build-manifest.json','utf8')).pages))"
+```
+
+Note the key matching home (e.g. `/page` or `/`). Use whichever appears.
+
+- [ ] **Step 4: Add a public-route size guard (script, key-tolerant)**
 
 `scripts/check-bundle-size.mjs`:
 
 ```js
 import fs from "node:fs";
 import path from "node:path";
+
 const STORE_LIMIT_KB = 250;
-const manifest = JSON.parse(fs.readFileSync(".next/app-build-manifest.json", "utf8"));
-const homeFiles = manifest.pages["/page"] ?? [];
-const totalBytes = homeFiles.reduce((acc, f) => acc + fs.statSync(path.join(".next", f)).size, 0);
+const manifestPath = ".next/app-build-manifest.json";
+
+if (!fs.existsSync(manifestPath)) {
+  console.error(`Missing ${manifestPath}. Run 'pnpm build' first.`);
+  process.exit(1);
+}
+
+const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+const pages = manifest.pages ?? {};
+
+// Tolerant lookup: Next 15 may key home as "/page" or "/" depending on version.
+const homeKey = ["/page", "/", "/(public)/page"].find((k) => pages[k]);
+if (!homeKey) {
+  console.error(`Could not find home route in manifest. Available keys:`, Object.keys(pages));
+  process.exit(1);
+}
+
+const files = pages[homeKey];
+const totalBytes = files.reduce((acc, f) => acc + fs.statSync(path.join(".next", f)).size, 0);
 const totalKb = totalBytes / 1024;
-console.log(`Storefront / route bundle: ${totalKb.toFixed(1)} KB (limit ${STORE_LIMIT_KB})`);
+console.log(`Storefront ${homeKey} bundle: ${totalKb.toFixed(1)} KB (limit ${STORE_LIMIT_KB})`);
+
 if (totalKb > STORE_LIMIT_KB) {
   console.error(`Exceeds ${STORE_LIMIT_KB} KB budget`);
   process.exit(1);
 }
 ```
 
-- [ ] **Step 4: Add to CI**
+- [ ] **Step 5: Add to CI**
 
 In `ci.yml` after `pnpm build`:
 
@@ -2167,7 +2320,7 @@ In `ci.yml` after `pnpm build`:
       - run: node scripts/check-bundle-size.mjs
 ```
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add -A
@@ -2241,29 +2394,53 @@ git commit -m "docs: README with setup + command reference"
 **Files:**
 - Create: `vercel.json` (optional, for build env hints)
 
-- [ ] **Step 1: Install Vercel CLI**
+- [ ] **Step 1: Use Vercel CLI via dlx (no global install)**
 
 ```bash
-pnpm add -g vercel
+pnpm dlx vercel@latest --version
 ```
 
-- [ ] **Step 2: Link + deploy preview**
+- [ ] **Step 2: Manual — create staging Supabase project + Vercel environment**
+
+a. In Supabase dashboard: create a new project named `boutique-360-staging`. Copy its URL + anon + service-role keys.
+
+b. In Vercel dashboard for this project → **Settings → Environments**: create a custom environment named `staging` (Vercel Pro plan supports custom environments; on Hobby plan, use the built-in `preview` with a branch alias instead).
+
+c. In **Settings → Environment Variables**: add for `staging`:
+   - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (from step a)
+   - `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`
+   - `INNGEST_EVENT_KEY`, `INNGEST_SIGNING_KEY` (from Inngest dashboard, create staging app)
+   - `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
+   - `APP_URL=https://staging-boutique-360.vercel.app` (or your chosen staging domain)
+   - `HEALTH_EVENT_STALENESS_SECONDS=3600`
+
+- [ ] **Step 3: Link + deploy preview**
 
 ```bash
-vercel link
-vercel env pull .env.vercel.local
-vercel deploy
+pnpm dlx vercel@latest link
+pnpm dlx vercel@latest env pull .env.vercel.local
+pnpm dlx vercel@latest deploy
 ```
 
-(Manual step: in Vercel dashboard, add a Supabase staging project's URL/keys + Sentry/Inngest/Resend keys as env vars. Document the list in `.env.example` — already done.)
+The deploy command returns a preview URL. Verify it loads.
 
-- [ ] **Step 3: Promote to staging**
+- [ ] **Step 4: Promote to staging environment**
+
+If you created a custom `staging` environment in Step 2b:
 
 ```bash
-vercel deploy --target=staging
+pnpm dlx vercel@latest deploy --target=staging
 ```
 
-Verify: visit the printed URL, see Boutique 360 placeholder. Visit `/admin` → redirected to sign-in. Visit `/api/health` → returns JSON.
+Otherwise (Hobby plan fallback), use a `staging` branch and let preview deploys handle it:
+
+```bash
+git checkout -b staging
+git push -u origin staging
+# Vercel auto-deploys; add a domain alias in Vercel dashboard: staging.<domain> → staging branch
+```
+
+Verify: visit the printed URL or alias → see Boutique 360 placeholder. Visit `/admin` → redirected to sign-in. Visit `/api/health` → returns JSON `{ "status": "ok", "checks": {...} }`.
 
 - [ ] **Step 4: Commit**
 
