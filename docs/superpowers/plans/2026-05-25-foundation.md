@@ -2440,9 +2440,9 @@ git push -u origin staging
 # Vercel auto-deploys; add a domain alias in Vercel dashboard: staging.<domain> → staging branch
 ```
 
-Verify: visit the printed URL or alias → see Boutique 360 placeholder. Visit `/admin` → redirected to sign-in. Visit `/api/health` → returns JSON `{ "status": "ok", "checks": {...} }`.
+Verify: visit the printed URL or alias → see Boutique 360 placeholder. Visit `/admin` → redirected to sign-in. Visit `/api/health` → returns JSON with `status: "ok"` (or `"degraded"` if Inngest/staleness checks aren't fully wired yet — both are acceptable, only `"fail"` is a blocker).
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add -A
@@ -2493,7 +2493,7 @@ git commit -m "docs: monitoring section"
 - [ ] CI workflow runs end-to-end green on a throwaway PR
 - [ ] Local sign-in flow: enter email → check Supabase Inbucket (`localhost:54324`) → click link → land on `/admin` → see dashboard stub
 - [ ] `staff_users` row was created for first sign-in with role `owner`
-- [ ] `/api/health` returns `{ status: "ok" }` locally
+- [ ] `/api/health` returns `status: "ok"` or `"degraded"` locally (degraded is OK if Inngest keys unset)
 - [ ] Vercel staging deploys; sign-in works against staging Supabase
 
 When all boxes are checked: **Foundation is done. Open PR, merge to main, and Plan 2 (CRM Core + Loyalty) can begin.**
