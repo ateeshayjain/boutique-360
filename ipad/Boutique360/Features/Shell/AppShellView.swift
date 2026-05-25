@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
-    case dashboard, designs, customers, inquiries, fabrics, catalog, settings
+    case dashboard, designs, customers, inquiries, orders, fabrics, catalog, settings
     var id: String { rawValue }
 
     var title: String {
@@ -10,6 +10,7 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
         case .designs:   "Designs"
         case .customers: "Customers"
         case .inquiries: "Inquiries"
+        case .orders:    "Orders"
         case .fabrics:   "Fabrics"
         case .catalog:   "Catalog"
         case .settings:  "Settings"
@@ -22,6 +23,7 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
         case .designs:   "pencil.and.scribble"
         case .customers: "person.2"
         case .inquiries: "envelope.open"
+        case .orders:    "bag"
         case .fabrics:   "square.grid.3x3.square"
         case .catalog:   "tag"
         case .settings:  "gearshape"
@@ -54,6 +56,7 @@ struct AppShellView: View {
                 case .dashboard:  DashboardView()
                 case .customers:  CustomersListView()
                 case .inquiries:  InquiriesListView()
+                case .orders:     OrdersListView()
                 case .designs:    ComingSoonView(title: "Designs",   subtitle: "Plan 4 — PencilKit canvas")
                 case .fabrics:    ComingSoonView(title: "Fabrics",   subtitle: "Plan 4")
                 case .catalog:    ComingSoonView(title: "Catalog",   subtitle: "Plan 6")

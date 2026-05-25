@@ -5,9 +5,13 @@ struct CustomerDetailView: View {
 
     @State private var measurements: [CustomerMeasurement] = []
     @State private var inquiries: [Inquiry] = []
+    @State private var profile: CustomerProfile?
+    @State private var dates: [ImportantDate] = []
     @State private var loading: Bool = true
     @State private var showAddMeasurement: Bool = false
     @State private var showAddInquiry: Bool = false
+    @State private var showAddDate: Bool = false
+    @State private var showEditStyle: Bool = false
     @State private var showEdit: Bool = false
     @State private var refreshTrigger: Int = 0
 
@@ -16,6 +20,8 @@ struct CustomerDetailView: View {
             VStack(alignment: .leading, spacing: 24) {
                 profileHeader
                 quickActions
+                styleSection
+                datesSection
                 measurementsSection
                 inquiriesSection
             }
@@ -25,7 +31,15 @@ struct CustomerDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("Edit") { showEdit = true }
+                Menu {
+                    Button { showEdit = true } label: { Label("Edit details", systemImage: "pencil") }
+                    Button { showEditStyle = true } label: { Label("Edit style profile", systemImage: "person.crop.rectangle") }
+                    Button { showAddDate = true } label: { Label("Add important date", systemImage: "calendar.badge.plus") }
+                    Button { showAddMeasurement = true } label: { Label("New measurement", systemImage: "ruler") }
+                    Button { showAddInquiry = true } label: { Label("New inquiry", systemImage: "envelope.badge.fill") }
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                }
             }
         }
         .sheet(isPresented: $showEdit) {
@@ -51,6 +65,24 @@ struct CustomerDetailView: View {
                     Task { await load() }
                 }
             }
+        }
+        .sheet(isPresented: $showEditStyle) {
+            NavigationStack {
+                CustomerStyleProfileView(customer: customer) {
+                    showEditStyle = false
+                    Task { await load() }
+                }
+            }
+            .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showAddDate) {
+            NavigationStack {
+                ImportantDateFormView(customerId: customer.id) {
+                    showAddDate = false
+                    Task { await load() }
+                }
+            }
+            .presentationDetents([.medium])
         }
         .task(id: refreshTrigger) { await load() }
     }
@@ -162,13 +194,110 @@ struct CustomerDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
+    private var styleSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Style profile").font(.headline)
+                Spacer()
+                Button("Edit") { showEditStyle = true }.font(.caption).buttonStyle(.borderless)
+            }
+            if let p = profile {
+                GroupBox {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if let persona = p.stylePersona.flatMap(StylePersona.init(rawValue:)) {
+                            Label(persona.label, systemImage: persona.systemImage)
+                                .font(.subheadline.weight(.medium))
+                        }
+                        HStack(spacing: 16) {
+                            if let bt = p.bodyType { profileChip("Body", bt.capitalized) }
+                            if let st = p.skinTone { profileChip("Skin", st.capitalized) }
+                            if let bb = p.budgetBand { profileChip("Budget", bb.capitalized) }
+                        }
+                        if !p.colorPalette.isEmpty {
+                            metaRow("Colors", p.colorPalette.joined(separator: ", "))
+                        }
+                        if !p.fabricPreferences.isEmpty {
+                            metaRow("Loves", p.fabricPreferences.joined(separator: ", "))
+                        }
+                        if !p.avoidFabrics.isEmpty {
+                            metaRow("Avoid", p.avoidFabrics.joined(separator: ", "))
+                        }
+                        if let notes = p.styleNotesMd, !notes.isEmpty {
+                            Text(notes).font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } else {
+                Text("Capture style preferences to power AI recommendations and personalized outreach.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func profileChip(_ label: String, _ value: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(label).font(.caption2).foregroundStyle(.secondary)
+            Text(value).font(.subheadline)
+        }
+    }
+    private func metaRow(_ k: String, _ v: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(k).font(.caption2).foregroundStyle(.secondary)
+            Text(v).font(.subheadline)
+        }
+    }
+
+    private var datesSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Important dates").font(.headline)
+                Spacer()
+                Button {
+                    showAddDate = true
+                } label: {
+                    Label("Add", systemImage: "plus")
+                        .labelStyle(.iconOnly)
+                }
+                .buttonStyle(.borderless)
+            }
+            if dates.isEmpty {
+                Text("Anniversaries, birthdays, festivals to remember.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                ForEach(dates) { d in
+                    HStack {
+                        Image(systemName: "calendar")
+                            .foregroundStyle(Color.accentColor)
+                        VStack(alignment: .leading) {
+                            Text(d.occasion).font(.subheadline.weight(.medium))
+                            Text(d.date).font(.caption).foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        if d.recurring {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(10)
+                    .background(Color(.secondarySystemBackground))
+                    .clipShape(RoundedRectangle(cornerRadius: 10))
+                }
+            }
+        }
+    }
+
     private func load() async {
         loading = true
         defer { loading = false }
         async let m = (try? MeasurementsService.listForCustomer(customer.id)) ?? []
         async let i = (try? InquiriesService.list(customerId: customer.id)) ?? []
+        async let p = (try? CustomerProfilesService.get(customerId: customer.id)) ?? nil
+        async let d = (try? ImportantDatesService.listForCustomer(customer.id)) ?? []
         self.measurements = await m
         self.inquiries = await i
+        self.profile = await p
+        self.dates = await d
     }
 }
 

@@ -6,6 +6,7 @@ struct CustomersListView: View {
     @State private var loading: Bool = false
     @State private var loadError: String?
     @State private var showAddSheet: Bool = false
+    @State private var navPath: [Customer] = []
 
     var body: some View {
         Group {
@@ -44,6 +45,16 @@ struct CustomersListView: View {
         }
         .navigationDestination(for: Customer.self) { c in
             CustomerDetailView(customer: c)
+        }
+        .onChange(of: customers) { _, list in
+            // DEV: -open-customer <uuid> auto-pushes detail
+            let args = CommandLine.arguments
+            if let i = args.firstIndex(of: "-open-customer"), i + 1 < args.count,
+               let uuid = UUID(uuidString: args[i + 1]),
+               let target = list.first(where: { $0.id == uuid }),
+               navPath.isEmpty {
+                navPath.append(target)
+            }
         }
         .sheet(isPresented: $showAddSheet) {
             NavigationStack {
