@@ -1,0 +1,30 @@
+.env
+.env.local
+.env.*.local
+.DS_Store
+node_modules/
+.next/
+out/
+build/
+dist/
+*.log
+.vercel
+.turbo
+
+# Supabase local stack (not used — we use cloud)
+supabase/.branches/
+supabase/.temp/
+
+# Xcode (iPad app — Plan 2)
+*.xcuserdata/
+xcuserdata/
+DerivedData/
+*.xcworkspace/xcuserdata
+*.xcodeproj/xcuserdata
+*.xcodeproj/project.xcworkspace/xcuserdata
+
+# Swift package
+.swiftpm/
+.build/
+Packages/
+Package.resolved
