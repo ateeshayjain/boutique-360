@@ -57,7 +57,7 @@ struct AppShellView: View {
                 case .customers:  CustomersListView()
                 case .inquiries:  InquiriesListView()
                 case .orders:     OrdersListView()
-                case .designs:    ComingSoonView(title: "Designs",   subtitle: "Plan 4 — PencilKit canvas")
+                case .designs:    DesignsListView()
                 case .fabrics:    ComingSoonView(title: "Fabrics",   subtitle: "Plan 4")
                 case .catalog:    ComingSoonView(title: "Catalog",   subtitle: "Plan 6")
                 case .settings:   SettingsView()
