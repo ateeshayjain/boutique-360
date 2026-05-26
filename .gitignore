@@ -15,6 +15,9 @@ dist/
 supabase/.branches/
 supabase/.temp/
 
+# Secrets — billable credentials. Each dev fills in their own Secrets.xcconfig.
+ipad/Boutique360/Configuration/Secrets.xcconfig
+
 # Xcode (iPad app — Plan 2)
 *.xcuserdata/
 xcuserdata/

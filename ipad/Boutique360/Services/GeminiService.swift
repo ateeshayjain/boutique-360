@@ -49,6 +49,29 @@ enum GeminiService {
         return try await generateImage(prompt: prompt, inputImages: images)
     }
 
+    /// Generates a Romanized-Hindi tailor brief from structured design data.
+    /// Output is plain text suitable for the bottom of the Job Card PDF or
+    /// pasting into a WhatsApp message to the karigar.
+    static func generateTailorBrief(
+        garmentType: String?,
+        occasion: String?,
+        customerNotes: String?,
+        fabricList: [FabricLine],
+        measurements: [String: Double]?,
+        embellishments: String?,
+        dueDate: String?,
+        karigarName: String?
+    ) async throws -> String {
+        guard !Config.geminiApiKey.isEmpty else { throw GeminiError.notConfigured }
+
+        let prompt = PromptTemplates.tailorBrief(
+            garmentType: garmentType, occasion: occasion, customerNotes: customerNotes,
+            fabricList: fabricList, measurements: measurements,
+            embellishments: embellishments, dueDate: dueDate, karigarName: karigarName
+        )
+        return try await generateText(prompt: prompt)
+    }
+
     /// Dresses a customer photo in the garment shown in `garmentImage`.
     /// The result preserves the customer's face/body while applying the garment realistically.
     static func virtualTryOn(
@@ -61,7 +84,35 @@ enum GeminiService {
         return try await generateImage(prompt: prompt, inputImages: [customerPhoto, garmentImage])
     }
 
-    // MARK: - Core call
+    // MARK: - Core calls
+
+    private static func generateText(prompt: String) async throws -> String {
+        // For text-only generation we use gemini-2.5-flash (cheaper, faster).
+        let textModel = "gemini-2.5-flash"
+        let url = URL(string: "\(baseURL)/models/\(textModel):generateContent?key=\(Config.geminiApiKey)")!
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.timeoutInterval = 30
+
+        let body: [String: Any] = [
+            "contents": [["role": "user", "parts": [["text": prompt]]]],
+        ]
+        req.httpBody = try JSONSerialization.data(withJSONObject: body)
+
+        let (data, response) = try await URLSession.shared.data(for: req)
+        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+            let body = String(data: data, encoding: .utf8) ?? "<no body>"
+            throw GeminiError.badResponse("Brief gen failed: \(body.prefix(500))")
+        }
+        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let candidates = json["candidates"] as? [[String: Any]],
+              let content = candidates.first?["content"] as? [String: Any],
+              let parts = content["parts"] as? [[String: Any]],
+              let text = parts.first?["text"] as? String
+        else { throw GeminiError.decodeFailed }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
 
     private static func generateImage(prompt: String, inputImages: [UIImage]) async throws -> UIImage {
         let url = URL(string: "\(baseURL)/models/\(model):generateContent?key=\(Config.geminiApiKey)")!
@@ -151,6 +202,64 @@ enum PromptTemplates {
         - Studio photography quality — sharp focus, true colors, no cartoon/illustration look
         - Square 1:1 aspect ratio
         - No text overlays, no watermarks
+        """
+    }
+
+    /// ┌─────────────────────────────────────────────────────────────────────────┐
+    /// │  USER CONTRIBUTION OPPORTUNITY (tailor brief)                          │
+    /// │                                                                         │
+    /// │  This Romanized-Hindi prompt produces the friendly brief at the bottom │
+    /// │  of every Job Card PDF. Older karigars often read this faster than the │
+    /// │  structured top half. After your first real Job Card, look at the AI's │
+    /// │  output and refine: tone, vocabulary, common tailor phrases you'd      │
+    /// │  actually use, regional preferences (Delhi vs Surat vs Banaras).       │
+    /// └─────────────────────────────────────────────────────────────────────────┘
+    static func tailorBrief(
+        garmentType: String?, occasion: String?, customerNotes: String?,
+        fabricList: [FabricLine], measurements: [String: Double]?,
+        embellishments: String?, dueDate: String?, karigarName: String?
+    ) -> String {
+        let greeting = karigarName.map { "\($0) bhai," } ?? "Bhai,"
+        let garment = garmentType ?? "dress"
+        let occasionStr = occasion.map { " ye \($0) ke liye hai." } ?? ""
+        let dueStr = dueDate.map { " Due date \($0) hai, time pe ready hona chahiye." } ?? ""
+        let measureStr: String = {
+            guard let m = measurements, !m.isEmpty else { return "" }
+            let pairs = m.sorted { $0.key < $1.key }
+                .map { "\($0.key.replacingOccurrences(of: "_", with: " ")): \(String(format: "%.1f", $0.value))" }
+                .joined(separator: ", ")
+            return "\n\nMeasurements: \(pairs) (sab inches mein hain)"
+        }()
+        let fabricStr: String = {
+            guard !fabricList.isEmpty else { return "" }
+            let lines = fabricList.map { f -> String in
+                var s = "- \(f.name)"
+                if let c = f.color { s += " (\(c))" }
+                s += " — \(String(format: "%.1f", f.quantityMeters)) meter"
+                if let r = f.role { s += " (\(r))" }
+                return s
+            }.joined(separator: "\n")
+            return "\n\nFabric:\n\(lines)"
+        }()
+        let embStr = embellishments.map { "\n\nEmbroidery / work: \($0)" } ?? ""
+        let notesStr = customerNotes.map { "\n\nCustomer note: \($0)" } ?? ""
+
+        return """
+        You are writing a brief for a master tailor (karigar) in India. Karigars read Romanized Hindi (Hindi words in English script) faster than Devanagari on phone screens.
+
+        Take the structured design info below and write a short, friendly, practical brief in Romanized Hindi (Hinglish). Use simple tailor vocabulary like 'chati' (chest), 'kamar' (waist), 'lambai' (length), 'astar' (lining), 'lace', 'border'. Keep numbers in digits. Mention due date clearly. End with "Doubt ho to call kar lena."
+
+        Style:
+        - 5 to 8 short sentences
+        - No formal English greetings — start with "\(greeting)"
+        - Don't repeat measurements unless calling out a critical one
+        - Use natural tailor language, not translated English
+
+        ----- DESIGN DATA -----
+        Garment: \(garment)\(occasionStr)\(dueStr)\(measureStr)\(fabricStr)\(embStr)\(notesStr)
+        ----- END DATA -----
+
+        Output ONLY the Hindi brief text. No explanations, no English headers, no markdown.
         """
     }
 
