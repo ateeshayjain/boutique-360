@@ -8,7 +8,6 @@ struct DesignsListView: View {
     @State private var filter: DesignStatus? = nil
     @State private var loading = false
     @State private var showCreate = false
-    @State private var navPath: [Design] = []
     @State private var loadError: String?
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
@@ -64,15 +63,6 @@ struct DesignsListView: View {
         }
         .navigationDestination(for: Design.self) { d in
             DesignDetailView(design: d, customerName: customers[d.customerId ?? UUID()]?.name)
-        }
-        .onChange(of: designs) { _, list in
-            let args = CommandLine.arguments
-            if let i = args.firstIndex(of: "-open-design"), i + 1 < args.count,
-               let uuid = UUID(uuidString: args[i + 1]),
-               let target = list.first(where: { $0.id == uuid }),
-               navPath.isEmpty {
-                navPath.append(target)
-            }
         }
         .sheet(isPresented: $showCreate) {
             NavigationStack {
