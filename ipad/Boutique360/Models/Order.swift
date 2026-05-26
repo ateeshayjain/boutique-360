@@ -55,6 +55,7 @@ struct Order: Identifiable, Codable, Hashable {
     var trackingUrl: String?
     var trackingCourier: String?
     var magicLinkToken: String?
+    var fulfillmentMethod: String?     // 'pickup' | 'ship'
     var placedAt: Date?
     var createdAt: Date
     var updatedAt: Date
@@ -69,6 +70,7 @@ struct Order: Identifiable, Codable, Hashable {
         case trackingUrl = "tracking_url"
         case trackingCourier = "tracking_courier"
         case magicLinkToken = "magic_link_token"
+        case fulfillmentMethod = "fulfillment_method"
         case placedAt = "placed_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
@@ -109,7 +111,8 @@ struct NewOrder: Encodable {
     let total: Double
     let currency: String
     let magic_link_token: String?
-    let placed_at: String?    // ISO8601
+    let fulfillment_method: String     // 'pickup' | 'ship'
+    let placed_at: String?
 }
 
 struct NewOrderItem: Encodable {

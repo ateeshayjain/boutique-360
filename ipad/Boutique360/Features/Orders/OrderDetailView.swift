@@ -27,7 +27,17 @@ struct OrderDetailView: View {
                         .labelStyle(.titleAndIcon)
                         .foregroundStyle(tint(current.status))
                 }
+                LabeledContent("Fulfillment") {
+                    Label(
+                        (current.fulfillmentMethod ?? "pickup") == "ship" ? "Ship" : "Pickup",
+                        systemImage: (current.fulfillmentMethod ?? "pickup") == "ship" ? "shippingbox" : "bag.fill"
+                    ).foregroundStyle(.secondary)
+                }
             }
+
+            PaymentsSectionView(order: current)
+            AlterationsSectionView(orderId: current.id)
+            OrderTimelineView(orderId: current.id)
 
             Section("Items") {
                 if items.isEmpty {

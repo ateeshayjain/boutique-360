@@ -15,6 +15,7 @@ struct OrderCreateView: View {
     @State private var lineQty: Int = 1
     @State private var linePriceText: String = ""
     @State private var gstRate: Double = 5.0
+    @State private var fulfillmentMethod: String = "pickup"
 
     @State private var saving = false
     @State private var error: String?
@@ -62,6 +63,14 @@ struct OrderCreateView: View {
                 }
                 Picker("GST rate", selection: $gstRate) {
                     ForEach([0.0, 5.0, 12.0, 18.0], id: \.self) { Text("\(Int($0))%").tag($0) }
+                }
+                .pickerStyle(.segmented)
+            }
+
+            Section("Delivery") {
+                Picker("Method", selection: $fulfillmentMethod) {
+                    Label("Pickup from store", systemImage: "bag.fill").tag("pickup")
+                    Label("Ship to address", systemImage: "shippingbox").tag("ship")
                 }
                 .pickerStyle(.segmented)
             }
@@ -116,6 +125,7 @@ struct OrderCreateView: View {
                 total: total,
                 currency: "INR",
                 magic_link_token: UUID().uuidString,
+                fulfillment_method: fulfillmentMethod,
                 placed_at: ISO8601DateFormatter().string(from: Date())
             )
             let created = try await OrdersService.create(

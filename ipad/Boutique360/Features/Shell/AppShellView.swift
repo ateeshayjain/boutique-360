@@ -1,16 +1,18 @@
 import SwiftUI
 
 enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
-    case dashboard, designs, customers, inquiries, orders, fabrics, catalog, settings
+    case dashboard, calendar, designs, customers, inquiries, orders, dates, fabrics, catalog, settings
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .dashboard: "Dashboard"
+        case .calendar:  "Calendar"
         case .designs:   "Designs"
         case .customers: "Customers"
         case .inquiries: "Inquiries"
         case .orders:    "Orders"
+        case .dates:     "Important dates"
         case .fabrics:   "Fabrics"
         case .catalog:   "Catalog"
         case .settings:  "Settings"
@@ -20,10 +22,12 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
     var systemImage: String {
         switch self {
         case .dashboard: "rectangle.grid.2x2"
+        case .calendar:  "calendar"
         case .designs:   "pencil.and.scribble"
         case .customers: "person.2"
         case .inquiries: "envelope.open"
         case .orders:    "bag"
+        case .dates:     "gift"
         case .fabrics:   "square.grid.3x3.square"
         case .catalog:   "tag"
         case .settings:  "gearshape"
@@ -54,12 +58,14 @@ struct AppShellView: View {
             NavigationStack {
                 switch selection {
                 case .dashboard:  DashboardView()
+                case .calendar:   CalendarView()
                 case .customers:  CustomersListView()
                 case .inquiries:  InquiriesListView()
                 case .orders:     OrdersListView()
+                case .dates:      ImportantDatesListView()
                 case .designs:    DesignsListView()
-                case .fabrics:    ComingSoonView(title: "Fabrics",   subtitle: "Plan 4")
-                case .catalog:    ComingSoonView(title: "Catalog",   subtitle: "Plan 6")
+                case .fabrics:    ComingSoonView(title: "Fabrics",   subtitle: "Coming with Workshop OS")
+                case .catalog:    ComingSoonView(title: "Catalog",   subtitle: "For ready-to-ship lookbook")
                 case .settings:   SettingsView()
                 case .none:       DashboardView()
                 }
