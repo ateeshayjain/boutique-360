@@ -6,6 +6,10 @@ struct DesignDetailView: View {
 
     @State private var current: Design
     @State private var showEdit = false
+    @State private var showSketch = false
+    @State private var showRender = false
+    @State private var showTryOn = false
+    @State private var customer: Customer?
 
     init(design: Design, customerName: String?) {
         self.design = design
@@ -43,15 +47,31 @@ struct DesignDetailView: View {
                     }
                 }
             }
-            Section("Sketch canvas") {
-                Label("PencilKit canvas arrives in Plan 4", systemImage: "pencil.and.scribble")
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
-            }
-            Section("AI render") {
-                Label("Gemini sketch→render arrives in Plan 5", systemImage: "sparkles")
-                    .foregroundStyle(.secondary)
-                    .font(.caption)
+            Section("Workflow") {
+                Button {
+                    showSketch = true
+                } label: {
+                    Label(current.sketchImageUrl == nil ? "Sketch with Pencil" : "Edit sketch", systemImage: "pencil.and.scribble")
+                }
+
+                Button {
+                    showRender = true
+                } label: {
+                    Label("AI render", systemImage: "sparkles")
+                }
+                .disabled(current.sketchImageUrl == nil)
+
+                Button {
+                    showTryOn = true
+                } label: {
+                    Label("Customer virtual try-on", systemImage: "person.crop.rectangle.badge.plus")
+                }
+                .disabled(current.customerId == nil)
+
+                if current.customerId == nil {
+                    Text("Link this design to a customer first (use Edit) to enable try-on.")
+                        .font(.caption2).foregroundStyle(.tertiary)
+                }
             }
         }
         .navigationTitle(current.name)
@@ -67,6 +87,34 @@ struct DesignDetailView: View {
                     current = updated
                     showEdit = false
                 }
+            }
+        }
+        .fullScreenCover(isPresented: $showSketch) {
+            NavigationStack {
+                SketchCanvasView(design: current) {
+                    Task {
+                        if let updated = try? await DesignsService.get(id: current.id) {
+                            current = updated
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showRender) {
+            NavigationStack {
+                RenderView(design: current) { _ in }
+            }
+            .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showTryOn) {
+            NavigationStack {
+                VirtualTryOnView(design: current, customer: customer)
+            }
+            .presentationDetents([.large])
+        }
+        .task {
+            if let cid = current.customerId {
+                customer = try? await CustomersService.get(id: cid)
             }
         }
     }
