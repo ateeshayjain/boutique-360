@@ -7,6 +7,7 @@ struct CustomersListView: View {
     @State private var loadError: String?
     @State private var showAddSheet: Bool = false
     @State private var navPath: [Customer] = []
+    @State private var searchTask: Task<Void, Never>?
 
     var body: some View {
         Group {
@@ -24,12 +25,21 @@ struct CustomersListView: View {
                         .buttonStyle(.borderedProminent)
                 }
             } else {
-                List(filteredCustomers) { c in
+                List(customers) { c in
                     NavigationLink(value: c) {
                         CustomerRow(customer: c)
                     }
                 }
                 .searchable(text: $query, prompt: "Search by name, phone, email")
+                .onChange(of: query) { _, new in
+                    // Debounce server-side search to avoid hammering the API every keystroke
+                    searchTask?.cancel()
+                    searchTask = Task {
+                        try? await Task.sleep(nanoseconds: 300_000_000)
+                        if Task.isCancelled { return }
+                        await load(query: new)
+                    }
+                }
                 .refreshable { await load() }
             }
         }
@@ -68,21 +78,11 @@ struct CustomersListView: View {
         .task { await load() }
     }
 
-    private var filteredCustomers: [Customer] {
-        guard !query.isEmpty else { return customers }
-        let q = query.lowercased()
-        return customers.filter {
-            $0.name.lowercased().contains(q)
-            || ($0.phone ?? "").contains(q)
-            || ($0.email ?? "").lowercased().contains(q)
-        }
-    }
-
-    private func load() async {
+    private func load(query: String? = nil) async {
         loading = true
         defer { loading = false }
         do {
-            customers = try await CustomersService.list()
+            customers = try await CustomersService.list(searchQuery: query ?? self.query)
             loadError = nil
         } catch {
             loadError = error.localizedDescription
@@ -97,7 +97,12 @@ private struct CustomerRow: View {
             Circle()
                 .fill(Color.accentColor.opacity(0.2))
                 .frame(width: 44, height: 44)
-                .overlay(Text(customer.initials).font(.subheadline.weight(.semibold)).foregroundStyle(Color.accentColor))
+                .overlay(
+                    Text(customer.initials)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                )
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
                 HStack {
                     Text(customer.name).font(.body.weight(.medium))
@@ -105,6 +110,7 @@ private struct CustomerRow: View {
                         Image(systemName: "crown.fill")
                             .font(.caption2)
                             .foregroundStyle(.yellow)
+                            .accessibilityLabel("VIP")
                     }
                 }
                 Text(customer.displayPhone).font(.caption).foregroundStyle(.secondary)
@@ -119,5 +125,6 @@ private struct CustomerRow: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
     }
 }

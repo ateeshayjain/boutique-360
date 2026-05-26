@@ -109,12 +109,14 @@ struct RenderView: View {
 
     @MainActor
     private func runRender() async {
-        guard let bid = ctx.boutiqueId, let sketchUrlStr = design.sketchImageUrl,
-              let sketchUrl = URL(string: sketchUrlStr) else { return }
+        guard let bid = ctx.boutiqueId else { return }
+        // Prefer the canonical path (stable). Fall back to the cached URL for old rows.
+        let sketchPath = design.sketchImagePath ?? StorageService.sketchPath(designId: design.id)
 
         phase = .fetchingSketch
         let started = Date()
         do {
+            let sketchUrl = try await StorageService.signedURL(bucket: .designSketches, path: sketchPath)
             let (sketchData, _) = try await URLSession.shared.data(from: sketchUrl)
             guard let sketchImg = UIImage(data: sketchData) else {
                 phase = .failed("Couldn't load sketch image")
@@ -143,14 +145,15 @@ struct RenderView: View {
             }
             let renderId = UUID()
             let path = StorageService.renderPath(renderId: renderId)
-            let resultUrl = try await StorageService.upload(resultData, to: .designRenders, path: path, contentType: "image/png")
+            let upload = try await StorageService.upload(resultData, to: .designRenders, path: path, contentType: "image/png")
 
             let processingMs = Int(Date().timeIntervalSince(started) * 1000)
             let record = try await DesignRendersService.record(NewDesignRender(
                 boutique_id: bid,
                 design_id: design.id,
                 prompt_used: prompt,
-                result_image_url: resultUrl,
+                result_image_url: upload.immediateURL,
+                result_image_path: upload.path,
                 model_used: "gemini-2.5-flash-image",
                 processing_ms: processingMs,
                 cost_estimate_usd: 0.04,
@@ -168,7 +171,7 @@ struct RenderView: View {
             if let bid = ctx.boutiqueId {
                 _ = try? await DesignRendersService.record(NewDesignRender(
                     boutique_id: bid, design_id: design.id,
-                    prompt_used: "", result_image_url: nil,
+                    prompt_used: "", result_image_url: nil, result_image_path: nil,
                     model_used: "gemini-2.5-flash-image", processing_ms: 0, cost_estimate_usd: 0,
                     status: RenderStatus.failed.rawValue, error_msg: error.localizedDescription
                 ))

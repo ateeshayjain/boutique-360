@@ -2,15 +2,21 @@ import Foundation
 import Supabase
 
 enum CustomersService {
-    static func list(searchQuery: String? = nil) async throws -> [Customer] {
+    static func list(searchQuery: String? = nil, limit: Int = 200) async throws -> [Customer] {
         let table = SupabaseService.client.from("customers")
         var query = table.select().is("deleted_at", value: nil)
-        if let q = searchQuery, !q.isEmpty {
-            query = query.or("name.ilike.%\(q)%,phone.ilike.%\(q)%,email.ilike.%\(q)%")
+        if let raw = searchQuery {
+            let q = raw.trimmingCharacters(in: .whitespaces)
+            if !q.isEmpty {
+                // Escape % and , as they have special meaning in PostgREST or() / ilike
+                let safe = q.replacingOccurrences(of: ",", with: "")
+                            .replacingOccurrences(of: "%", with: "")
+                query = query.or("name.ilike.%\(safe)%,phone.ilike.%\(safe)%,email.ilike.%\(safe)%")
+            }
         }
         return try await query
             .order("created_at", ascending: false)
-            .limit(100)
+            .limit(limit)
             .execute()
             .value
     }

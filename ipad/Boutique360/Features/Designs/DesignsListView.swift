@@ -9,6 +9,7 @@ struct DesignsListView: View {
     @State private var loading = false
     @State private var showCreate = false
     @State private var navPath: [Design] = []
+    @State private var loadError: String?
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
 
@@ -16,6 +17,14 @@ struct DesignsListView: View {
         Group {
             if loading && designs.isEmpty {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let err = loadError, designs.isEmpty {
+                ContentUnavailableView {
+                    Label("Couldn't load designs", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(err)
+                } actions: {
+                    Button("Retry") { Task { await load() } }.buttonStyle(.borderedProminent)
+                }
             } else if filtered.isEmpty {
                 ContentUnavailableView {
                     Label("No designs yet", systemImage: "pencil.and.scribble")
@@ -91,8 +100,9 @@ struct DesignsListView: View {
                 let all = try await CustomersService.list()
                 customers = Dictionary(uniqueKeysWithValues: all.filter { custIds.contains($0.id) }.map { ($0.id, $0) })
             }
+            loadError = nil
         } catch {
-            // surfaced in empty state if needed
+            loadError = error.localizedDescription
         }
     }
 }

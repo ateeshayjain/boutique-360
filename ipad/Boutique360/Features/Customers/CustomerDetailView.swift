@@ -92,12 +92,21 @@ struct CustomerDetailView: View {
             Circle()
                 .fill(Color.accentColor.opacity(0.2))
                 .frame(width: 72, height: 72)
-                .overlay(Text(customer.initials).font(.title2.weight(.semibold)).foregroundStyle(Color.accentColor))
+                .overlay(
+                    Text(customer.initials)
+                        .font(.title2.weight(.semibold))
+                        .foregroundStyle(Color.accentColor)
+                )
+                .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
-                    Text(customer.name).font(.title.weight(.semibold))
+                    Text(customer.name)
+                        .font(.title.weight(.semibold))
+                        .accessibilityAddTraits(.isHeader)
                     if customer.vipStatus {
-                        Image(systemName: "crown.fill").foregroundStyle(.yellow)
+                        Image(systemName: "crown.fill")
+                            .foregroundStyle(.yellow)
+                            .accessibilityLabel("VIP customer")
                     }
                 }
                 if let p = customer.phone { Label(p, systemImage: "phone").font(.subheadline) }
@@ -111,6 +120,8 @@ struct CustomerDetailView: View {
                                 .clipShape(Capsule())
                         }
                     }
+                    .accessibilityElement(children: .combine)
+                    .accessibilityLabel("Tags: \(customer.tags.joined(separator: ", "))")
                 }
             }
             Spacer()

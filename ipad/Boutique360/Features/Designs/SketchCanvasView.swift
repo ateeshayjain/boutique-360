@@ -112,18 +112,14 @@ struct SketchCanvasView: View {
             error = "Could not capture canvas"
             return
         }
-        // 2) Upload to Storage
+        // 2) Upload to Storage and persist the (bucket, path) — not the short-lived signed URL.
         do {
             let path = StorageService.sketchPath(designId: design.id)
-            let url = try await StorageService.upload(png, to: .designSketches, path: path, contentType: "image/png")
-            // 3) Save URL + stroke data on the design
-            let strokes = drawing.dataRepresentation().base64EncodedString()
-            _ = try await DesignsService.update(design.id, patch: .init(status: DesignStatus.draft.rawValue))
-            // Update sketch_image_url separately — needs a custom patch (status reuse OK for now)
-            _ = try await SupabaseService.client.from("designs")
-                .update(["sketch_image_url": url, "sketch_strokes_json": "{\"data\":\"\(strokes)\"}"])
-                .eq("id", value: design.id)
-                .execute()
+            let upload = try await StorageService.upload(png, to: .designSketches, path: path, contentType: "image/png")
+            try await DesignsService.saveSketchPath(designId: design.id,
+                                                    path: upload.path,
+                                                    cachedURL: upload.immediateURL,
+                                                    strokes: drawing.dataRepresentation())
             onSaved()
             dismiss()
         } catch {

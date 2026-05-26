@@ -123,6 +123,7 @@ struct NewOrderItem: Encodable {
     let qty: Int
     let unit_price: Double
     let gst_amount: Double
+    let line_description: String?
 }
 
 /// Minimal AnyCodable for shipping_address_json without pulling in a dep.

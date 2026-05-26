@@ -4,11 +4,13 @@ struct OrderDetailView: View {
     let order: Order
     let customerName: String?
 
+    @EnvironmentObject private var ctx: BoutiqueContext
     @State private var current: Order
     @State private var items: [OrderItem] = []
     @State private var changing = false
     @State private var invoicePDF: Data?
     @State private var showingInvoice = false
+    @State private var invoiceError: String?
 
     init(order: Order, customerName: String?) {
         self.order = order
@@ -77,10 +79,21 @@ struct OrderDetailView: View {
 
             Section("Invoice") {
                 Button {
-                    invoicePDF = generateInvoicePDF()
-                    showingInvoice = true
+                    if let pdf = generateInvoicePDF() {
+                        invoicePDF = pdf
+                        showingInvoice = true
+                    }
                 } label: {
                     Label("Generate GST invoice", systemImage: "doc.text.fill")
+                }
+                .disabled(ctx.boutique?.gstin == nil)
+                if ctx.boutique?.gstin == nil {
+                    Label("Add your GSTIN in Settings before generating invoices.", systemImage: "exclamationmark.triangle")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                }
+                if let err = invoiceError {
+                    Text(err).font(.caption).foregroundStyle(.red)
                 }
                 Text("PDF preview opens in-app. Tap Share to email, print, or save.")
                     .font(.caption2).foregroundStyle(.tertiary)
@@ -129,11 +142,19 @@ struct OrderDetailView: View {
         }
     }
 
-    /// Builds the PDF input from current order + items. Invoice number is "INV-YYYY-NNNN"
-    /// using the order's placed-at year + a deterministic suffix from the order number.
-    private func generateInvoicePDF() -> Data {
+    /// Builds the PDF input from current order + items.
+    /// Reads boutique identity from BoutiqueContext (never hard-coded).
+    /// Returns nil if boutique identity isn't loaded — UI surfaces the error.
+    private func generateInvoicePDF() -> Data? {
+        guard let boutique = ctx.boutique else {
+            invoiceError = "Boutique identity not loaded. Sign out and back in, or check Settings."
+            return nil
+        }
         let lines: [InvoicePDFGenerator.InvoiceLine] = items.isEmpty
-            ? [.init(description: "Custom order \(current.orderNumber)", qty: 1, unitPrice: current.subtotal, gstRate: current.subtotal > 0 ? (current.gstAmount / current.subtotal * 100) : 5.0, hsnCode: "6204")]
+            ? [.init(description: "Custom order \(current.orderNumber)",
+                     qty: 1, unitPrice: current.subtotal,
+                     gstRate: current.subtotal > 0 ? (current.gstAmount / current.subtotal * 100) : 5.0,
+                     hsnCode: "6204")]
             : items.map { item in
                 .init(
                     description: item.lineDescription ?? "Custom line",
@@ -147,9 +168,9 @@ struct OrderDetailView: View {
             invoiceNumber: invoiceNumberPreview(),
             orderNumber: current.orderNumber,
             issuedAt: current.placedAt ?? current.createdAt,
-            boutiqueName: "Aditi Designer Studio",
-            boutiqueAddress: "123 Designer Street, New Delhi 110001",
-            boutiqueGSTIN: "07AAAAA0000A1Z5",
+            boutiqueName: boutique.name,
+            boutiqueAddress: boutique.address ?? "",
+            boutiqueGSTIN: boutique.gstin,
             customerName: customerName ?? "Customer",
             customerPhone: nil,
             customerAddress: nil,
@@ -158,9 +179,10 @@ struct OrderDetailView: View {
             gstAmount: current.gstAmount,
             shipping: current.shipping ?? 0,
             total: current.total,
-            placeOfSupply: "Delhi",
+            placeOfSupply: boutique.placeOfSupply ?? "—",
             hsnDefault: "6204"
         )
+        invoiceError = nil
         return InvoicePDFGenerator.render(input)
     }
 
@@ -189,11 +211,5 @@ struct OrderDetailView: View {
         }
     }
 
-    private func formatINR(_ v: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "INR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "₹\(Int(v))"
-    }
+    private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 }

@@ -8,6 +8,8 @@ struct CalendarView: View {
     @State private var selectedDate: Date = Date()
     @State private var showCreate = false
     @State private var loading = false
+    @State private var loadError: String?
+    @State private var confirmCancelId: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -22,6 +24,15 @@ struct CalendarView: View {
             Group {
                 if loading {
                     ProgressView().frame(maxHeight: .infinity)
+                } else if let err = loadError, appointments.isEmpty {
+                    ContentUnavailableView {
+                        Label("Couldn't load calendar", systemImage: "exclamationmark.triangle")
+                    } description: {
+                        Text(err)
+                    } actions: {
+                        Button("Retry") { Task { await load() } }.buttonStyle(.borderedProminent)
+                    }
+                    .frame(maxHeight: .infinity)
                 } else if filteredForDay.isEmpty {
                     ContentUnavailableView(
                         "Nothing scheduled",
@@ -42,16 +53,34 @@ struct CalendarView: View {
                                     }
                                     .tint(.green)
                                     Button("Cancel", role: .destructive) {
-                                        Task {
-                                            _ = try? await AppointmentsService.updateStatus(appt.id, to: .cancelled)
-                                            await load()
-                                        }
+                                        confirmCancelId = appt.id
                                     }
                                 }
                         }
                     }
                     .listStyle(.insetGrouped)
                 }
+            }
+            .confirmationDialog(
+                "Cancel this appointment?",
+                isPresented: Binding(
+                    get: { confirmCancelId != nil },
+                    set: { if !$0 { confirmCancelId = nil } }
+                ),
+                titleVisibility: .visible
+            ) {
+                Button("Cancel appointment", role: .destructive) {
+                    if let id = confirmCancelId {
+                        Task {
+                            _ = try? await AppointmentsService.updateStatus(id, to: .cancelled)
+                            await load()
+                        }
+                    }
+                    confirmCancelId = nil
+                }
+                Button("Keep it", role: .cancel) { confirmCancelId = nil }
+            } message: {
+                Text("The customer won't be automatically notified.")
             }
         }
         .navigationTitle("Calendar")
@@ -90,7 +119,10 @@ struct CalendarView: View {
                 let all = (try? await CustomersService.list()) ?? []
                 customers = Dictionary(uniqueKeysWithValues: all.filter { custIds.contains($0.id) }.map { ($0.id, $0) })
             }
-        } catch { /* silent — empty state shown */ }
+            loadError = nil
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 }
 

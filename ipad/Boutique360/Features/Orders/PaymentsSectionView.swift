@@ -73,10 +73,7 @@ struct PaymentsSectionView: View {
     }
     private var balanceDue: Double { order.total - receivedTotal }
 
-    private func format(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "INR"; f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "₹\(Int(v))"
-    }
+    private func format(_ v: Double) -> String { Formatters.inr(v) }
 
     private func load() async {
         do {
@@ -108,20 +105,22 @@ struct RecordPaymentView: View {
         Form {
             Section("Amount") {
                 LabeledContent("Suggested", value: formatINR(suggestedAmount))
-                HStack {
-                    Text("₹")
+                LabeledContent("Amount") {
                     TextField("0", text: $amountText)
-                        .keyboardType(.numberPad)
+                        .keyboardType(.decimalPad)
                         .multilineTextAlignment(.trailing)
                 }
             }
             Section("Method") {
                 Picker("Method", selection: $method) {
-                    ForEach(["upi","cash","card","netbanking","wallet","bank_transfer"], id: \.self) {
-                        Text($0.uppercased()).tag($0)
-                    }
+                    Label("UPI", systemImage: "qrcode").tag("upi")
+                    Label("Cash", systemImage: "indianrupeesign").tag("cash")
+                    Label("Card", systemImage: "creditcard").tag("card")
+                    Label("Net banking", systemImage: "building.columns").tag("netbanking")
+                    Label("Wallet", systemImage: "wallet.pass").tag("wallet")
+                    Label("Bank transfer", systemImage: "arrow.left.arrow.right").tag("bank_transfer")
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
             }
             if let err = error {
                 Section { Text(err).foregroundStyle(.red).font(.caption) }
@@ -143,10 +142,7 @@ struct RecordPaymentView: View {
         }
     }
 
-    private func formatINR(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "INR"; f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "₹\(Int(v))"
-    }
+    private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 
     private func save() async {
         guard let bid = ctx.boutiqueId, let amount = Double(amountText), amount > 0 else { return }

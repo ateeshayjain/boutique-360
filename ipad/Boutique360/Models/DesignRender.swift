@@ -9,7 +9,8 @@ struct DesignRender: Identifiable, Codable, Hashable {
     var boutiqueId: UUID
     var designId: UUID
     var promptUsed: String?
-    var resultImageUrl: String?
+    var resultImageUrl: String?           // deprecated: short-lived signed URL
+    var resultImagePath: String?          // canonical path inside design-renders bucket
     var modelUsed: String?
     var processingMs: Int?
     var costEstimateUsd: Double?
@@ -25,6 +26,7 @@ struct DesignRender: Identifiable, Codable, Hashable {
         case designId = "design_id"
         case promptUsed = "prompt_used"
         case resultImageUrl = "result_image_url"
+        case resultImagePath = "result_image_path"
         case modelUsed = "model_used"
         case processingMs = "processing_ms"
         case costEstimateUsd = "cost_estimate_usd"
@@ -40,6 +42,7 @@ struct NewDesignRender: Encodable {
     let design_id: UUID
     let prompt_used: String
     let result_image_url: String?
+    let result_image_path: String?
     let model_used: String
     let processing_ms: Int
     let cost_estimate_usd: Double

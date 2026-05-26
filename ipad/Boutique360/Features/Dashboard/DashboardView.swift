@@ -39,7 +39,9 @@ struct DashboardView: View {
     private var headerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
             if let b = boutique {
-                Text(b.name).font(.system(size: 32, weight: .semibold, design: .serif))
+                Text(b.name)
+                    .font(.system(.largeTitle, design: .serif).weight(.semibold))
+                    .accessibilityAddTraits(.isHeader)
                 Text(greetingFor(date: Date()))
                     .font(.subheadline).foregroundStyle(.secondary)
             }
@@ -47,7 +49,7 @@ struct DashboardView: View {
     }
 
     private var quickStatsGrid: some View {
-        LazyVGrid(columns: [.init(.adaptive(minimum: 180), spacing: 12)], spacing: 12) {
+        LazyVGrid(columns: [.init(.adaptive(minimum: 220), spacing: 12)], spacing: 12) {
             StatCard(label: "Today's fittings", value: "\(todaysAppointments.count)", icon: "calendar", tint: .blue)
             StatCard(label: "Open inquiries", value: "\(openInquiries)", icon: "envelope", tint: .indigo)
             StatCard(label: "Orders in progress", value: "\(ordersInProgress)", icon: "bag", tint: .orange)
@@ -183,10 +185,7 @@ struct DashboardView: View {
         return "\(greet) — \(date.formatted(.dateTime.weekday(.wide).day().month(.wide)))"
     }
 
-    private func formatINR(_ v: Double) -> String {
-        let f = NumberFormatter(); f.numberStyle = .currency; f.currencyCode = "INR"; f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "₹\(Int(v))"
-    }
+    private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 
     private func load() async {
         loading = true; defer { loading = false }
@@ -285,13 +284,19 @@ private struct StatCard: View {
             HStack {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(label).font(.caption).foregroundStyle(.secondary)
-                    Text(value).font(.system(size: 28, weight: .semibold)).monospacedDigit()
+                    Text(value)
+                        .font(.title.weight(.semibold))
+                        .monospacedDigit()
+                        .minimumScaleFactor(0.7)
                 }
                 Spacer()
                 Image(systemName: icon)
                     .font(.title2)
                     .foregroundStyle(tint)
+                    .accessibilityHidden(true)
             }
         }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(label): \(value)")
     }
 }

@@ -5,11 +5,20 @@ import SwiftUI
 struct ImportantDatesListView: View {
     @State private var dates: [(date: Date, importantDate: ImportantDate, customer: Customer?)] = []
     @State private var loading = false
+    @State private var loadError: String?
 
     var body: some View {
         Group {
             if loading {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let err = loadError, dates.isEmpty {
+                ContentUnavailableView {
+                    Label("Couldn't load dates", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(err)
+                } actions: {
+                    Button("Retry") { Task { await load() } }.buttonStyle(.borderedProminent)
+                }
             } else if dates.isEmpty {
                 ContentUnavailableView(
                     "No upcoming dates",
@@ -99,8 +108,9 @@ struct ImportantDatesListView: View {
                 }
             }
             self.dates = result.sorted { $0.0 < $1.0 }
+            self.loadError = nil
         } catch {
-            // empty state
+            self.loadError = error.localizedDescription
         }
     }
 }

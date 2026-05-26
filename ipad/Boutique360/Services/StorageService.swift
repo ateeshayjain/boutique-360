@@ -1,8 +1,12 @@
 import Foundation
 import Supabase
 
-/// Single entry point for uploading/fetching images across all Storage buckets.
-/// Centralizes the public-vs-private decision and auto-purge contracts.
+/// Single entry point for uploading + fetching images across all Storage buckets.
+///
+/// Critical design rule (post-audit):
+///   - **Persist (bucket, path)** in DB, never the signed URL.
+///   - **Generate signed URL on read** at view time (signed URLs expire after 1 hour).
+///   - Public buckets return long-lived URLs that ARE safe to persist.
 enum StorageService {
     enum Bucket: String {
         case productImages      = "product-images"          // public
@@ -23,33 +27,49 @@ enum StorageService {
         }
     }
 
-    /// Upload data; returns the URL to fetch the asset.
-    /// For public buckets: returns the long-lived public URL.
-    /// For private buckets: returns a short-lived signed URL (1 hour default).
-    static func upload(_ data: Data, to bucket: Bucket, path: String, contentType: String) async throws -> String {
+    /// Result of an upload — caller persists `path` (and optionally `signedURL` for immediate use).
+    /// For private buckets, the signed URL is short-lived; refresh via `signedURL(bucket:path:)` before use.
+    struct UploadResult {
+        let bucket: Bucket
+        let path: String
+        let immediateURL: String   // public URL OR fresh signed URL (1hr)
+    }
+
+    /// Upload data to a bucket.
+    /// **Caller must persist (bucket, path), NOT immediateURL.**
+    @discardableResult
+    static func upload(_ data: Data, to bucket: Bucket, path: String, contentType: String) async throws -> UploadResult {
         _ = try await SupabaseService.client.storage
             .from(bucket.rawValue)
             .upload(path: path, file: data, options: .init(contentType: contentType, upsert: true))
 
+        let url: String
         if bucket.isPublic {
-            return try SupabaseService.client.storage.from(bucket.rawValue).getPublicURL(path: path).absoluteString
+            url = try SupabaseService.client.storage.from(bucket.rawValue).getPublicURL(path: path).absoluteString
         } else {
-            let signed = try await SupabaseService.client.storage
+            url = try await SupabaseService.client.storage
                 .from(bucket.rawValue)
                 .createSignedURL(path: path, expiresIn: 3600)
-            return signed.absoluteString
+                .absoluteString
         }
+        return UploadResult(bucket: bucket, path: path, immediateURL: url)
     }
 
-    /// Get a fresh signed URL for a previously-uploaded private asset.
-    static func refreshSignedURL(bucket: Bucket, path: String, expiresIn seconds: Int = 3600) async throws -> String {
+    /// Generate a fresh signed URL for a previously-uploaded private asset.
+    /// **Use this every time you display a private image** — never store the result.
+    static func signedURL(bucket: Bucket, path: String, expiresIn seconds: Int = 3600) async throws -> URL {
         try await SupabaseService.client.storage
             .from(bucket.rawValue)
             .createSignedURL(path: path, expiresIn: seconds)
-            .absoluteString
     }
 
-    /// Convenience: deterministic path for design sketches.
+    /// For public buckets, the URL is stable — safe to persist or fetch directly.
+    static func publicURL(bucket: Bucket, path: String) throws -> URL {
+        try SupabaseService.client.storage.from(bucket.rawValue).getPublicURL(path: path)
+    }
+
+    // MARK: - Deterministic paths
+
     static func sketchPath(designId: UUID) -> String { "designs/\(designId.uuidString)/sketch.png" }
     static func renderPath(renderId: UUID) -> String { "renders/\(renderId.uuidString).png" }
     static func tryonPath(tryonId: UUID, kind: String) -> String { "tryons/\(tryonId.uuidString)/\(kind).png" }

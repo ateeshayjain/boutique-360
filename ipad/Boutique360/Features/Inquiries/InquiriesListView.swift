@@ -4,18 +4,38 @@ struct InquiriesListView: View {
     @State private var inquiries: [Inquiry] = []
     @State private var customers: [UUID: Customer] = [:]
     @State private var loading = false
+    @State private var loadError: String?
 
     var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(alignment: .top, spacing: 16) {
-                ForEach(InquiryStatus.kanbanColumns) { status in
-                    column(for: status)
+        Group {
+            if let err = loadError, inquiries.isEmpty {
+                ContentUnavailableView {
+                    Label("Couldn't load inquiries", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(err)
+                } actions: {
+                    Button("Retry") { Task { await load() } }
+                        .buttonStyle(.borderedProminent)
                 }
+            } else if inquiries.isEmpty && !loading {
+                ContentUnavailableView(
+                    "No inquiries yet",
+                    systemImage: "envelope.badge",
+                    description: Text("Inquiries appear here as customers reach out or you create them from a customer profile.")
+                )
+            } else {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(alignment: .top, spacing: 16) {
+                        ForEach(InquiryStatus.kanbanColumns) { status in
+                            column(for: status)
+                        }
+                    }
+                    .padding(20)
+                    .frame(maxHeight: .infinity, alignment: .top)
+                }
+                .frame(maxHeight: .infinity, alignment: .top)
             }
-            .padding(20)
-            .frame(maxHeight: .infinity, alignment: .top)
         }
-        .frame(maxHeight: .infinity, alignment: .top)
         .navigationTitle("Inquiries")
         .task { await load() }
         .refreshable { await load() }
@@ -65,10 +85,11 @@ struct InquiriesListView: View {
             self.inquiries = inqs
             // batch-load customer names
             let ids = Set(inqs.map(\.customerId))
-            let custs = try await CustomersService.list()  // simple; refine later with .in() filter
+            let custs = try await CustomersService.list()
             self.customers = Dictionary(uniqueKeysWithValues: custs.filter { ids.contains($0.id) }.map { ($0.id, $0) })
+            self.loadError = nil
         } catch {
-            // swallow for now; reflected in empty state
+            self.loadError = error.localizedDescription
         }
     }
 }

@@ -135,12 +135,14 @@ struct VirtualTryOnView: View {
     @MainActor
     private func runTryOn() async {
         guard let bid = ctx.boutiqueId, let cust = customer,
-              let render = selectedRender, let renderUrlStr = render.resultImageUrl,
-              let renderUrl = URL(string: renderUrlStr),
+              let render = selectedRender,
               let customerImg = customerImage else { return }
+        // Always refresh the render's signed URL — stored ones may be expired.
+        let renderPath = render.resultImagePath ?? StorageService.renderPath(renderId: render.id)
         let started = Date()
         do {
             phase = .calling
+            let renderUrl = try await StorageService.signedURL(bucket: .designRenders, path: renderPath)
             let (renderData, _) = try await URLSession.shared.data(from: renderUrl)
             guard let garmentImg = UIImage(data: renderData) else {
                 phase = .failed("Couldn't load garment render")
@@ -151,23 +153,30 @@ struct VirtualTryOnView: View {
             )
 
             phase = .uploading
-            // Upload customer photo (private, auto-purge), then result (watermarked, public-ish)
             let tryonId = UUID()
             let custData = customerImg.jpegData(compressionQuality: 0.85) ?? Data()
-            let custPath = StorageService.tryonPath(tryonId: tryonId, kind: "customer")
-            let custUrl = try await StorageService.upload(custData, to: .customerPhotos, path: custPath, contentType: "image/jpeg")
+            let custUpload = try await StorageService.upload(
+                custData,
+                to: .customerPhotos,
+                path: StorageService.tryonPath(tryonId: tryonId, kind: "customer"),
+                contentType: "image/jpeg"
+            )
 
             let resultData = result.pngData() ?? Data()
-            let resultPath = StorageService.tryonPath(tryonId: tryonId, kind: "result")
-            let resultUrl = try await StorageService.upload(resultData, to: .vtoResults, path: resultPath, contentType: "image/png")
+            let resultUpload = try await StorageService.upload(
+                resultData,
+                to: .vtoResults,
+                path: StorageService.tryonPath(tryonId: tryonId, kind: "result"),
+                contentType: "image/png"
+            )
 
             let processingMs = Int(Date().timeIntervalSince(started) * 1000)
             _ = try await DesignTryOnsService.record(NewDesignTryOn(
                 boutique_id: bid,
                 design_render_id: render.id,
                 customer_id: cust.id,
-                customer_photo_url: custUrl,
-                result_image_url: resultUrl,
+                customer_photo_url: custUpload.immediateURL,
+                result_image_url: resultUpload.immediateURL,
                 model_used: "gemini-2.5-flash-image",
                 processing_ms: processingMs,
                 cost_estimate_usd: 0.04,

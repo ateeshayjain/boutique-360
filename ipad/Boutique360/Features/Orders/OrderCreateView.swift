@@ -58,7 +58,7 @@ struct OrderCreateView: View {
                 LabeledContent("Unit price") {
                     TextField("0", text: $linePriceText)
                         .multilineTextAlignment(.trailing)
-                        .keyboardType(.numberPad)
+                        .keyboardType(.decimalPad)
                         .frame(width: 120)
                 }
                 Picker("GST rate", selection: $gstRate) {
@@ -113,7 +113,7 @@ struct OrderCreateView: View {
         saving = true; defer { saving = false }
 
         do {
-            let orderNumber = try await OrdersService.generateOrderNumber()
+            let orderNumber = try await OrdersService.generateOrderNumber(boutiqueId: bid)
             let new = NewOrder(
                 boutique_id: bid,
                 order_number: orderNumber,
@@ -128,9 +128,14 @@ struct OrderCreateView: View {
                 fulfillment_method: fulfillmentMethod,
                 placed_at: ISO8601DateFormatter().string(from: Date())
             )
+            let lineDesc = lineDescription.trimmingCharacters(in: .whitespaces).isEmpty
+                ? nil
+                : lineDescription.trimmingCharacters(in: .whitespaces)
             let created = try await OrdersService.create(
                 order: new,
-                items: [(nil, nil, lineQty, unitPrice, gstAmount)],
+                items: [.init(productId: nil, variantId: nil,
+                              qty: lineQty, unitPrice: unitPrice,
+                              gstAmount: gstAmount, lineDescription: lineDesc)],
                 sourceInquiryId: selectedInquiryId
             )
             onCreated(created)
@@ -140,11 +145,5 @@ struct OrderCreateView: View {
         }
     }
 
-    private func formatINR(_ v: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "INR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "₹\(Int(v))"
-    }
+    private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 }

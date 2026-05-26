@@ -32,9 +32,17 @@ enum OrdersService {
 
     /// Creates an order header + items in one logical call (two requests).
     /// Pre-condition: caller has computed totals correctly.
+    struct LineDraft {
+        let productId: UUID?
+        let variantId: UUID?
+        let qty: Int
+        let unitPrice: Double
+        let gstAmount: Double
+        let lineDescription: String?
+    }
     static func create(
         order: NewOrder,
-        items: [(productId: UUID?, variantId: UUID?, qty: Int, unitPrice: Double, gstAmount: Double)],
+        items: [LineDraft],
         sourceInquiryId: UUID? = nil
     ) async throws -> Order {
         let created: Order = try await SupabaseService.client.from("orders")
@@ -53,7 +61,8 @@ enum OrdersService {
                     variant_id: $0.variantId,
                     qty: $0.qty,
                     unit_price: $0.unitPrice,
-                    gst_amount: $0.gstAmount
+                    gst_amount: $0.gstAmount,
+                    line_description: $0.lineDescription
                 )
             }
             _ = try await SupabaseService.client.from("order_items").insert(rows).execute()
@@ -79,22 +88,18 @@ enum OrdersService {
             .value
     }
 
-    /// Invoice number: INV-YYYY-NNNN (per-year sequence). Naive sequence —
-    /// queries today's count for the year. Good enough for single-boutique v1.
-    static func generateOrderNumber() async throws -> String {
+    /// Race-safe per-boutique sequence via Postgres RPC. Replaces the prior
+    /// `count + 1` pattern which two concurrent iPads could collide on.
+    static func generateOrderNumber(boutiqueId: UUID) async throws -> String {
         let year = Calendar(identifier: .gregorian).component(.year, from: Date())
-        let prefix = "BTQ-\(year)-"
-        struct CountRow: Decodable { let count: Int }
-        let result: [Order] = try await SupabaseService.client.from("orders")
-            .select("order_number")
-            .like("order_number", pattern: "\(prefix)%")
+        struct RPCParams: Encodable {
+            let p_boutique_id: UUID
+            let p_sequence_name: String
+        }
+        let next: Int64 = try await SupabaseService.client
+            .rpc("next_sequence_value", params: RPCParams(p_boutique_id: boutiqueId, p_sequence_name: "orders-\(year)"))
             .execute()
             .value
-        let next = result.count + 1
-        return "\(prefix)\(String(format: "%04d", next))"
-    }
-
-    static func generateInvoiceNumber(forYear year: Int, existingCount: Int) -> String {
-        "INV-\(year)-\(String(format: "%04d", existingCount + 1))"
+        return "BTQ-\(year)-\(String(format: "%04d", next))"
     }
 }

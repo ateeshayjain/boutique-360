@@ -12,6 +12,15 @@ struct OrdersListView: View {
         Group {
             if loading && orders.isEmpty {
                 ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let err = loadError, orders.isEmpty {
+                ContentUnavailableView {
+                    Label("Couldn't load orders", systemImage: "exclamationmark.triangle")
+                } description: {
+                    Text(err)
+                } actions: {
+                    Button("Retry") { Task { await load() } }
+                        .buttonStyle(.borderedProminent)
+                }
             } else if orders.isEmpty {
                 ContentUnavailableView {
                     Label("No orders yet", systemImage: "bag.badge.plus")
@@ -131,6 +140,7 @@ private struct OrderRow: View {
                 .font(.title2)
                 .foregroundStyle(tint)
                 .frame(width: 32)
+                .accessibilityLabel("Status: \(order.status.label)")
             VStack(alignment: .leading, spacing: 2) {
                 Text(customerName).font(.body.weight(.medium))
                 HStack(spacing: 6) {
@@ -147,6 +157,8 @@ private struct OrderRow: View {
             }
         }
         .padding(.vertical, 4)
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(customerName), order \(order.orderNumber), \(formatINR(order.total)), \(order.status.label)")
     }
 
     private var tint: Color {
@@ -157,11 +169,5 @@ private struct OrderRow: View {
         }
     }
 
-    private func formatINR(_ v: Double) -> String {
-        let f = NumberFormatter()
-        f.numberStyle = .currency
-        f.currencyCode = "INR"
-        f.maximumFractionDigits = 0
-        return f.string(from: NSNumber(value: v)) ?? "₹\(Int(v))"
-    }
+    private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 }

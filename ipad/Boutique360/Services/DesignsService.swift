@@ -49,6 +49,30 @@ enum DesignsService {
             .execute()
             .value
     }
+
+    /// Persists the sketch's canonical Storage path (not the expiring signed URL).
+    /// `cachedURL` is included as a write-through cache for immediate display only.
+    struct SketchPatch: Encodable {
+        let sketch_image_path: String
+        let sketch_image_url: String
+        let sketch_strokes_json: SketchStrokesJSON
+        let status: String
+    }
+    struct SketchStrokesJSON: Encodable {
+        let data: String
+    }
+    static func saveSketchPath(designId: UUID, path: String, cachedURL: String, strokes: Data) async throws {
+        let patch = SketchPatch(
+            sketch_image_path: path,
+            sketch_image_url: cachedURL,
+            sketch_strokes_json: .init(data: strokes.base64EncodedString()),
+            status: DesignStatus.draft.rawValue
+        )
+        _ = try await SupabaseService.client.from("designs")
+            .update(patch)
+            .eq("id", value: designId)
+            .execute()
+    }
 }
 
 enum LookbooksService {

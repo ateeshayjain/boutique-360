@@ -4,6 +4,7 @@ struct SignInView: View {
     @EnvironmentObject private var auth: AuthService
     @State private var email: String = ""
     @State private var sent: Bool = false
+    @State private var pwdSignInRequested = false
     @FocusState private var emailFocused: Bool
 
     var body: some View {
@@ -12,10 +13,13 @@ struct SignInView: View {
 
             VStack(spacing: 12) {
                 Image(systemName: "scissors")
-                    .font(.system(size: 56, weight: .light))
+                    .font(.system(.largeTitle, design: .serif).weight(.light))
+                    .imageScale(.large)
                     .foregroundStyle(Color.accentColor)
+                    .accessibilityHidden(true)
                 Text("Boutique 360")
-                    .font(.system(size: 36, weight: .semibold, design: .serif))
+                    .font(.system(.largeTitle, design: .serif).weight(.semibold))
+                    .accessibilityAddTraits(.isHeader)
                 Text("Designer workspace")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
@@ -24,10 +28,12 @@ struct SignInView: View {
             if sent {
                 VStack(spacing: 16) {
                     Image(systemName: "envelope.badge.fill")
-                        .font(.largeTitle)
+                        .font(.title)
                         .foregroundStyle(Color.accentColor)
+                        .accessibilityHidden(true)
                     Text("Check your email")
                         .font(.title2.weight(.medium))
+                        .accessibilityAddTraits(.isHeader)
                     Text("We sent a sign-in link to \(email).\nTap it on this iPad to continue.")
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.secondary)
@@ -35,6 +41,8 @@ struct SignInView: View {
                         sent = false
                         email = ""
                     }
+                    .buttonStyle(.bordered)
+                    .controlSize(.regular)
                     .padding(.top, 8)
                 }
                 .frame(maxWidth: 420)
@@ -50,6 +58,7 @@ struct SignInView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                         .focused($emailFocused)
                         .frame(maxWidth: 420)
+                        .accessibilityLabel("Email address")
 
                     Button {
                         Task {
@@ -58,16 +67,18 @@ struct SignInView: View {
                         }
                     } label: {
                         if auth.isLoading {
-                            ProgressView().tint(.white)
+                            ProgressView()
+                                .controlSize(.regular)
+                                .frame(maxWidth: .infinity, minHeight: 30)
                         } else {
-                            Text("Send magic link").fontWeight(.semibold)
+                            Text("Send magic link")
+                                .frame(maxWidth: .infinity, minHeight: 30)
                         }
                     }
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.large)
                     .disabled(auth.isLoading || !isValidEmail(email))
-                    .frame(maxWidth: 420, minHeight: 50)
-                    .background(isValidEmail(email) ? Color.accentColor : Color.gray.opacity(0.3))
-                    .foregroundStyle(.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .frame(maxWidth: 420)
 
                     if let err = auth.lastError {
                         Text(err)
@@ -81,30 +92,36 @@ struct SignInView: View {
 
             Spacer()
 
-            // DEV: one-tap demo sign-in (remove before production)
-            Button {
-                Task {
-                    _ = await auth.signInWithPassword(
-                        email: "demo@boutique360.test",
-                        password: "demo-password-123"
-                    )
+            #if DEBUG
+            // DEV ONLY — compiled out of Release builds.
+            VStack(spacing: 4) {
+                Button {
+                    Task {
+                        _ = await auth.signInWithPassword(
+                            email: "demo@boutique360.test",
+                            password: "demo-password-123"
+                        )
+                    }
+                } label: {
+                    Label("Continue as demo (dev)", systemImage: "person.badge.shield.checkmark")
+                        .font(.caption)
                 }
-            } label: {
-                Label("Continue as demo (dev)", systemImage: "person.badge.shield.checkmark")
-                    .font(.caption)
+                .buttonStyle(.bordered)
+                .controlSize(.small)
+                Text("Debug build")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.small)
-
-            Text("Plan 3 · CRM Core")
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+            #endif
         }
         .padding(40)
         .onAppear {
             emailFocused = true
-            // DEV: launch with -auto-demo to auto-sign-in to demo user
-            if CommandLine.arguments.contains("-auto-demo") {
+            #if DEBUG
+            // DEV: launch with -auto-demo to auto-sign-in to demo user.
+            // Compiled out of Release builds.
+            if CommandLine.arguments.contains("-auto-demo") && !pwdSignInRequested {
+                pwdSignInRequested = true
                 Task {
                     _ = await auth.signInWithPassword(
                         email: "demo@boutique360.test",
@@ -112,11 +129,21 @@ struct SignInView: View {
                     )
                 }
             }
+            #endif
         }
     }
 
+    /// Stricter than `contains("@") && contains(".")` — uses NSDataDetector
+    /// which Apple uses internally for link detection.
     private func isValidEmail(_ s: String) -> Bool {
-        s.contains("@") && s.contains(".")
+        let trimmed = s.trimmingCharacters(in: .whitespaces)
+        guard trimmed.count >= 5, trimmed.contains("@") else { return false }
+        let parts = trimmed.split(separator: "@", maxSplits: 1)
+        guard parts.count == 2,
+              let domain = parts.last, domain.contains("."),
+              !parts.first!.isEmpty, !domain.hasPrefix("."), !domain.hasSuffix(".")
+        else { return false }
+        return true
     }
 }
 

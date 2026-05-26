@@ -49,11 +49,14 @@ final class AuthService: ObservableObject {
 
     /// Process a magic-link callback URL.
     func handleAuthCallback(url: URL) async {
-        // DEV escape hatch: boutique360://demo-signin → password sign-in for demo user
+        #if DEBUG
+        // DEV escape hatch: boutique360://demo-signin → password sign-in for demo user.
+        // Compiled out of Release builds.
         if url.scheme == "boutique360" && url.host == "demo-signin" {
             _ = await signInWithPassword(email: "demo@boutique360.test", password: "demo-password-123")
             return
         }
+        #endif
         do {
             try await SupabaseService.client.auth.session(from: url)
         } catch {
@@ -61,8 +64,9 @@ final class AuthService: ObservableObject {
         }
     }
 
+    #if DEBUG
     /// DEV ONLY: sign in with email + password (for the seeded demo user).
-    /// Remove this method before production.
+    /// Compiled out of Release builds. Never call from production code paths.
     func signInWithPassword(email: String, password: String) async -> Bool {
         isLoading = true
         defer { isLoading = false }
@@ -75,6 +79,7 @@ final class AuthService: ObservableObject {
             return false
         }
     }
+    #endif
 
     func signOut() async {
         do {
