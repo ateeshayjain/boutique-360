@@ -51,12 +51,12 @@ struct ImportantDateFormView: View {
     private func save() async {
         guard let bid = ctx.boutiqueId else { return }
         saving = true; defer { saving = false }
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        // M1 sweep: use central Formatters.postgresDate
         do {
             _ = try await ImportantDatesService.create(NewImportantDate(
                 boutique_id: bid, customer_id: customerId,
                 occasion: occasion == "Other" ? "Other" : occasion,
-                date: f.string(from: date),
+                date: Formatters.postgresDate.string(from: date),
                 recurring: recurring,
                 reminder_days_before: reminderDays
             ))

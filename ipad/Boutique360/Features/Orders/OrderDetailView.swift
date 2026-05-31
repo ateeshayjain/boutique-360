@@ -11,6 +11,8 @@ struct OrderDetailView: View {
     @State private var invoicePDF: Data?
     @State private var showingInvoice = false
     @State private var invoiceError: String?
+    @State private var customer: Customer?
+    @State private var statusError: String?
 
     init(order: Order, customerName: String?) {
         self.order = order
@@ -20,6 +22,12 @@ struct OrderDetailView: View {
 
     var body: some View {
         Form {
+            if let err = statusError {
+                Section {
+                    Label(err, systemImage: "exclamationmark.triangle.fill")
+                        .foregroundStyle(.red).font(.caption)
+                }
+            }
             Section("Summary") {
                 LabeledContent("Order #", value: current.orderNumber)
                 LabeledContent("Customer", value: customerName ?? "—")
@@ -30,14 +38,13 @@ struct OrderDetailView: View {
                         .foregroundStyle(tint(current.status))
                 }
                 LabeledContent("Fulfillment") {
-                    Label(
-                        (current.fulfillmentMethod ?? "pickup") == "ship" ? "Ship" : "Pickup",
-                        systemImage: (current.fulfillmentMethod ?? "pickup") == "ship" ? "shippingbox" : "bag.fill"
-                    ).foregroundStyle(.secondary)
+                    let method = current.fulfillmentMethod ?? .pickup
+                    Label(method.label, systemImage: method.systemImage)
+                        .foregroundStyle(.secondary)
                 }
             }
 
-            PaymentsSectionView(order: current)
+            PaymentsSectionView(order: current, customer: customer)
             AlterationsSectionView(orderId: current.id)
             OrderTimelineView(orderId: current.id)
 
@@ -99,6 +106,19 @@ struct OrderDetailView: View {
                     .font(.caption2).foregroundStyle(.tertiary)
             }
 
+            if let cust = customer, cust.consentWhatsapp, cust.phone != nil {
+                Section("WhatsApp customer") {
+                    Button {
+                        WhatsAppShareHelper.open(phone: cust.phone, message: whatsAppMessage(for: current.status, customer: cust))
+                    } label: {
+                        Label(whatsAppLabel(for: current.status), systemImage: "message.fill")
+                            .foregroundStyle(.green)
+                    }
+                    Text("Opens WhatsApp with a pre-filled, editable message.")
+                        .font(.caption2).foregroundStyle(.tertiary)
+                }
+            }
+
             Section("Magic link (customer-facing)") {
                 if let token = current.magicLinkToken {
                     Text("https://boutique360.com/orders/\(token)")
@@ -150,17 +170,26 @@ struct OrderDetailView: View {
             invoiceError = "Boutique identity not loaded. Sign out and back in, or check Settings."
             return nil
         }
+        let defaultRate = ctx.boutique?.defaultGstRate ?? 5.0
         let lines: [InvoicePDFGenerator.InvoiceLine] = items.isEmpty
             ? [.init(description: "Custom order \(current.orderNumber)",
                      qty: 1, unitPrice: current.subtotal,
-                     gstRate: current.subtotal > 0 ? (current.gstAmount / current.subtotal * 100) : 5.0,
+                     // L2 fix: use boutique's default rate, not hardcoded 5%.
+                     gstRate: current.subtotal > 0 ? (current.gstAmount / current.subtotal * 100) : defaultRate,
                      hsnCode: "6204")]
             : items.map { item in
-                .init(
+                // H13 fix: prefer the persisted gstRate; only reverse-engineer
+                // for legacy rows where gstRate is nil. Defaults to boutique's
+                // configured rate, not the hardcoded 5%.
+                let defaultRate = ctx.boutique?.defaultGstRate ?? 5.0
+                let rate = item.gstRate ?? (item.unitPrice > 0
+                    ? (item.gstAmount / (Double(item.qty) * item.unitPrice) * 100)
+                    : defaultRate)
+                return .init(
                     description: item.lineDescription ?? "Custom line",
                     qty: item.qty,
                     unitPrice: item.unitPrice,
-                    gstRate: item.unitPrice > 0 ? (item.gstAmount / (Double(item.qty) * item.unitPrice) * 100) : 5.0,
+                    gstRate: rate,
                     hsnCode: nil
                 )
             }
@@ -194,12 +223,61 @@ struct OrderDetailView: View {
 
     private func loadItems() async {
         items = (try? await OrdersService.items(forOrder: order.id)) ?? []
+        customer = try? await CustomersService.get(id: order.customerId)
+    }
+
+    /// Status-aware WhatsApp button label.
+    private func whatsAppLabel(for status: OrderStatus) -> String {
+        switch status {
+        case .pending, .confirmed: "Send order confirmation"
+        case .packed, .shipped:    "Send shipping update"
+        case .delivered:           "Send ready/delivered note"
+        case .cancelled:           "Send cancellation note"
+        case .returned:            "Send return acknowledgement"
+        }
+    }
+
+    /// Templated, editable Hinglish message — the owner can tweak before sending.
+    /// Keeps tone consistent ("Namaste {firstName}", boutique name signature).
+    private func whatsAppMessage(for status: OrderStatus, customer: Customer) -> String {
+        let firstName = customer.name.split(separator: " ").first.map(String.init) ?? customer.name
+        let boutiqueName = ctx.boutique?.name ?? "Boutique"
+        let amount = Formatters.inr(current.total)
+        switch status {
+        case .pending, .confirmed:
+            return "Namaste \(firstName)! Your order \(current.orderNumber) for \(amount) is confirmed. We'll keep you updated. — \(boutiqueName)"
+        case .packed:
+            return "Hi \(firstName), your order \(current.orderNumber) is packed and ready. We'll dispatch shortly. — \(boutiqueName)"
+        case .shipped:
+            let track = current.trackingUrl.map { "\nTrack: \($0)" } ?? ""
+            return "Hi \(firstName), your order \(current.orderNumber) has been shipped.\(track) — \(boutiqueName)"
+        case .delivered:
+            let fulfillment = current.fulfillmentMethod ?? .pickup
+            if fulfillment == .ship {
+                return "Hi \(firstName), your order \(current.orderNumber) has been delivered. Hope you love it! — \(boutiqueName)"
+            } else {
+                return "Hi \(firstName), your order \(current.orderNumber) is ready for pickup at \(boutiqueName). Looking forward to seeing you!"
+            }
+        case .cancelled:
+            return "Hi \(firstName), your order \(current.orderNumber) has been cancelled as discussed. Any refund will be processed within 5-7 days. — \(boutiqueName)"
+        case .returned:
+            return "Hi \(firstName), we've received your return for \(current.orderNumber). Refund will be processed shortly. — \(boutiqueName)"
+        }
     }
 
     private func advance(to next: OrderStatus) async {
         changing = true; defer { changing = false }
-        if let updated = try? await OrdersService.updateStatus(order.id, to: next) {
+        do {
+            // H2 fix: surface failures instead of leaving the UI on the old
+            // status (which led to the owner re-sending WhatsApp confirmations).
+            let updated = try await OrdersService.updateStatus(order.id, to: next)
             current = updated
+            statusError = nil
+            // H3 fix: tell embedded child views (Payments, Alterations, Timeline)
+            // to refresh — they were initialized with `current` at view load.
+            NotificationCenter.default.post(name: .orderDidChange, object: order.id)
+        } catch {
+            statusError = "Couldn't update status: \(error.localizedDescription)"
         }
     }
 

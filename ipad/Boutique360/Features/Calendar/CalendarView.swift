@@ -47,8 +47,14 @@ struct CalendarView: View {
                                 .swipeActions(edge: .trailing) {
                                     Button("Done") {
                                         Task {
-                                            _ = try? await AppointmentsService.updateStatus(appt.id, to: .completed)
-                                            await load()
+                                            do {
+                                                _ = try await AppointmentsService.updateStatus(appt.id, to: .completed)
+                                                // Cancel the pending 1-hour reminder — appointment already happened.
+                                                NotificationsService.cancelAppointmentReminder(id: appt.id)
+                                                await load()
+                                            } catch {
+                                                ErrorBus.shared.report("Couldn't mark done: \(error.localizedDescription)")
+                                            }
                                         }
                                     }
                                     .tint(.green)
@@ -72,8 +78,13 @@ struct CalendarView: View {
                 Button("Cancel appointment", role: .destructive) {
                     if let id = confirmCancelId {
                         Task {
-                            _ = try? await AppointmentsService.updateStatus(id, to: .cancelled)
-                            await load()
+                            do {
+                                _ = try await AppointmentsService.updateStatus(id, to: .cancelled)
+                                NotificationsService.cancelAppointmentReminder(id: id)
+                                await load()
+                            } catch {
+                                ErrorBus.shared.report("Couldn't cancel: \(error.localizedDescription)")
+                            }
                         }
                     }
                     confirmCancelId = nil

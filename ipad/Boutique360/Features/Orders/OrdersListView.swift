@@ -4,6 +4,7 @@ struct OrdersListView: View {
     @State private var orders: [Order] = []
     @State private var customers: [UUID: Customer] = [:]
     @State private var filter: OrderStatus? = nil       // nil = "All"
+    @State private var search: String = ""
     @State private var loading: Bool = false
     @State private var showCreate: Bool = false
     @State private var loadError: String?
@@ -55,6 +56,7 @@ struct OrdersListView: View {
             }
         }
         .navigationTitle("Orders")
+        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search order # or customer")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Picker("Filter", selection: $filter) {
@@ -89,8 +91,18 @@ struct OrdersListView: View {
     }
 
     private var filteredOrders: [Order] {
-        guard let f = filter else { return orders }
-        return orders.filter { $0.status == f }
+        var result = orders
+        if let f = filter { result = result.filter { $0.status == f } }
+        let q = search.trimmingCharacters(in: .whitespaces).lowercased()
+        if !q.isEmpty {
+            result = result.filter { o in
+                if o.orderNumber.lowercased().contains(q) { return true }
+                if let name = customers[o.customerId]?.name.lowercased(), name.contains(q) { return true }
+                if let phone = customers[o.customerId]?.phone, phone.contains(q) { return true }
+                return false
+            }
+        }
+        return result
     }
 
     private func advance(_ order: Order, to status: OrderStatus) async {

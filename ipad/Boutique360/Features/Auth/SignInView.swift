@@ -139,9 +139,12 @@ struct SignInView: View {
         let trimmed = s.trimmingCharacters(in: .whitespaces)
         guard trimmed.count >= 5, trimmed.contains("@") else { return false }
         let parts = trimmed.split(separator: "@", maxSplits: 1)
+        // L1 fix: avoid force-unwrap. Even though parts.count == 2 guarantees
+        // .first is non-nil, the bang is fragile under refactor.
         guard parts.count == 2,
+              let local = parts.first, !local.isEmpty,
               let domain = parts.last, domain.contains("."),
-              !parts.first!.isEmpty, !domain.hasPrefix("."), !domain.hasSuffix(".")
+              !domain.hasPrefix("."), !domain.hasSuffix(".")
         else { return false }
         return true
     }

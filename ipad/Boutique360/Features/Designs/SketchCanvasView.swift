@@ -174,17 +174,17 @@ struct PencilCanvas: UIViewRepresentable {
         canvas.isOpaque = false
         canvas.delegate = context.coordinator
 
-        if let window = canvas.window, let toolPicker = PKToolPicker.shared(for: window) {
+        // iOS 14+: each scene owns its own PKToolPicker — `PKToolPicker.shared(for:)`
+        // was deprecated because it tied the picker's lifecycle to a window. The
+        // coordinator holds the strong reference so it survives view updates.
+        let toolPicker = context.coordinator.toolPicker
+        toolPicker.setVisible(true, forFirstResponder: canvas)
+        toolPicker.addObserver(canvas)
+        canvas.becomeFirstResponder()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             toolPicker.setVisible(true, forFirstResponder: canvas)
             toolPicker.addObserver(canvas)
             canvas.becomeFirstResponder()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if let window = canvas.window, let toolPicker = PKToolPicker.shared(for: window) {
-                toolPicker.setVisible(true, forFirstResponder: canvas)
-                toolPicker.addObserver(canvas)
-                canvas.becomeFirstResponder()
-            }
         }
         return canvas
     }
@@ -197,6 +197,9 @@ struct PencilCanvas: UIViewRepresentable {
 
     final class Coordinator: NSObject, PKCanvasViewDelegate {
         var parent: PencilCanvas
+        /// Own this picker so its lifetime matches the view. Without a strong
+        /// reference here, the picker would deallocate immediately and never show.
+        let toolPicker = PKToolPicker()
         init(_ p: PencilCanvas) { parent = p }
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
             parent.drawing = canvasView.drawing

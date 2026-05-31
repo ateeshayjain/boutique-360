@@ -14,8 +14,8 @@ struct OrderCreateView: View {
     @State private var lineDescription: String = ""
     @State private var lineQty: Int = 1
     @State private var linePriceText: String = ""
-    @State private var gstRate: Double = 5.0
-    @State private var fulfillmentMethod: String = "pickup"
+    @State private var gstRate: Double = 5.0   // populated from boutique.defaultGstRate on .task
+    @State private var fulfillmentMethod: FulfillmentMethod = .pickup
 
     @State private var saving = false
     @State private var error: String?
@@ -69,8 +69,8 @@ struct OrderCreateView: View {
 
             Section("Delivery") {
                 Picker("Method", selection: $fulfillmentMethod) {
-                    Label("Pickup from store", systemImage: "bag.fill").tag("pickup")
-                    Label("Ship to address", systemImage: "shippingbox").tag("ship")
+                    Label("Pickup from store", systemImage: "bag.fill").tag(FulfillmentMethod.pickup)
+                    Label("Ship to address", systemImage: "shippingbox").tag(FulfillmentMethod.ship)
                 }
                 .pickerStyle(.segmented)
             }
@@ -95,17 +95,25 @@ struct OrderCreateView: View {
             ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
             ToolbarItem(placement: .confirmationAction) {
                 Button(saving ? "Saving…" : "Create") { Task { await create() } }
-                    .disabled(saving || selectedCustomerId == nil || total <= 0)
+                    .disabled(saving || selectedCustomerId == nil || total <= 0 || error != nil)
             }
         }
         .task { await load() }
     }
 
     private func load() async {
-        async let custs: [Customer] = (try? await CustomersService.list()) ?? []
-        async let inqs: [Inquiry] = (try? await InquiriesService.list()) ?? []
-        self.customers = await custs
-        self.inquiries = (await inqs).filter { ![.delivered, .lost].contains($0.status) }
+        // M3 fix: surface load failure. If customers list silently empties, the
+        // picker shows nothing and the owner adds a duplicate customer record.
+        do {
+            self.customers = try await CustomersService.list()
+            self.inquiries = (try await InquiriesService.list())
+                .filter { ![.delivered, .lost].contains($0.status) }
+            self.error = nil
+            // L2 fix: seed GST rate from boutique config instead of 5% hardcode.
+            if let r = ctx.boutique?.defaultGstRate { self.gstRate = r }
+        } catch {
+            self.error = "Couldn't load customers: \(error.localizedDescription). Retry."
+        }
     }
 
     private func create() async {
@@ -125,8 +133,8 @@ struct OrderCreateView: View {
                 total: total,
                 currency: "INR",
                 magic_link_token: UUID().uuidString,
-                fulfillment_method: fulfillmentMethod,
-                placed_at: ISO8601DateFormatter().string(from: Date())
+                fulfillment_method: fulfillmentMethod.rawValue,
+                placed_at: Formatters.iso8601Basic.string(from: Date())
             )
             let lineDesc = lineDescription.trimmingCharacters(in: .whitespaces).isEmpty
                 ? nil
@@ -135,6 +143,7 @@ struct OrderCreateView: View {
                 order: new,
                 items: [.init(productId: nil, variantId: nil,
                               qty: lineQty, unitPrice: unitPrice,
+                              gstRate: gstRate,            // H13: store the chosen rate
                               gstAmount: gstAmount, lineDescription: lineDesc)],
                 sourceInquiryId: selectedInquiryId
             )

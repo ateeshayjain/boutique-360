@@ -9,6 +9,7 @@ struct InvoicePreviewView: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var tempFileURL: URL?
+    @State private var shareError: String?
 
     var body: some View {
         NavigationStack {
@@ -39,8 +40,15 @@ struct InvoicePreviewView: View {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("invoice-\(invoiceNumber).pdf")
         do {
             try pdfData.write(to: url)
+            shareError = nil
             return url
-        } catch { return nil }
+        } catch {
+            // L4 fix: surface the failure (e.g. disk full) instead of silently disabling Share.
+            Task { @MainActor in
+                ErrorBus.shared.report("Couldn't prepare invoice for sharing: \(error.localizedDescription)")
+            }
+            return nil
+        }
     }
 }
 

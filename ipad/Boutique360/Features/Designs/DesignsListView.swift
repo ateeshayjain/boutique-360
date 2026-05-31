@@ -6,6 +6,7 @@ struct DesignsListView: View {
     @State private var designs: [Design] = []
     @State private var customers: [UUID: Customer] = [:]
     @State private var filter: DesignStatus? = nil
+    @State private var search: String = ""
     @State private var loading = false
     @State private var showCreate = false
     @State private var loadError: String?
@@ -49,6 +50,7 @@ struct DesignsListView: View {
             }
         }
         .navigationTitle("Designs")
+        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search design, garment, or customer")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Picker("Filter", selection: $filter) {
@@ -77,8 +79,19 @@ struct DesignsListView: View {
     }
 
     private var filtered: [Design] {
-        guard let f = filter else { return designs }
-        return designs.filter { $0.status == f }
+        var result = designs
+        if let f = filter { result = result.filter { $0.status == f } }
+        let q = search.trimmingCharacters(in: .whitespaces).lowercased()
+        if !q.isEmpty {
+            result = result.filter { d in
+                if d.name.lowercased().contains(q) { return true }
+                if let g = d.garmentType?.lowercased(), g.contains(q) { return true }
+                if let o = d.occasion?.lowercased(), o.contains(q) { return true }
+                if let cid = d.customerId, let name = customers[cid]?.name.lowercased(), name.contains(q) { return true }
+                return false
+            }
+        }
+        return result
     }
 
     private func load() async {

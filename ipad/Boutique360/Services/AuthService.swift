@@ -35,13 +35,16 @@ final class AuthService: ObservableObject {
     func signInWithMagicLink(email: String) async -> Bool {
         isLoading = true
         defer { isLoading = false }
+        Log.auth.info("magic-link request: \(email, privacy: .private)")
         do {
             try await SupabaseService.client.auth.signInWithOTP(
                 email: email,
                 redirectTo: URL(string: "boutique360://auth/callback")
             )
+            Log.auth.notice("magic-link sent to \(email, privacy: .private)")
             return true
         } catch {
+            Log.auth.error("magic-link request failed: \(error.localizedDescription, privacy: .public)")
             lastError = error.localizedDescription
             return false
         }
@@ -82,10 +85,13 @@ final class AuthService: ObservableObject {
     #endif
 
     func signOut() async {
+        Log.auth.notice("sign-out requested")
         do {
             try await SupabaseService.client.auth.signOut()
             self.session = nil
+            Log.auth.info("sign-out complete")
         } catch {
+            Log.auth.error("sign-out failed: \(error.localizedDescription, privacy: .public)")
             lastError = error.localizedDescription
         }
     }

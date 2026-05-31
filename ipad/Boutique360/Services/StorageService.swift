@@ -41,7 +41,7 @@ enum StorageService {
     static func upload(_ data: Data, to bucket: Bucket, path: String, contentType: String) async throws -> UploadResult {
         _ = try await SupabaseService.client.storage
             .from(bucket.rawValue)
-            .upload(path: path, file: data, options: .init(contentType: contentType, upsert: true))
+            .upload(path, data: data, options: .init(contentType: contentType, upsert: true))
 
         let url: String
         if bucket.isPublic {

@@ -90,8 +90,8 @@ struct CustomerFormView: View {
             source = c.source
             tagsRaw = c.tags.joined(separator: ", ")
             if let d = c.dob {
-                let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-                if let parsed = f.date(from: d) { dob = parsed; hasDob = true }
+                // M1 sweep: use central Formatters.postgresDate
+                if let parsed = Formatters.postgresDate.date(from: d) { dob = parsed; hasDob = true }
             }
         }
     }
@@ -106,8 +106,8 @@ struct CustomerFormView: View {
         let tags = tagsRaw.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
         let dobString: String? = {
             guard hasDob else { return nil }
-            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-            return f.string(from: dob)
+            // M1 sweep: use central Formatters.postgresDate
+            return Formatters.postgresDate.string(from: dob)
         }()
 
         do {

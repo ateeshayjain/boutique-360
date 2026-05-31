@@ -145,7 +145,7 @@ struct JobCardComposerView: View {
                 Button(saving ? "Saving…" : "Create & open PDF") {
                     Task { await save() }
                 }
-                .disabled(saving || ctx.boutiqueId == nil)
+                .disabled(saving || ctx.boutiqueId == nil || error != nil)
             }
         }
         .task { await load() }
@@ -153,9 +153,16 @@ struct JobCardComposerView: View {
 
     private func load() async {
         guard let cid = design.customerId else { return }
-        customer = try? await CustomersService.get(id: cid)
-        availableMeasurements = (try? await MeasurementsService.listForCustomer(cid)) ?? []
-        // Auto-select the measurement matching the design's garment type, else latest
+        do {
+            // M2 fix: surface load failures. Karigar getting a job card with
+            // "Customer" as the customer name + zero measurements means the wrong
+            // garment will be produced. Block downstream PDF generation on failure.
+            customer = try await CustomersService.get(id: cid)
+            availableMeasurements = try await MeasurementsService.listForCustomer(cid)
+            error = nil
+        } catch {
+            self.error = "Couldn't load customer / measurements: \(error.localizedDescription). Retry before creating the job card."
+        }
         if let g = design.garmentType?.lowercased() {
             selectedMeasurement = availableMeasurements.first { $0.garmentType.lowercased() == g }
                                   ?? availableMeasurements.first
@@ -217,7 +224,7 @@ struct JobCardComposerView: View {
     }
 
     private func formatDate(_ d: Date) -> String {
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-        return f.string(from: d)
+        // M1 sweep: use central Formatters.postgresDate
+        return Formatters.postgresDate.string(from: d)
     }
 }

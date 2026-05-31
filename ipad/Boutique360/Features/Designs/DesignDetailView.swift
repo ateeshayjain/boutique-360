@@ -41,8 +41,11 @@ struct DesignDetailView: View {
                     if s != current.status {
                         Button {
                             Task {
-                                if let updated = try? await DesignsService.update(current.id, patch: .init(status: s.rawValue)) {
-                                    current = updated
+                                // H2 fix: surface failures via the central toast.
+                                do {
+                                    current = try await DesignsService.update(current.id, patch: .init(status: s.rawValue))
+                                } catch {
+                                    ErrorBus.shared.report("Couldn't update design status: \(error.localizedDescription)")
                                 }
                             }
                         } label: {

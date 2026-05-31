@@ -4,6 +4,14 @@ enum GarmentType: String, Codable, CaseIterable, Identifiable {
     case blouse, kurti, lehenga, bottom, saree, suit, other
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
+
+    /// H9 fix: forward-compat decoder. If the DB returns a garment type we
+    /// don't recognise (e.g. a future "anarkali"), fall back to .other rather
+    /// than failing decode + losing the measurement record.
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = GarmentType(rawValue: raw.lowercased()) ?? .other
+    }
     var fields: [String] {
         switch self {
         case .blouse:  ["bust", "waist", "shoulder", "armhole", "sleeve_length", "blouse_length"]

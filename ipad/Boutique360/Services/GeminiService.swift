@@ -89,10 +89,17 @@ enum GeminiService {
     private static func generateText(prompt: String) async throws -> String {
         // For text-only generation we use gemini-2.5-flash (cheaper, faster).
         let textModel = "gemini-2.5-flash"
-        let url = URL(string: "\(baseURL)/models/\(textModel):generateContent?key=\(Config.geminiApiKey)")!
+        // Audit fix: API key in `x-goog-api-key` header, not URL query — URLs
+        // get logged in proxies/error reports/network traces; the header
+        // doesn't. Cost-ceiling check via Supabase RPC before the call.
+        try await AICostMeter.checkCeiling(costEstimate: 0.001)   // gemini-2.5-flash text is ~$0.001 per call
+        guard let url = URL(string: "\(baseURL)/models/\(textModel):generateContent") else {
+            throw GeminiError.badResponse("Couldn't build Gemini URL")
+        }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.geminiApiKey, forHTTPHeaderField: "x-goog-api-key")
         req.timeoutInterval = 30
 
         let body: [String: Any] = [
@@ -115,10 +122,15 @@ enum GeminiService {
     }
 
     private static func generateImage(prompt: String, inputImages: [UIImage]) async throws -> UIImage {
-        let url = URL(string: "\(baseURL)/models/\(model):generateContent?key=\(Config.geminiApiKey)")!
+        // Image gen is ~40x more expensive than text — ~$0.04 per call.
+        try await AICostMeter.checkCeiling(costEstimate: 0.04)
+        guard let url = URL(string: "\(baseURL)/models/\(model):generateContent") else {
+            throw GeminiError.badResponse("Couldn't build Gemini URL")
+        }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.geminiApiKey, forHTTPHeaderField: "x-goog-api-key")
         req.timeoutInterval = 120
 
         var parts: [[String: Any]] = [["text": prompt]]

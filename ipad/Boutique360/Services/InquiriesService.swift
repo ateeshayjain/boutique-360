@@ -36,11 +36,21 @@ enum InquiriesService {
             .value
     }
 
-    static func generateInquiryNumber() -> String {
-        // INQ-YYYYMM-NNNN (random 4-digit; collision-safe enough for a single boutique)
-        let f = DateFormatter()
-        f.dateFormat = "yyyyMM"
-        let suffix = String(format: "%04d", Int.random(in: 0...9999))
-        return "INQ-\(f.string(from: Date()))-\(suffix)"
+    /// L6 fix: race-safe via `next_sequence_value` RPC instead of `Int.random`.
+    /// Birthday paradox: ~40% collision probability at 100 inquiries/month.
+    /// Same pattern orders/jobcards already use.
+    static func generateInquiryNumber(boutiqueId: UUID) async throws -> String {
+        let cal = Calendar(identifier: .gregorian)
+        let comps = cal.dateComponents([.year, .month], from: Date())
+        let yyyymm = String(format: "%04d%02d", comps.year ?? 2026, comps.month ?? 1)
+        struct P: Encodable {
+            let p_boutique_id: UUID
+            let p_sequence_name: String
+        }
+        let next: Int64 = try await SupabaseService.client
+            .rpc("next_sequence_value", params: P(p_boutique_id: boutiqueId, p_sequence_name: "inquiries-\(yyyymm)"))
+            .execute()
+            .value
+        return "INQ-\(yyyymm)-\(String(format: "%04d", next))"
     }
 }

@@ -30,62 +30,75 @@ enum OrdersService {
             .value
     }
 
-    /// Creates an order header + items in one logical call (two requests).
+    /// Creates an order header + items in one logical call.
     /// Pre-condition: caller has computed totals correctly.
     struct LineDraft {
         let productId: UUID?
         let variantId: UUID?
         let qty: Int
         let unitPrice: Double
+        let gstRate: Double?   // H13 fix: explicit per-line rate
         let gstAmount: Double
         let lineDescription: String?
     }
+    /// B6 fix: atomic via `create_order_with_items` RPC. The Postgres function
+    /// runs header + items + inquiry-link in a single transaction — any failure
+    /// rolls back the whole thing, no more orphan order headers or unconverted
+    /// inquiries on partial failure.
     static func create(
         order: NewOrder,
         items: [LineDraft],
         sourceInquiryId: UUID? = nil
     ) async throws -> Order {
-        let created: Order = try await SupabaseService.client.from("orders")
-            .insert(order)
-            .select()
-            .single()
+        struct RPCParams: Encodable {
+            let p_order: NewOrder
+            let p_items: [LineDraftEncodable]
+            let p_source_inquiry_id: UUID?
+        }
+        struct LineDraftEncodable: Encodable {
+            let boutique_id: UUID
+            let product_id: UUID?
+            let variant_id: UUID?
+            let qty: Int
+            let unit_price: Double
+            let gst_rate: Double?
+            let gst_amount: Double
+            let line_description: String?
+        }
+        let encodableItems = items.map {
+            LineDraftEncodable(
+                boutique_id: order.boutique_id,
+                product_id: $0.productId,
+                variant_id: $0.variantId,
+                qty: $0.qty,
+                unit_price: $0.unitPrice,
+                gst_rate: $0.gstRate,
+                gst_amount: $0.gstAmount,
+                line_description: $0.lineDescription
+            )
+        }
+        let params = RPCParams(
+            p_order: order,
+            p_items: encodableItems,
+            p_source_inquiry_id: sourceInquiryId
+        )
+        return try await SupabaseService.client
+            .rpc("create_order_with_items", params: params)
             .execute()
             .value
-
-        if !items.isEmpty {
-            let rows = items.map {
-                NewOrderItem(
-                    order_id: created.id,
-                    boutique_id: order.boutique_id,
-                    product_id: $0.productId,
-                    variant_id: $0.variantId,
-                    qty: $0.qty,
-                    unit_price: $0.unitPrice,
-                    gst_amount: $0.gstAmount,
-                    line_description: $0.lineDescription
-                )
-            }
-            _ = try await SupabaseService.client.from("order_items").insert(rows).execute()
-        }
-
-        // If converted from an inquiry, link it bi-directionally
-        if let inqId = sourceInquiryId {
-            _ = try await SupabaseService.client.from("inquiries")
-                .update(["converted_order_id": created.id.uuidString, "status": "confirmed"])
-                .eq("id", value: inqId)
-                .execute()
-        }
-        return created
     }
 
     static func updateStatus(_ id: UUID, to status: OrderStatus) async throws -> Order {
-        try await SupabaseService.client.from("orders")
+        let updated: Order = try await SupabaseService.client.from("orders")
             .update(["status": status.rawValue])
             .eq("id", value: id)
             .select()
             .single()
             .execute()
             .value
+        // Business event — useful for analytics + debugging "where did this order go?"
+        Log.business.notice("order \(updated.orderNumber, privacy: .public) → \(status.rawValue, privacy: .public)")
+        return updated
     }
 
     /// Race-safe per-boutique sequence via Postgres RPC. Replaces the prior

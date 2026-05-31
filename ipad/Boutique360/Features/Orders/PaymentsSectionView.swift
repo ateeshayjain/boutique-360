@@ -4,28 +4,51 @@ import SwiftUI
 /// Common bridal pattern: 40% advance on order, 60% on delivery.
 struct PaymentsSectionView: View {
     let order: Order
+    var customer: Customer? = nil
+    @EnvironmentObject private var ctx: BoutiqueContext
 
     @State private var payments: [PaymentRow] = []
     @State private var showAdd = false
     @State private var defaultAmount: Double = 0
+    @State private var loadError: String?
+    @State private var loading = false
 
-    struct PaymentRow: Identifiable, Decodable {
-        let id: UUID
-        let amount: Double
-        let status: String
-        let method: String?
-        let captured_at: Date?
-        let created_at: Date
-    }
+    typealias PaymentRow = PaymentsService.OrderHistoryRow
 
     var body: some View {
         Section {
+            if let err = loadError {
+                // B1 fix: NEVER show a balance derived from a failed fetch — that
+                // tricks the owner into double-charging the customer. Surface the
+                // failure prominently and block the Record-payment button below.
+                Label("Couldn't load payment history — \(err). Retry before recording new payments.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.red)
+                    .font(.caption)
+                Button("Retry") { Task { await load() } }
+                    .buttonStyle(.bordered)
+            }
             LabeledContent("Order total", value: format(order.total))
-            LabeledContent("Received", value: format(receivedTotal))
+            LabeledContent("Received", value: loadError == nil ? format(receivedTotal) : "—")
             LabeledContent("Balance due") {
-                Text(format(max(order.total - receivedTotal, 0)))
-                    .foregroundStyle(balanceDue > 0 ? .orange : .green)
-                    .fontWeight(.semibold)
+                // HIG audit fix: SF symbol prefix gives a non-color cue (works for
+                // color-blind users and in grayscale). Color reinforces but doesn't carry.
+                HStack(spacing: Spacing.micro) {
+                    if loadError == nil {
+                        Image(systemName: balanceDue > 0 ? "exclamationmark.circle.fill" : "checkmark.circle.fill")
+                            .foregroundStyle(balanceDue > 0 ? .orange : .green)
+                            .accessibilityHidden(true)
+                    }
+                    Text(loadError == nil ? format(max(order.total - receivedTotal, 0)) : "—")
+                        .foregroundStyle(balanceDue > 0 ? .orange : .green)
+                        .fontWeight(.semibold)
+                        .monospacedDigit()
+                        .minimumScaleFactor(0.7)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(balanceDue > 0
+                    ? "Balance due \(format(max(order.total - receivedTotal, 0)))"
+                    : "Fully paid")
             }
 
             if !payments.isEmpty {
@@ -52,11 +75,30 @@ struct PaymentsSectionView: View {
             } label: {
                 Label("Record payment", systemImage: "plus.circle")
             }
-            .disabled(balanceDue <= 0)
+            // Block recording while load is failed — receivedTotal would be 0
+            // and the suggested amount would be the full order total.
+            .disabled(balanceDue <= 0 || loadError != nil)
+
+            if balanceDue > 0, let cust = customer, cust.consentWhatsapp, cust.phone != nil {
+                Button {
+                    let firstName = cust.name.split(separator: " ").first.map(String.init) ?? cust.name
+                    let boutiqueName = ctx.boutique?.name ?? "Boutique"
+                    let msg = "Hi \(firstName), a gentle reminder — balance of \(format(balanceDue)) is pending on order \(order.orderNumber). UPI / card / cash all accepted. Thank you! — \(boutiqueName)"
+                    WhatsAppShareHelper.open(phone: cust.phone, message: msg)
+                } label: {
+                    Label("Send payment reminder on WhatsApp", systemImage: "message.fill")
+                        .foregroundStyle(.green)
+                }
+            }
         } header: {
             Text("Payments")
         }
         .task { await load() }
+        // H3 fix: refresh when the parent order changes status (could affect
+        // payment-due interpretation downstream) or returns from foreground.
+        .onReceive(NotificationCenter.default.publisher(for: .orderDidChange)) { _ in
+            Task { await load() }
+        }
         .sheet(isPresented: $showAdd) {
             NavigationStack {
                 RecordPaymentView(order: order, suggestedAmount: defaultAmount) {
@@ -71,20 +113,26 @@ struct PaymentsSectionView: View {
     private var receivedTotal: Double {
         payments.filter { $0.status == "captured" }.reduce(0) { $0 + $1.amount }
     }
-    private var balanceDue: Double { order.total - receivedTotal }
+    /// L7 fix: round to paise to prevent floating-point drift surfacing a
+    /// "₹0.000001 balance due" WhatsApp reminder on a fully-paid order.
+    /// Uses the shared `Money.roundedToPaise` helper (testable + reusable).
+    private var balanceDue: Double {
+        Money.roundedToPaise(order.total - receivedTotal)
+    }
 
     private func format(_ v: Double) -> String { Formatters.inr(v) }
 
     private func load() async {
+        loading = true; defer { loading = false }
         do {
-            let rows: [PaymentRow] = try await SupabaseService.client.from("payments")
-                .select("id,amount,status,method,captured_at,created_at")
-                .eq("order_id", value: order.id)
-                .order("created_at", ascending: true)
-                .execute()
-                .value
-            self.payments = rows
-        } catch { payments = [] }
+            // Audit-fix: through Service layer.
+            self.payments = try await PaymentsService.historyForOrder(order.id)
+            self.loadError = nil
+        } catch {
+            // B1 fix: surface the error instead of silently emptying the list.
+            // The view binds `loadError` to disable Record-payment + show banner.
+            self.loadError = error.localizedDescription
+        }
     }
 }
 
@@ -147,22 +195,13 @@ struct RecordPaymentView: View {
     private func save() async {
         guard let bid = ctx.boutiqueId, let amount = Double(amountText), amount > 0 else { return }
         saving = true; defer { saving = false }
-        struct NewPayment: Encodable {
-            let boutique_id: UUID
-            let order_id: UUID
-            let amount: Double
-            let status: String
-            let method: String
-            let captured_at: String
-        }
         do {
-            _ = try await SupabaseService.client.from("payments")
-                .insert(NewPayment(
-                    boutique_id: bid, order_id: order.id, amount: amount,
-                    status: "captured", method: method,
-                    captured_at: ISO8601DateFormatter().string(from: Date())
-                ))
-                .execute()
+            // Audit-fix: through Service layer.
+            try await PaymentsService.record(.init(
+                boutique_id: bid, order_id: order.id, amount: amount,
+                status: "captured", method: method,
+                captured_at: Formatters.iso8601Basic.string(from: Date())
+            ))
             onSaved()
             dismiss()
         } catch {

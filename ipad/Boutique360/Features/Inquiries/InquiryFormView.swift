@@ -46,15 +46,14 @@ struct InquiryFormView: View {
     private func save() async {
         guard let bid = ctx.boutiqueId else { saveError = "Boutique context unavailable"; return }
         saving = true; defer { saving = false }
-        let dateString: String? = {
-            guard hasEventDate else { return nil }
-            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-            return f.string(from: eventDate)
-        }()
+        // H5/M7 fix: use central Formatters.postgresDate (POSIX locale + Asia/Kolkata timezone).
+        let dateString: String? = hasEventDate ? Formatters.postgresDate.string(from: eventDate) : nil
         do {
+            // L6 fix: async sequence-RPC inquiry number instead of Int.random.
+            let inquiryNumber = try await InquiriesService.generateInquiryNumber(boutiqueId: bid)
             let created = try await InquiriesService.create(NewInquiry(
                 boutique_id: bid,
-                inquiry_number: InquiriesService.generateInquiryNumber(),
+                inquiry_number: inquiryNumber,
                 customer_id: customerId,
                 occasion: occasion.isEmpty ? nil : occasion,
                 event_date: dateString,

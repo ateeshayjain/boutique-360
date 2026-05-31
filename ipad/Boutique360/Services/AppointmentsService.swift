@@ -4,9 +4,9 @@ import Supabase
 enum AppointmentsService {
     static func list(from: Date? = nil, to: Date? = nil) async throws -> [Appointment] {
         var query = SupabaseService.client.from("appointments").select()
-        let iso = ISO8601DateFormatter()
-        if let f = from { query = query.gte("scheduled_at", value: iso.string(from: f)) }
-        if let t = to   { query = query.lt("scheduled_at",  value: iso.string(from: t)) }
+        // M1 fix: use central Formatters.iso8601Basic.
+        if let f = from { query = query.gte("scheduled_at", value: Formatters.iso8601Basic.string(from: f)) }
+        if let t = to   { query = query.lt("scheduled_at",  value: Formatters.iso8601Basic.string(from: t)) }
         return try await query
             .order("scheduled_at", ascending: true)
             .limit(500)

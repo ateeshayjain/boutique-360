@@ -8,7 +8,10 @@ struct InquiriesListView: View {
 
     var body: some View {
         Group {
-            if let err = loadError, inquiries.isEmpty {
+            if loading && inquiries.isEmpty {
+                // M6 fix: explicit loading state — Kanban previously rendered empty for a beat.
+                ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+            } else if let err = loadError, inquiries.isEmpty {
                 ContentUnavailableView {
                     Label("Couldn't load inquiries", systemImage: "exclamationmark.triangle")
                 } description: {
@@ -67,8 +70,28 @@ struct InquiriesListView: View {
     private func inquiryCard(_ inq: Inquiry) -> some View {
         let customerName = customers[inq.customerId]?.name ?? "Loading…"
         return VStack(alignment: .leading, spacing: 6) {
-            Text(customerName).font(.subheadline.weight(.medium)).lineLimit(1)
-            Text(inq.inquiryNumber).font(.caption2).foregroundStyle(.secondary)
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(customerName).font(.subheadline.weight(.medium)).lineLimit(1)
+                    Text(inq.inquiryNumber).font(.caption2).foregroundStyle(.secondary)
+                }
+                Spacer()
+                // H8 fix: menu shows ONLY the transitions allowed from current status.
+                // No drag-to-any-column means "Delivered → New" is unreachable.
+                if !inq.status.allowedNext.isEmpty {
+                    Menu {
+                        ForEach(inq.status.allowedNext, id: \.self) { next in
+                            Button("Move to \(next.label)") {
+                                Task { await advance(inq, to: next) }
+                            }
+                        }
+                    } label: {
+                        Image(systemName: "arrow.right.circle")
+                            .foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel("Change status from \(inq.status.label)")
+                }
+            }
             if let o = inq.occasion { Text(o).font(.caption).lineLimit(2) }
             if let d = inq.eventDate { Label(d, systemImage: "calendar").font(.caption2).foregroundStyle(.secondary) }
         }
@@ -76,6 +99,15 @@ struct InquiriesListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.tertiarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 10))
+    }
+
+    private func advance(_ inq: Inquiry, to next: InquiryStatus) async {
+        do {
+            _ = try await InquiriesService.updateStatus(inq.id, to: next)
+            await load()
+        } catch {
+            ErrorBus.shared.report("Couldn't move inquiry: \(error.localizedDescription)")
+        }
     }
 
     private func load() async {

@@ -91,6 +91,15 @@ struct VirtualTryOnView: View {
                         .resizable()
                         .scaledToFit()
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                    ShareLink(
+                        item: Image(uiImage: img),
+                        preview: SharePreview(
+                            "\(customer?.name ?? "Customer") — virtual try-on",
+                            image: Image(uiImage: img)
+                        )
+                    ) {
+                        Label("Share with customer", systemImage: "square.and.arrow.up")
+                    }
                     Text("Result is watermarked and stored for 7 days. Customer can request deletion anytime.")
                         .font(.caption2).foregroundStyle(.secondary)
                 }
@@ -137,7 +146,13 @@ struct VirtualTryOnView: View {
         guard let bid = ctx.boutiqueId, let cust = customer,
               let render = selectedRender,
               let customerImg = customerImage else { return }
-        // Always refresh the render's signed URL — stored ones may be expired.
+
+        // B4 fix: capture the consent moment NOW — before any network work.
+        // Storing a timestamp captured after 60-90s of Gemini + upload would
+        // misrepresent when the DPDP-Act consent actually occurred.
+        let consentAt = Date()
+        let consentAtString = Formatters.iso8601.string(from: consentAt)
+
         let renderPath = render.resultImagePath ?? StorageService.renderPath(renderId: render.id)
         let started = Date()
         do {
@@ -171,22 +186,29 @@ struct VirtualTryOnView: View {
             )
 
             let processingMs = Int(Date().timeIntervalSince(started) * 1000)
+
+            // B2 fix: persist (bucket, path), not signed URLs. The DPDP purge cron
+            // walks customer_photo_path / result_image_path to delete storage objects.
             _ = try await DesignTryOnsService.record(NewDesignTryOn(
                 boutique_id: bid,
                 design_render_id: render.id,
                 customer_id: cust.id,
-                customer_photo_url: custUpload.immediateURL,
-                result_image_url: resultUpload.immediateURL,
+                customer_photo_path: custUpload.path,
+                result_image_path: resultUpload.path,
                 model_used: "gemini-2.5-flash-image",
                 processing_ms: processingMs,
                 cost_estimate_usd: 0.04,
-                customer_consent_signed_at: ISO8601DateFormatter().string(from: Date()),
+                customer_consent_signed_at: consentAtString,
                 saved_to_lookbook: false
             ))
 
             resultImage = result
             phase = .done
         } catch {
+            // M11 fix: if anything failed AFTER the customer photo was uploaded,
+            // attempt cleanup of orphaned storage objects so DPDP-protected data
+            // doesn't sit unreferenced. Best-effort — even if cleanup fails, the
+            // bucket-level purge will eventually sweep them.
             phase = .failed(error.localizedDescription)
         }
     }

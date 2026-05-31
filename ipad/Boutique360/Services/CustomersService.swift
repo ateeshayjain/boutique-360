@@ -62,7 +62,7 @@ enum CustomersService {
     }
 
     static func softDelete(_ id: UUID) async throws {
-        let now = ISO8601DateFormatter().string(from: Date())
+        let now = Formatters.iso8601Basic.string(from: Date())
         _ = try await SupabaseService.client.from("customers")
             .update(["deleted_at": now])
             .eq("id", value: id)
