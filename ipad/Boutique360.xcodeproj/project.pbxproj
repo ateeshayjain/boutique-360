@@ -94,6 +94,7 @@
 		D3A1035B25F04968CB373AB9 /* JobCardsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C5E3128DEEB781A8374FAA /* JobCardsService.swift */; };
 		D49FD1F5C9148B9E3BB42A10 /* ImageInputPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE00060E9A0163F499E59AB9 /* ImageInputPicker.swift */; };
 		D4B8B3D52DDA61929077A0D3 /* PaymentsSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596812C9E451E4F67282DEE2 /* PaymentsSectionView.swift */; };
+		D5C75A09B2E8609D5A23FC13 /* CustomerLinkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */; };
 		D74F92B0DD307B8704982DB9 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 523DA0A5E070A5E8B5D07DB0 /* Customer.swift */; };
 		DC3DDC6F8EAB9563B8862E49 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCDDEB6EF95DEBA783A69D77 /* DesignTokens.swift */; };
 		DE3FBD723F5E1CDF0852F2A4 /* InquiriesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A7D5B291D442D4A0D6AE5C /* InquiriesService.swift */; };
@@ -181,6 +182,7 @@
 		89EC55AD960A6888307EF31B /* Boutique360App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boutique360App.swift; sourceTree = "<group>"; };
 		8A9D3F4F4226B8D309CCE16B /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8D863245ED5ACE74EB5C9AB8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerLinkSheet.swift; sourceTree = "<group>"; };
 		93025C03E14A1542CC2A5238 /* Env.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Env.xcconfig; sourceTree = "<group>"; };
 		93794B16F0C3102D8AB87332 /* CustomerTimelineEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTimelineEventTests.swift; sourceTree = "<group>"; };
 		98D3635D547A3831FD95F341 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
@@ -290,6 +292,7 @@
 		0CB45820E3D159C78494E8C9 /* Designs */ = {
 			isa = PBXGroup;
 			children = (
+				911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */,
 				67B75DFF054FA21FD73C7334 /* DesignDetailView.swift */,
 				2F5036E60A9CF0E902B748A6 /* DesignFormView.swift */,
 				531B614F104FBB0C1B8F63D6 /* DesignsListView.swift */,
@@ -635,6 +638,7 @@
 				3FCD2D638C3843D00F04E944 /* CustomerDetailView.swift in Sources */,
 				56BD952314C4D2F871545F14 /* CustomerFormView.swift in Sources */,
 				3264B217FD1CCFA58DAA2633 /* CustomerImportService.swift in Sources */,
+				D5C75A09B2E8609D5A23FC13 /* CustomerLinkSheet.swift in Sources */,
 				623703DD58FDB486EC845FB8 /* CustomerProfile.swift in Sources */,
 				132F580C1AC00B8C85DCF0A0 /* CustomerProfilesService.swift in Sources */,
 				6F73FA4C49F74B4B68CB220A /* CustomerStyleProfileView.swift in Sources */,
