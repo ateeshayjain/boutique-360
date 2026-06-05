@@ -4,6 +4,22 @@ Notable changes per release. Format roughly follows [Keep a Changelog](https://k
 
 ---
 
+## [Unreleased] — 2026-06-05 (Reference Photo Studio — Phase 1)
+
+### Added
+- **Reference Photo Studio** — seed a Design from a reference dress photo (Pinterest/Instagram/camera roll) instead of a hand sketch, apply fabric (photo + text description), AI-render the dress in that fabric, then flow into the existing customer virtual try-on → job card → WhatsApp pipeline.
+  - `ReferenceStudioView` — reference image + fabric + generate, reachable from DesignDetailView ("Start from a photo") and the Designs list ("From inspo photo").
+  - `GeminiService.renderGarmentFromReference(...)` + pure `PromptTemplates.renderGarmentFromReference(...)` (unit-tested).
+  - `designs.reference_image_path` column + private `design-references` storage bucket (migration `0026`) + `DesignsService.saveReferenceImagePath`.
+- **App-wide camera input fix** — new reusable `ImageInputPicker` (Camera · Library · Paste URL) replaces the library-only `PhotosPicker` in Virtual Try-On (customer photo) and Sketch Canvas (fabric). The previously-dead `NSCameraUsageDescription` permission is now actually used. URL paste fails gracefully for Instagram/Pinterest (hot-link block) with a "save to Photos" hint via pure `ImageURLValidator` (unit-tested).
+- **VTO customer-link gate** — a reference-photo Design may have no customer yet; `CustomerLinkSheet` lets the owner attach one mid-flow (try-on requires a customer for consent + 7-day purge). `VirtualTryOnView.customer` is now `@State` (was `let`).
+
+### Notes
+- Recovered T2–T6 work left uncommitted during a workspace move, and implemented the missing `GeminiService` peer method (the task tracker had marked it done prematurely). Each task committed as its own logical unit.
+- Phases 2 (Share Extension) and 4 (saved fabric library) remain deferred per the spec.
+
+---
+
 ## [Unreleased] — 2026-05-28 (architecture documentation cycle)
 
 ### Architecture documentation

@@ -72,12 +72,12 @@ ipad/Boutique360/
 | PaymentsService | payments | n/a | PaymentsSectionView, DashboardView |
 | AlterationsService | alterations | next_alteration_round | AlterationsSectionView |
 | AppointmentsService | appointments | n/a | CalendarView, AppointmentFormView |
-| DesignsService | designs, design_lookbooks | n/a | DesignsListView, DesignDetailView |
-| DesignRendersService | design_renders | n/a | RenderView |
+| DesignsService | designs, design_lookbooks | n/a | DesignsListView, DesignDetailView, ReferenceStudioView (`saveReferenceImagePath`) |
+| DesignRendersService | design_renders | n/a | RenderView, ReferenceStudioView |
 | DesignTryOnsService | design_tryons | n/a | VirtualTryOnView |
 | JobCardsService | job_cards | next_sequence_value | JobCardComposer, DesignDetailView |
-| StorageService | (Supabase Storage) | n/a | Render/VTO/Sketch/Invoice flows |
-| GeminiService | n/a | n/a | RenderView, VirtualTryOnView, JobCardComposer |
+| StorageService | (Supabase Storage; buckets incl. `design-references`) | n/a | Render/VTO/Sketch/Reference/Invoice flows |
+| GeminiService | n/a | n/a | RenderView, VirtualTryOnView, ReferenceStudioView, JobCardComposer |
 | AICostMeter | ai_usage_daily | record_ai_usage | GeminiService internal |
 | CustomerImportService | customers (via Service) | n/a | SettingsView import |
 | GSTReportExporter | orders, customers | n/a | SettingsView export |
