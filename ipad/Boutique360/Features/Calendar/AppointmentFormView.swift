@@ -84,10 +84,13 @@ struct AppointmentFormView: View {
             _ = try await AppointmentsService.create(NewAppointment(
                 boutique_id: bid, customer_id: cid, order_id: orderId,
                 type: type.rawValue,
-                scheduled_at: ISO8601DateFormatter().string(from: date),
+                scheduled_at: Formatters.iso8601Basic.string(from: date),
                 duration_minutes: duration,
                 notes: notes.isEmpty ? nil : notes
             ))
+            // Reschedule local notifications so the new appointment's
+            // 1-hour-before reminder is armed before we navigate away.
+            await NotificationsService.refresh()
             onSaved()
             dismiss()
         } catch {

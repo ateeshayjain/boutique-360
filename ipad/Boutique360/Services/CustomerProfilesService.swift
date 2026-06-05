@@ -24,29 +24,4 @@ enum CustomerProfilesService {
     }
 }
 
-enum ImportantDatesService {
-    static func listForCustomer(_ customerId: UUID) async throws -> [ImportantDate] {
-        try await SupabaseService.client.from("important_dates")
-            .select()
-            .eq("customer_id", value: customerId)
-            .order("date", ascending: true)
-            .execute()
-            .value
-    }
-
-    static func create(_ input: NewImportantDate) async throws -> ImportantDate {
-        try await SupabaseService.client.from("important_dates")
-            .insert(input)
-            .select()
-            .single()
-            .execute()
-            .value
-    }
-
-    static func delete(_ id: UUID) async throws {
-        _ = try await SupabaseService.client.from("important_dates")
-            .delete()
-            .eq("id", value: id)
-            .execute()
-    }
-}
+// Moved to Services/ImportantDatesService.swift

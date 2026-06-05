@@ -5,8 +5,11 @@ struct CustomerDetailView: View {
 
     @State private var measurements: [CustomerMeasurement] = []
     @State private var inquiries: [Inquiry] = []
+    @State private var orders: [Order] = []
     @State private var profile: CustomerProfile?
     @State private var dates: [ImportantDate] = []
+    @State private var timeline: [CustomerTimelineEvent] = []
+    @State private var showFullTimeline: Bool = false
     @State private var loading: Bool = true
     @State private var showAddMeasurement: Bool = false
     @State private var showAddInquiry: Bool = false
@@ -20,8 +23,10 @@ struct CustomerDetailView: View {
             VStack(alignment: .leading, spacing: 24) {
                 profileHeader
                 quickActions
+                journeySection
                 styleSection
                 datesSection
+                ordersSection
                 measurementsSection
                 inquiriesSection
             }
@@ -136,6 +141,153 @@ struct CustomerDetailView: View {
             Button { showAddInquiry = true } label: {
                 Label("New inquiry", systemImage: "envelope.badge.fill")
             }.buttonStyle(.borderedProminent)
+            if customer.consentWhatsapp, customer.phone != nil {
+                Button {
+                    WhatsAppShareHelper.open(
+                        phone: customer.phone,
+                        message: "Namaste \(customer.name.split(separator: " ").first.map(String.init) ?? customer.name)! "
+                    )
+                } label: {
+                    Label("WhatsApp", systemImage: "message.fill")
+                }
+                .buttonStyle(.bordered)
+                .tint(.green)
+            }
+        }
+    }
+
+    /// Unified chronological feed — replaces the "where is this customer in
+    /// their journey?" question with a single answer. Shows the latest 6
+    /// events inline; tap "See all" for the full history sheet.
+    private var journeySection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text("Journey").font(.headline)
+                Spacer()
+                if timeline.count > 6 {
+                    Button("See all (\(timeline.count))") { showFullTimeline = true }
+                        .font(.caption)
+                        .buttonStyle(.borderless)
+                }
+            }
+            if loading && timeline.isEmpty {
+                ProgressView()
+            } else if timeline.isEmpty {
+                Text("Activity will appear here as inquiries, designs, orders, and payments happen.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                GroupBox {
+                    VStack(spacing: 0) {
+                        ForEach(Array(timeline.prefix(6))) { ev in
+                            timelineRow(ev)
+                            if ev.id != timeline.prefix(6).last?.id {
+                                Divider().padding(.leading, 36)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        .sheet(isPresented: $showFullTimeline) {
+            NavigationStack {
+                List(timeline) { ev in
+                    timelineRow(ev).padding(.vertical, 4)
+                }
+                .listStyle(.plain)
+                .navigationTitle("\(customer.name) — full journey")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button("Done") { showFullTimeline = false }
+                    }
+                }
+            }
+        }
+    }
+
+    private func timelineRow(_ ev: CustomerTimelineEvent) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            Image(systemName: ev.kind.systemImage)
+                .foregroundStyle(ev.kind.tint)
+                .frame(width: 24, alignment: .center)
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(ev.title)
+                    .font(.subheadline.weight(.medium))
+                    .fixedSize(horizontal: false, vertical: true)
+                if let s = ev.subtitle {
+                    Text(s).font(.caption).foregroundStyle(.secondary)
+                        .lineLimit(2)
+                }
+            }
+            Spacer()
+            Text(ev.at.formatted(.relative(presentation: .named)))
+                .font(.caption2).foregroundStyle(.tertiary)
+                .accessibilityLabel(ev.at.formatted(date: .abbreviated, time: .shortened))
+        }
+        .padding(.vertical, 6)
+        .accessibilityElement(children: .combine)
+    }
+
+    private var ordersSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Orders").font(.headline)
+            if loading && orders.isEmpty {
+                ProgressView()
+            } else if orders.isEmpty {
+                Text("No orders yet. Convert an inquiry to create one.")
+                    .font(.caption).foregroundStyle(.secondary)
+            } else {
+                ForEach(orders) { o in
+                    NavigationLink(value: o) {
+                        orderRow(o)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .navigationDestination(for: Order.self) { o in
+            OrderDetailView(order: o, customerName: customer.name)
+        }
+    }
+
+    private func orderRow(_ o: Order) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: o.status.systemImage)
+                .foregroundStyle(orderColor(o.status))
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(o.orderNumber).font(.subheadline.weight(.medium))
+                Text(o.createdAt.formatted(date: .abbreviated, time: .omitted))
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(Formatters.inr(o.total))
+                    .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
+                Text(o.status.label)
+                    .font(.caption2)
+                    .padding(.horizontal, 8).padding(.vertical, 2)
+                    .background(orderColor(o.status).opacity(0.18))
+                    .foregroundStyle(orderColor(o.status))
+                    .clipShape(Capsule())
+            }
+        }
+        .padding(12)
+        .background(Color(.tertiarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+
+    private func orderColor(_ s: OrderStatus) -> Color {
+        switch s {
+        case .pending:   .orange
+        case .confirmed: .blue
+        case .packed:    .indigo
+        case .shipped:   .purple
+        case .delivered: .green
+        case .cancelled: .gray
+        case .returned:  .red
         }
     }
 
@@ -270,6 +422,7 @@ struct CustomerDetailView: View {
                         .labelStyle(.iconOnly)
                 }
                 .buttonStyle(.borderless)
+                .accessibilityLabel("Add important date")
             }
             if dates.isEmpty {
                 Text("Anniversaries, birthdays, festivals to remember.")
@@ -303,12 +456,18 @@ struct CustomerDetailView: View {
         defer { loading = false }
         async let m = (try? MeasurementsService.listForCustomer(customer.id)) ?? []
         async let i = (try? InquiriesService.list(customerId: customer.id)) ?? []
+        async let o = (try? OrdersService.list(customerId: customer.id)) ?? []
         async let p = (try? CustomerProfilesService.get(customerId: customer.id)) ?? nil
         async let d = (try? ImportantDatesService.listForCustomer(customer.id)) ?? []
         self.measurements = await m
         self.inquiries = await i
+        self.orders = await o
         self.profile = await p
         self.dates = await d
+        // Build timeline AFTER the source data is hydrated. The aggregator
+        // re-queries authoritative sources so a stale local cache can't
+        // produce an inconsistent feed.
+        self.timeline = await CustomerTimelineService.fetch(customerId: customer.id, customer: customer)
     }
 }
 

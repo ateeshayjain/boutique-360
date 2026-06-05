@@ -123,14 +123,14 @@ struct AlterationFormView: View {
     private func save() async {
         guard let bid = ctx.boutiqueId else { return }
         saving = true; defer { saving = false }
-        let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
+        // M1 sweep: use central Formatters.postgresDate
         do {
             let round = (try? await AlterationsService.nextRoundNumber(forOrder: orderId)) ?? 1
             _ = try await AlterationsService.create(NewAlteration(
                 boutique_id: bid, order_id: orderId, round_number: round,
                 request_notes: notes,
                 internal_notes: nil,
-                target_date: hasTarget ? f.string(from: targetDate) : nil
+                target_date: hasTarget ? Formatters.postgresDate.string(from: targetDate) : nil
             ))
             onSaved()
             dismiss()

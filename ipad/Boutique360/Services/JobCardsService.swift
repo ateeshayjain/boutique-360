@@ -18,6 +18,17 @@ enum JobCardsService {
             .select().eq("design_id", value: designId).order("created_at").execute().value
     }
 
+    /// Customer-scoped fetch. Lets the timeline aggregator avoid pulling every
+    /// job card and filtering client-side as the boutique grows.
+    static func listForCustomer(_ customerId: UUID) async throws -> [JobCard] {
+        try await SupabaseService.client.from("job_cards")
+            .select()
+            .eq("customer_id", value: customerId)
+            .order("created_at", ascending: false)
+            .execute()
+            .value
+    }
+
     static func create(_ input: NewJobCard) async throws -> JobCard {
         try await SupabaseService.client.from("job_cards")
             .insert(input).select().single().execute().value

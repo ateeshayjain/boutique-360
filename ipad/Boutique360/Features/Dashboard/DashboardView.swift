@@ -13,14 +13,23 @@ struct DashboardView: View {
     @State private var dormantCustomers: [Customer] = []
     @State private var loading = true
     @State private var customers: [UUID: Customer] = [:]
+    @State private var todayRevenue: Double = 0
+    @State private var todayCashRevenue: Double = 0
+    @State private var todayUpiRevenue: Double = 0
+    @State private var todayNewCustomers: Int = 0
+    @State private var todayNewOrders: Int = 0
+    @State private var loadFailed: Bool = false        // H1: surface stale-data banner
+    @State private var lastRefreshAt: Date?
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 headerSection
+                if loadFailed { staleDataBanner }
                 if loading {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
+                    todaysRevenueCard
                     quickStatsGrid
                     todaySection
                     weekSection
@@ -32,8 +41,12 @@ struct DashboardView: View {
             .padding(32)
         }
         .navigationTitle("Dashboard")
-        .task { await load() }
+        .task { await load(); await primeNotifications() }
         .refreshable { await load() }
+        // H4 fix: re-fetch when the app returns from background.
+        .onReceive(NotificationCenter.default.publisher(for: .appDidForeground)) { _ in
+            Task { await load() }
+        }
     }
 
     private var headerSection: some View {
@@ -44,6 +57,80 @@ struct DashboardView: View {
                     .accessibilityAddTraits(.isHeader)
                 Text(greetingFor(date: Date()))
                     .font(.subheadline).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private var todaysRevenueCard: some View {
+        GroupBox {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack {
+                    Label("Today", systemImage: "indianrupeesign.circle.fill")
+                        .font(.headline)
+                        .foregroundStyle(.green)
+                    Spacer()
+                    Text(Date().formatted(.dateTime.weekday(.wide).day().month(.wide)))
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                HStack(alignment: .firstTextBaseline, spacing: 16) {
+                    Text(Formatters.inr(todayRevenue))
+                        .font(.system(.largeTitle, design: .rounded).weight(.bold))
+                        .monospacedDigit()
+                        .minimumScaleFactor(0.6)
+                        .lineLimit(1)
+                    Spacer()
+                    HStack(spacing: 14) {
+                        revenueSplit("Cash", todayCashRevenue, icon: "banknote", tint: .green)
+                        revenueSplit("UPI", todayUpiRevenue, icon: "qrcode", tint: .blue)
+                    }
+                }
+                Divider()
+                HStack(spacing: 24) {
+                    miniMetric("New orders", "\(todayNewOrders)", icon: "bag.badge.plus")
+                    miniMetric("New customers", "\(todayNewCustomers)", icon: "person.badge.plus")
+                    Spacer()
+                }
+            }
+            .padding(.vertical, 4)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel("Today's revenue \(Formatters.inr(todayRevenue)), \(todayNewOrders) new orders, \(todayNewCustomers) new customers")
+    }
+
+    private func revenueSplit(_ label: String, _ value: Double, icon: String, tint: Color) -> some View {
+        VStack(alignment: .trailing, spacing: 2) {
+            HStack(spacing: 4) {
+                Image(systemName: icon).font(.caption2).foregroundStyle(tint)
+                Text(label).font(.caption2).foregroundStyle(.secondary)
+            }
+            Text(Formatters.inr(value))
+                .font(.subheadline.weight(.medium))
+                .monospacedDigit()
+        }
+    }
+
+    private func miniMetric(_ label: String, _ value: String, icon: String) -> some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon).font(.subheadline).foregroundStyle(.secondary)
+            Text(value).font(.subheadline.weight(.semibold)).monospacedDigit()
+            Text(label).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    /// H1 fix: when the load partly or wholly failed, owners must know the
+    /// numbers below are not authoritative — otherwise ₹0 revenue + 0 appointments
+    /// looks like a normal quiet day instead of "Supabase unreachable."
+    private var staleDataBanner: some View {
+        GroupBox {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Couldn't reach server").font(.subheadline.weight(.semibold))
+                    Text("Figures below may be stale" + (lastRefreshAt.map { " — last refreshed \($0.formatted(.relative(presentation: .named)))" } ?? "") + ". Pull to retry.")
+                        .font(.caption).foregroundStyle(.secondary)
+                }
+                Spacer()
             }
         }
     }
@@ -136,7 +223,10 @@ struct DashboardView: View {
                     ForEach(dormantCustomers.prefix(5)) { c in
                         HStack {
                             Text(c.name).font(.subheadline)
-                            if c.vipStatus { Image(systemName: "crown.fill").foregroundStyle(.yellow).font(.caption) }
+                            if c.vipStatus {
+                                Image(systemName: "crown.fill").foregroundStyle(.yellow).font(.caption)
+                                    .accessibilityLabel("VIP")
+                            }
                             Spacer()
                             Text("Reach out").font(.caption2).foregroundStyle(.blue)
                         }
@@ -179,6 +269,16 @@ struct DashboardView: View {
         .padding(.vertical, 4)
     }
 
+    /// First-time: ask permission. Every time: refresh schedule from DB so
+    /// new/edited appointments get reminders. iOS de-dupes by identifier.
+    private func primeNotifications() async {
+        let status = await NotificationsService.authorizationStatus()
+        if status == .notDetermined {
+            _ = await NotificationsService.requestAuthorization()
+        }
+        await NotificationsService.refresh()
+    }
+
     private func greetingFor(date: Date) -> String {
         let h = Calendar.current.component(.hour, from: date)
         let greet = h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"
@@ -192,51 +292,71 @@ struct DashboardView: View {
         let cal = Calendar.current
         let now = Date()
         let todayStart = cal.startOfDay(for: now)
-        let weekEnd = cal.date(byAdding: .day, value: 7, to: todayStart)!
-        let monthEnd = cal.date(byAdding: .day, value: 30, to: todayStart)!
+        // L5 fix: guard the Calendar arithmetic instead of force-unwrapping.
+        let weekEnd = cal.date(byAdding: .day, value: 7, to: todayStart) ?? now
+        let monthEnd = cal.date(byAdding: .day, value: 30, to: todayStart) ?? now
 
-        async let boutiqueRes: [Boutique] = (try? await SupabaseService.client.from("boutiques").select().limit(1).execute().value) ?? []
-        async let weekAppts = (try? await AppointmentsService.list(from: todayStart, to: weekEnd)) ?? []
-        async let openInq = (try? await InquiriesService.list()) ?? []
-        async let activeOrders = (try? await OrdersService.list()) ?? []
-        async let allCust = (try? await CustomersService.list()) ?? []
-        async let dates: [ImportantDate] = await fetchUpcomingDates(until: monthEnd)
+        // M4 fix: read boutique from BoutiqueContext (already RLS-validated).
+        self.boutique = BoutiqueContext.shared.boutique
 
-        let bRows = await boutiqueRes
-        self.boutique = bRows.first
-        let appts = await weekAppts
-        self.todaysAppointments = appts.filter { cal.isDateInToday($0.scheduledAt) && $0.status == .scheduled }
-        self.weekAppointments = appts.filter { $0.status == .scheduled }
+        // Fan out 5 reads in parallel, then merge results + track failures.
+        // Each task returns (result, failed) so the caller doesn't need Sendable closures.
+        async let weekApptsFut: ([Appointment], Bool) = {
+            do { return (try await AppointmentsService.list(from: todayStart, to: weekEnd), false) }
+            catch { return ([], true) }
+        }()
+        async let openInqFut: ([Inquiry], Bool) = {
+            do { return (try await InquiriesService.list(), false) }
+            catch { return ([], true) }
+        }()
+        async let activeOrdersFut: ([Order], Bool) = {
+            do { return (try await OrdersService.list(), false) }
+            catch { return ([], true) }
+        }()
+        async let allCustFut: ([Customer], Bool) = {
+            do { return (try await CustomersService.list(), false) }
+            catch { return ([], true) }
+        }()
+        async let datesFut: [ImportantDate] = fetchUpcomingDates(until: monthEnd)
 
-        let inq = await openInq
-        self.openInquiries = inq.filter { ![.delivered, .lost, .ready].contains($0.status) }.count
+        let (weekAppts, f1) = await weekApptsFut
+        let (openInq, f2) = await openInqFut
+        let (activeOrders, f3) = await activeOrdersFut
+        let (allCust, f4) = await allCustFut
+        let dates = await datesFut
+        var anyFailed = f1 || f2 || f3 || f4
+        self.todaysAppointments = weekAppts.filter { cal.isDateInToday($0.scheduledAt) && $0.status == .scheduled }
+        self.weekAppointments = weekAppts.filter { $0.status == .scheduled }
+        self.openInquiries = openInq.filter { ![.delivered, .lost, .ready].contains($0.status) }.count
+        self.ordersInProgress = activeOrders.filter { [.pending, .confirmed, .packed, .shipped].contains($0.status) }.count
 
-        let orders = await activeOrders
-        self.ordersInProgress = orders.filter { [.pending, .confirmed, .packed, .shipped].contains($0.status) }.count
-        // payments overdue: orders that should be confirmed/shipped/delivered but balance > 0
-        self.paymentsOverdue = await filterOverdue(orders: orders)
+        // H5 fix: single grouped query instead of N-way waterfall.
+        self.paymentsOverdue = await filterOverdue(orders: activeOrders, anyFailed: &anyFailed)
 
-        let custList = await allCust
-        self.customers = Dictionary(uniqueKeysWithValues: custList.map { ($0.id, $0) })
+        self.customers = Dictionary(uniqueKeysWithValues: allCust.map { ($0.id, $0) })
+
+        await loadTodayMetrics(orders: activeOrders, customers: allCust, todayStart: todayStart, anyFailed: &anyFailed)
 
         // dormant: no order in 90 days. Approximation: customers whose updated_at < 90d ago
-        let ninetyAgo = cal.date(byAdding: .day, value: -90, to: now)!
-        let recentCustomerIds = Set(orders.filter { $0.createdAt > ninetyAgo }.map(\.customerId))
-        self.dormantCustomers = custList.filter { !recentCustomerIds.contains($0.id) && $0.updatedAt < ninetyAgo }
+        // L5 fix: guard the Calendar arithmetic.
+        let ninetyAgo = cal.date(byAdding: .day, value: -90, to: now) ?? now
+        let recentCustomerIds = Set(activeOrders.filter { $0.createdAt > ninetyAgo }.map(\.customerId))
+        self.dormantCustomers = allCust.filter { !recentCustomerIds.contains($0.id) && $0.updatedAt < ninetyAgo }
 
-        self.upcomingDates = await dates
+        self.upcomingDates = dates
+
+        self.loadFailed = anyFailed
+        self.lastRefreshAt = Date()
     }
 
     private func fetchUpcomingDates(until: Date) async -> [ImportantDate] {
-        // Fetch all dates, filter client-side for "in next 30 days" considering recurrence
-        let all: [ImportantDate] = (try? await SupabaseService.client.from("important_dates")
-            .select()
-            .execute()
-            .value) ?? []
+        // Audit-fix: use Service layer instead of inline SupabaseService.client call.
+        // Defense-in-depth boutique_id filter still applied inside the Service.
+        guard let bid = BoutiqueContext.shared.boutiqueId else { return [] }
+        let all: [ImportantDate] = (try? await ImportantDatesService.listForBoutique(bid)) ?? []
         let now = Date()
         return all.filter { d in
-            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-            guard var parsed = f.date(from: d.date) else { return false }
+            guard var parsed = Formatters.postgresDate.date(from: d.date) else { return false }
             if d.recurring {
                 // Align to current/next year
                 let nowYear = Calendar.current.component(.year, from: now)
@@ -253,18 +373,56 @@ struct DashboardView: View {
         }.sorted { $0.date < $1.date }
     }
 
-    private func filterOverdue(orders: [Order]) async -> [Order] {
-        // Order has balance due AND placed > 7 days ago AND status != cancelled/returned
+    /// "How am I doing today?" — single most-asked question at end of day.
+    /// Sums payments captured today (split cash vs UPI), counts new customers
+    /// and new orders created since local midnight.
+    private func loadTodayMetrics(orders: [Order], customers: [Customer], todayStart: Date, anyFailed: inout Bool) async {
+        do {
+            // Audit-fix: through Service layer instead of inline SDK call.
+            let payments = try await PaymentsService.capturedSinceMidnight()
+            var total = 0.0, cash = 0.0, upi = 0.0
+            for p in payments {
+                total += p.amount
+                switch (p.method ?? "").lowercased() {
+                case "cash":             cash += p.amount
+                case "upi", "razorpay":  upi += p.amount
+                default: break
+                }
+            }
+            self.todayRevenue = total
+            self.todayCashRevenue = cash
+            self.todayUpiRevenue = upi
+        } catch {
+            anyFailed = true
+            self.todayRevenue = 0; self.todayCashRevenue = 0; self.todayUpiRevenue = 0
+        }
+        self.todayNewCustomers = customers.filter { $0.createdAt >= todayStart }.count
+        self.todayNewOrders = orders.filter { $0.createdAt >= todayStart }.count
+    }
+
+    /// H5 fix: single grouped query — fetches all captured payments for the
+    /// candidate orders, sums per order, then computes overdue locally. Replaces
+    /// the N-way waterfall that froze the dashboard for several seconds.
+    private func filterOverdue(orders: [Order], anyFailed: inout Bool) async -> [Order] {
+        let candidates = orders.filter { ![.cancelled, .returned, .pending].contains($0.status) }
+            .filter { (Calendar.current.dateComponents([.day], from: $0.placedAt ?? $0.createdAt, to: Date()).day ?? 0) >= 7 }
+        guard !candidates.isEmpty else { return [] }
+
+        let payments: [PaymentsService.PerOrderSum]
+        do {
+            // Audit-fix: through Service layer.
+            payments = try await PaymentsService.capturedSumsForOrders(candidates.map(\.id))
+        } catch {
+            anyFailed = true
+            return []
+        }
+
+        // Sum once, lookup O(1).
+        var receivedByOrder: [UUID: Double] = [:]
+        for p in payments { receivedByOrder[p.order_id, default: 0] += p.amount }
         var result: [Order] = []
-        for o in orders where ![.cancelled, .returned, .pending].contains(o.status) {
-            let days = Calendar.current.dateComponents([.day], from: o.placedAt ?? o.createdAt, to: Date()).day ?? 0
-            guard days >= 7 else { continue }
-            struct PaymentSum: Decodable { let amount: Double; let status: String }
-            let payments: [PaymentSum] = (try? await SupabaseService.client.from("payments")
-                .select("amount,status")
-                .eq("order_id", value: o.id)
-                .execute().value) ?? []
-            let received = payments.filter { $0.status == "captured" }.reduce(0) { $0 + $1.amount }
+        for o in candidates {
+            let received = receivedByOrder[o.id] ?? 0
             if received < o.total {
                 result.append(o)
             }

@@ -10,12 +10,16 @@ struct Boutique: Identifiable, Codable, Hashable {
     let brandColorHex: String?
     let address: String?           // multiline; used on invoices
     let placeOfSupply: String?     // state name for GST inter-state determination
+    /// L2 fix: default GST rate to suggest in OrderCreateView (was hardcoded 5%).
+    /// Defaults to 5 server-side if column was added empty.
+    let defaultGstRate: Double?
 
     enum CodingKeys: String, CodingKey {
         case id, name, slug, gstin, address
         case logoUrl = "logo_url"
         case brandColorHex = "brand_color_hex"
         case placeOfSupply = "place_of_supply"
+        case defaultGstRate = "default_gst_rate"
     }
 }
 

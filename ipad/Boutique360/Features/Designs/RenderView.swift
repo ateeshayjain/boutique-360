@@ -61,6 +61,15 @@ struct RenderView: View {
                         .resizable()
                         .scaledToFit()
                         .clipShape(RoundedRectangle(cornerRadius: 12))
+                    ShareLink(
+                        item: Image(uiImage: img),
+                        preview: SharePreview(
+                            "\(design.name) — AI preview",
+                            image: Image(uiImage: img)
+                        )
+                    ) {
+                        Label("Share with customer (WhatsApp, Messages…)", systemImage: "square.and.arrow.up")
+                    }
                 }
             }
 
@@ -148,11 +157,13 @@ struct RenderView: View {
             let upload = try await StorageService.upload(resultData, to: .designRenders, path: path, contentType: "image/png")
 
             let processingMs = Int(Date().timeIntervalSince(started) * 1000)
+            // B3 fix: don't persist the 1-hr signed URL — only the path. Readers
+            // (DesignDetailView, VTO chooser) regenerate signed URLs on demand.
             let record = try await DesignRendersService.record(NewDesignRender(
                 boutique_id: bid,
                 design_id: design.id,
                 prompt_used: prompt,
-                result_image_url: upload.immediateURL,
+                result_image_url: nil,
                 result_image_path: upload.path,
                 model_used: "gemini-2.5-flash-image",
                 processing_ms: processingMs,

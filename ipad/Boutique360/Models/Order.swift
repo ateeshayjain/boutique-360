@@ -1,5 +1,24 @@
 import Foundation
 
+/// H9 fix: typed enum replaces stringly-typed `fulfillment_method`.
+/// Forward-compat decoder falls back to .pickup if the DB returns an unknown
+/// value (e.g. a future "courier" option) — keeps existing reads working.
+enum FulfillmentMethod: String, Codable, CaseIterable, Identifiable, Hashable {
+    case pickup, ship
+    var id: String { rawValue }
+    var label: String { rawValue.capitalized }
+    var systemImage: String {
+        switch self {
+        case .pickup: "bag.fill"
+        case .ship:   "shippingbox"
+        }
+    }
+    init(from decoder: Decoder) throws {
+        let raw = try decoder.singleValueContainer().decode(String.self)
+        self = FulfillmentMethod(rawValue: raw) ?? .pickup
+    }
+}
+
 enum OrderStatus: String, Codable, CaseIterable, Identifiable {
     case pending, confirmed, packed, shipped, delivered, cancelled, returned
     var id: String { rawValue }
@@ -55,7 +74,7 @@ struct Order: Identifiable, Codable, Hashable {
     var trackingUrl: String?
     var trackingCourier: String?
     var magicLinkToken: String?
-    var fulfillmentMethod: String?     // 'pickup' | 'ship'
+    var fulfillmentMethod: FulfillmentMethod?    // H9 fix: typed enum, was String?
     var placedAt: Date?
     var createdAt: Date
     var updatedAt: Date
@@ -85,8 +104,11 @@ struct OrderItem: Identifiable, Codable, Hashable {
     var variantId: UUID?
     var qty: Int
     var unitPrice: Double
+    /// H13 fix: explicit per-line GST rate. Source of truth — gstAmount can be
+    /// re-derived as `qty * unitPrice * gstRate / 100`. Backfilled by migration 0026.
+    var gstRate: Double?
     var gstAmount: Double
-    var lineDescription: String?     // free-text fallback when no product is linked (custom design line)
+    var lineDescription: String?
 
     enum CodingKeys: String, CodingKey {
         case id, qty
@@ -95,6 +117,7 @@ struct OrderItem: Identifiable, Codable, Hashable {
         case productId = "product_id"
         case variantId = "variant_id"
         case unitPrice = "unit_price"
+        case gstRate = "gst_rate"
         case gstAmount = "gst_amount"
         case lineDescription = "line_description"
     }
@@ -122,6 +145,8 @@ struct NewOrderItem: Encodable {
     let variant_id: UUID?
     let qty: Int
     let unit_price: Double
+    /// H13 fix: explicit GST rate per line (source of truth).
+    let gst_rate: Double?
     let gst_amount: Double
     let line_description: String?
 }

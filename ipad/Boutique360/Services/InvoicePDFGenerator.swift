@@ -58,10 +58,10 @@ enum InvoicePDFGenerator {
         return renderer.pdfData { ctx in
             ctx.beginPage()
             var y = contentRect.minY
-            let fmt = NumberFormatter()
-            fmt.numberStyle = .currency
-            fmt.currencyCode = "INR"
-            fmt.maximumFractionDigits = 0
+            // H12 fix: use central Formatters.inr — guarantees en_IN lakh grouping
+            // (₹1,31,250). Previous local NumberFormatter() lacked the locale and
+            // rendered as ₹131,250 on devices set to en_US locale.
+            func money(_ v: Double) -> String { Formatters.inr(v) }
 
             // Header
             let title = "TAX INVOICE"
@@ -136,7 +136,8 @@ enum InvoicePDFGenerator {
             let colQty = contentRect.minX + 310
             let colRate = contentRect.minX + 360
             let colGst = contentRect.minX + 420
-            let colAmt = contentRect.maxX - 80
+            // Amount column is right-aligned per row (see `amountSize` math below),
+            // so no fixed left edge is needed.
 
             let headerBgRect = CGRect(x: contentRect.minX - 4, y: y - 2, width: contentRect.width + 8, height: 22)
             UIColor.secondarySystemBackground.setFill()
@@ -163,9 +164,9 @@ enum InvoicePDFGenerator {
                 (line.description as NSString).draw(in: CGRect(x: colDesc, y: y, width: 240, height: 30), withAttributes: cellAttrs)
                 ((line.hsnCode ?? input.hsnDefault) as NSString).draw(at: CGPoint(x: colHsn, y: y), withAttributes: cellAttrs)
                 ("\(line.qty)" as NSString).draw(at: CGPoint(x: colQty, y: y), withAttributes: cellAttrs)
-                ((fmt.string(from: NSNumber(value: line.unitPrice)) ?? "") as NSString).draw(at: CGPoint(x: colRate, y: y), withAttributes: cellAttrs)
+                (money(line.unitPrice) as NSString).draw(at: CGPoint(x: colRate, y: y), withAttributes: cellAttrs)
                 ("\(Int(line.gstRate))%" as NSString).draw(at: CGPoint(x: colGst, y: y), withAttributes: cellAttrs)
-                let amount = fmt.string(from: NSNumber(value: line.total)) ?? ""
+                let amount = money(line.total)
                 let amountSize = (amount as NSString).size(withAttributes: cellAttrs)
                 (amount as NSString).draw(at: CGPoint(x: contentRect.maxX - amountSize.width, y: y), withAttributes: cellAttrs)
                 y += 22
@@ -184,7 +185,7 @@ enum InvoicePDFGenerator {
                     .foregroundColor: UIColor.label,
                 ]
                 (label as NSString).draw(at: CGPoint(x: contentRect.minX + 320, y: y), withAttributes: attrs)
-                let v = fmt.string(from: NSNumber(value: value)) ?? ""
+                let v = money(value)
                 let vSize = (v as NSString).size(withAttributes: attrs)
                 (v as NSString).draw(at: CGPoint(x: contentRect.maxX - vSize.width, y: y), withAttributes: attrs)
                 y += bold ? 20 : 16

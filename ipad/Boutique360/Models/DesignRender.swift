@@ -55,8 +55,10 @@ struct DesignTryOn: Identifiable, Codable, Hashable {
     var boutiqueId: UUID
     var designRenderId: UUID
     var customerId: UUID
-    var customerPhotoUrl: String?
-    var resultImageUrl: String?
+    var customerPhotoUrl: String?     // deprecated: 1-hr signed URL, use customerPhotoPath
+    var customerPhotoPath: String?    // canonical path inside customer-photos bucket
+    var resultImageUrl: String?       // public-bucket URL — stable, but path is source of truth
+    var resultImagePath: String?      // canonical path inside vto-results bucket
     var modelUsed: String?
     var processingMs: Int?
     var costEstimateUsd: Double?
@@ -71,7 +73,9 @@ struct DesignTryOn: Identifiable, Codable, Hashable {
         case designRenderId = "design_render_id"
         case customerId = "customer_id"
         case customerPhotoUrl = "customer_photo_url"
+        case customerPhotoPath = "customer_photo_path"
         case resultImageUrl = "result_image_url"
+        case resultImagePath = "result_image_path"
         case modelUsed = "model_used"
         case processingMs = "processing_ms"
         case costEstimateUsd = "cost_estimate_usd"
@@ -86,11 +90,13 @@ struct NewDesignTryOn: Encodable {
     let boutique_id: UUID
     let design_render_id: UUID
     let customer_id: UUID
-    let customer_photo_url: String?
-    let result_image_url: String?
+    // URLs intentionally omitted on insert — only paths are persisted. Signed URLs
+    // are regenerated at view time via StorageService.signedURL(bucket:path:).
+    let customer_photo_path: String
+    let result_image_path: String
     let model_used: String
     let processing_ms: Int
     let cost_estimate_usd: Double
-    let customer_consent_signed_at: String   // ISO8601
+    let customer_consent_signed_at: String   // ISO8601, captured at moment of consent
     let saved_to_lookbook: Bool
 }

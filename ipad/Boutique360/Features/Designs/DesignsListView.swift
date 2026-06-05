@@ -3,12 +3,15 @@ import SwiftUI
 /// HIG-aligned designs gallery. Grid on iPad with cover thumbnails.
 /// PencilKit sketch canvas comes in Plan 4 — for now, designs are text + ref images.
 struct DesignsListView: View {
+    @EnvironmentObject private var ctx: BoutiqueContext
     @State private var designs: [Design] = []
     @State private var customers: [UUID: Customer] = [:]
     @State private var filter: DesignStatus? = nil
+    @State private var search: String = ""
     @State private var loading = false
     @State private var showCreate = false
     @State private var loadError: String?
+    @State private var newReferenceDesign: Design?
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
 
@@ -49,6 +52,7 @@ struct DesignsListView: View {
             }
         }
         .navigationTitle("Designs")
+        .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search design, garment, or customer")
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Picker("Filter", selection: $filter) {
@@ -58,11 +62,24 @@ struct DesignsListView: View {
                 .pickerStyle(.menu)
             }
             ToolbarItem(placement: .primaryAction) {
-                Button { showCreate = true } label: { Label("New", systemImage: "plus") }
+                Menu {
+                    Button { showCreate = true } label: { Label("New design", systemImage: "plus") }
+                    Button { Task { await startFromPhoto() } } label: {
+                        Label("From inspo photo", systemImage: "photo.badge.plus")
+                    }
+                } label: {
+                    Label("New", systemImage: "plus")
+                }
             }
         }
         .navigationDestination(for: Design.self) { d in
             DesignDetailView(design: d, customerName: customers[d.customerId ?? UUID()]?.name)
+        }
+        .sheet(item: $newReferenceDesign) { d in
+            NavigationStack {
+                ReferenceStudioView(design: d) { _ in Task { await load() } }
+            }
+            .presentationDetents([.large])
         }
         .sheet(isPresented: $showCreate) {
             NavigationStack {
@@ -77,8 +94,40 @@ struct DesignsListView: View {
     }
 
     private var filtered: [Design] {
-        guard let f = filter else { return designs }
-        return designs.filter { $0.status == f }
+        var result = designs
+        if let f = filter { result = result.filter { $0.status == f } }
+        let q = search.trimmingCharacters(in: .whitespaces).lowercased()
+        if !q.isEmpty {
+            result = result.filter { d in
+                if d.name.lowercased().contains(q) { return true }
+                if let g = d.garmentType?.lowercased(), g.contains(q) { return true }
+                if let o = d.occasion?.lowercased(), o.contains(q) { return true }
+                if let cid = d.customerId, let name = customers[cid]?.name.lowercased(), name.contains(q) { return true }
+                return false
+            }
+        }
+        return result
+    }
+
+    /// Create a draft Design seeded for a reference photo, then open the studio.
+    /// (Reference upload needs a design.id, so the row must exist first.)
+    private func startFromPhoto() async {
+        guard let bid = ctx.boutiqueId else { return }
+        let name = "Inspo — \(Date().formatted(date: .abbreviated, time: .omitted))"
+        do {
+            let d = try await DesignsService.create(NewDesign(
+                boutique_id: bid,
+                customer_id: nil,
+                name: name,
+                status: DesignStatus.draft.rawValue,
+                garment_type: nil,
+                occasion: nil,
+                notes_md: nil,
+                created_by_staff_id: nil))
+            newReferenceDesign = d
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 
     private func load() async {

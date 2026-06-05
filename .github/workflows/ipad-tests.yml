@@ -1,0 +1,69 @@
+name: iPad Tests
+
+# Runs the Boutique360 unit test suite on every PR + on push to main.
+# Pure-logic tests only (Formatters, validators, parsers, state machines).
+# Network/integration tests are deferred until a test Supabase project is provisioned.
+#
+# Note: this workflow uses no untrusted GitHub event context (no issue titles,
+# PR bodies, etc.) so command-injection risks documented at
+# https://github.blog/security/vulnerability-research/how-to-catch-github-actions-workflow-injections-before-attackers-do/
+# do not apply here.
+
+on:
+  pull_request:
+    paths:
+      - 'ipad/**'
+      - '.github/workflows/ipad-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ipad/**'
+
+jobs:
+  test:
+    name: xcodebuild test (iPad Pro simulator)
+    runs-on: macos-15
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode_16.app
+
+      - name: Install xcodegen
+        run: brew install xcodegen
+
+      - name: Stub Secrets.xcconfig
+        # CI doesn't have a Gemini key; tests don't need one, but the build needs the file.
+        run: |
+          cd ipad
+          printf 'GEMINI_API_KEY = stub-for-ci-tests\n' > Boutique360/Configuration/Secrets.xcconfig
+
+      - name: Generate Xcode project
+        run: cd ipad && xcodegen generate
+
+      - name: Build for testing
+        run: |
+          cd ipad
+          xcodebuild build-for-testing \
+            -project Boutique360.xcodeproj \
+            -scheme Boutique360 \
+            -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5),OS=latest' \
+            -quiet
+
+      - name: Run tests
+        run: |
+          cd ipad
+          xcodebuild test-without-building \
+            -project Boutique360.xcodeproj \
+            -scheme Boutique360 \
+            -destination 'platform=iOS Simulator,name=iPad Pro 11-inch (M5),OS=latest' \
+            -resultBundlePath build/TestResults.xcresult
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: ipad/build/TestResults.xcresult

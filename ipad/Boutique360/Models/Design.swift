@@ -35,6 +35,7 @@ struct Design: Identifiable, Codable, Hashable {
     var status: DesignStatus
     var sketchImageUrl: String?         // deprecated: short-lived signed URL, may be expired
     var sketchImagePath: String?        // canonical path inside design-sketches bucket
+    var referenceImagePath: String?     // canonical path inside design-references bucket
     var measurementsJson: [String: Double]?
     var garmentType: String?
     var occasion: String?
@@ -48,6 +49,7 @@ struct Design: Identifiable, Codable, Hashable {
         case customerId = "customer_id"
         case sketchImageUrl = "sketch_image_url"
         case sketchImagePath = "sketch_image_path"
+        case referenceImagePath = "reference_image_path"
         case measurementsJson = "measurements_json"
         case garmentType = "garment_type"
         case notesMd = "notes_md"

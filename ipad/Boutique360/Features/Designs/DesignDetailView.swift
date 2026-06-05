@@ -13,6 +13,7 @@ struct DesignDetailView: View {
     @State private var jobCardPDF: Data?
     @State private var lastJobNumber: String = ""
     @State private var showJobCardPreview = false
+    @State private var showReferenceStudio = false
     @State private var customer: Customer?
 
     init(design: Design, customerName: String?) {
@@ -41,8 +42,11 @@ struct DesignDetailView: View {
                     if s != current.status {
                         Button {
                             Task {
-                                if let updated = try? await DesignsService.update(current.id, patch: .init(status: s.rawValue)) {
-                                    current = updated
+                                // H2 fix: surface failures via the central toast.
+                                do {
+                                    current = try await DesignsService.update(current.id, patch: .init(status: s.rawValue))
+                                } catch {
+                                    ErrorBus.shared.report("Couldn't update design status: \(error.localizedDescription)")
                                 }
                             }
                         } label: {
@@ -59,6 +63,12 @@ struct DesignDetailView: View {
                 }
 
                 Button {
+                    showReferenceStudio = true
+                } label: {
+                    Label("Start from a photo", systemImage: "photo.badge.plus")
+                }
+
+                Button {
                     showRender = true
                 } label: {
                     Label("AI render", systemImage: "sparkles")
@@ -70,12 +80,9 @@ struct DesignDetailView: View {
                 } label: {
                     Label("Customer virtual try-on", systemImage: "person.crop.rectangle.badge.plus")
                 }
-                .disabled(current.customerId == nil)
-
-                if current.customerId == nil {
-                    Text("Link this design to a customer first (use Edit) to enable try-on.")
-                        .font(.caption2).foregroundStyle(.tertiary)
-                }
+                // No longer gated on customerId: the VTO sheet links a customer
+                // in-flow (CustomerLinkSheet) when none is set — needed for
+                // reference-photo Designs that start customer-less.
 
                 Button {
                     showJobCardComposer = true
@@ -109,6 +116,16 @@ struct DesignDetailView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showReferenceStudio) {
+            NavigationStack {
+                ReferenceStudioView(design: current) { _ in
+                    Task {
+                        if let updated = try? await DesignsService.get(id: current.id) { current = updated }
+                    }
+                }
+            }
+            .presentationDetents([.large])
         }
         .sheet(isPresented: $showRender) {
             NavigationStack {

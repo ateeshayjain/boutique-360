@@ -22,6 +22,24 @@ enum InquiryStatus: String, Codable, CaseIterable, Identifiable {
     static var kanbanColumns: [InquiryStatus] {
         [.new, .consulting, .measurements, .quoted, .confirmed, .in_production, .ready, .delivered]
     }
+
+    /// H8 fix: explicit allowed transitions — without this, the Kanban could drag
+    /// "Delivered" back to "New" (silent data corruption). The forward-flow
+    /// pipeline + `.lost` from any non-terminal state mirrors how inquiries
+    /// actually move through the boutique.
+    var allowedNext: [InquiryStatus] {
+        switch self {
+        case .new:           [.consulting, .measurements, .quoted, .lost]
+        case .consulting:    [.measurements, .quoted, .lost]
+        case .measurements:  [.quoted, .lost]
+        case .quoted:        [.confirmed, .lost]
+        case .confirmed:     [.in_production, .lost]
+        case .in_production: [.ready]
+        case .ready:         [.delivered]
+        case .delivered:     []         // terminal
+        case .lost:          []         // terminal
+        }
+    }
 }
 
 struct Inquiry: Identifiable, Codable, Hashable {

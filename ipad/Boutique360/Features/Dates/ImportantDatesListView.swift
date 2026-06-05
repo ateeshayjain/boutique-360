@@ -45,6 +45,20 @@ struct ImportantDatesListView: View {
                                         Text("in \(daysFromNow(item.date)) days")
                                             .font(.caption2).foregroundStyle(.tertiary)
                                     }
+                                    if let cust = item.customer, cust.consentWhatsapp, cust.phone != nil {
+                                        Button {
+                                            WhatsAppShareHelper.open(
+                                                phone: cust.phone,
+                                                message: greetingMessage(for: item.importantDate.occasion, customer: cust)
+                                            )
+                                        } label: {
+                                            Image(systemName: "message.fill")
+                                                .foregroundStyle(.green)
+                                                .padding(8)
+                                        }
+                                        .buttonStyle(.borderless)
+                                        .accessibilityLabel("Send WhatsApp greeting to \(cust.name)")
+                                    }
                                 }
                             }
                         }
@@ -71,6 +85,21 @@ struct ImportantDatesListView: View {
         }
     }
 
+    /// Pick the right warmth based on occasion keyword. Owner can edit before sending.
+    private func greetingMessage(for occasion: String, customer: Customer) -> String {
+        let firstName = customer.name.split(separator: " ").first.map(String.init) ?? customer.name
+        let lower = occasion.lowercased()
+        if lower.contains("birthday") || lower.contains("janamdin") {
+            return "Happy Birthday \(firstName)! Wishing you a day filled with joy. Come visit us — there's a small surprise on your next outfit ✨"
+        } else if lower.contains("anniversary") || lower.contains("salgirah") {
+            return "Happy Anniversary \(firstName)! Wishing you a beautiful year ahead. Drop by for the new festive collection 🌸"
+        } else if lower.contains("diwali") || lower.contains("eid") || lower.contains("karwa") || lower.contains("rakhi") {
+            return "Wishing you and your family a very happy \(occasion), \(firstName)! Our festive collection is in — would love to see you 🪔"
+        } else {
+            return "Hi \(firstName)! Just wanted to wish you on \(occasion). Hope to see you at the store soon!"
+        }
+    }
+
     private func daysFromNow(_ date: Date) -> Int {
         Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: Date()), to: Calendar.current.startOfDay(for: date)).day ?? 0
     }
@@ -79,19 +108,17 @@ struct ImportantDatesListView: View {
         loading = true; defer { loading = false }
         let now = Date()
         let cal = Calendar.current
-        let until = cal.date(byAdding: .day, value: 90, to: now)!
+        // L5 fix: guard the Calendar arithmetic.
+        let until = cal.date(byAdding: .day, value: 90, to: now) ?? now
+        guard let bid = BoutiqueContext.shared.boutiqueId else { return }
         do {
-            let all: [ImportantDate] = try await SupabaseService.client.from("important_dates")
-                .select()
-                .execute()
-                .value
+            // Audit-fix: use Service layer, not inline Supabase call.
+            let all = try await ImportantDatesService.listForBoutique(bid)
             let custs = (try? await CustomersService.list()) ?? []
             let custMap = Dictionary(uniqueKeysWithValues: custs.map { ($0.id, $0) })
-            let f = DateFormatter(); f.dateFormat = "yyyy-MM-dd"
-
             var result: [(Date, ImportantDate, Customer?)] = []
             for d in all {
-                guard var parsed = f.date(from: d.date) else { continue }
+                guard var parsed = Formatters.postgresDate.date(from: d.date) else { continue }
                 if d.recurring {
                     let nowYear = cal.component(.year, from: now)
                     let dComp = cal.dateComponents([.month, .day], from: parsed)

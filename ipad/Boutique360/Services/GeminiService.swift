@@ -49,6 +49,31 @@ enum GeminiService {
         return try await generateImage(prompt: prompt, inputImages: images)
     }
 
+    /// Renders a garment from a customer-supplied reference photo (e.g. a dress
+    /// from Pinterest/Instagram/camera roll), re-imagined in the chosen fabric.
+    /// The reference image is the FIRST input; optional fabric swatches follow.
+    /// `generateImage` enforces the per-boutique AICostMeter ceiling internally.
+    static func renderGarmentFromReference(
+        reference: UIImage,
+        fabricImages: [UIImage] = [],
+        fabricDescription: String? = nil,
+        garmentType: String?,
+        occasion: String?,
+        styleNotes: String? = nil
+    ) async throws -> UIImage {
+        guard !Config.geminiApiKey.isEmpty else { throw GeminiError.notConfigured }
+
+        let prompt = PromptTemplates.renderGarmentFromReference(
+            garmentType: garmentType,
+            occasion: occasion,
+            fabricDescription: fabricDescription,
+            fabricImageCount: fabricImages.count,
+            styleNotes: styleNotes
+        )
+        let images = [reference] + fabricImages
+        return try await generateImage(prompt: prompt, inputImages: images)
+    }
+
     /// Generates a Romanized-Hindi tailor brief from structured design data.
     /// Output is plain text suitable for the bottom of the Job Card PDF or
     /// pasting into a WhatsApp message to the karigar.
@@ -89,10 +114,17 @@ enum GeminiService {
     private static func generateText(prompt: String) async throws -> String {
         // For text-only generation we use gemini-2.5-flash (cheaper, faster).
         let textModel = "gemini-2.5-flash"
-        let url = URL(string: "\(baseURL)/models/\(textModel):generateContent?key=\(Config.geminiApiKey)")!
+        // Audit fix: API key in `x-goog-api-key` header, not URL query — URLs
+        // get logged in proxies/error reports/network traces; the header
+        // doesn't. Cost-ceiling check via Supabase RPC before the call.
+        try await AICostMeter.checkCeiling(costEstimate: 0.001)   // gemini-2.5-flash text is ~$0.001 per call
+        guard let url = URL(string: "\(baseURL)/models/\(textModel):generateContent") else {
+            throw GeminiError.badResponse("Couldn't build Gemini URL")
+        }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.geminiApiKey, forHTTPHeaderField: "x-goog-api-key")
         req.timeoutInterval = 30
 
         let body: [String: Any] = [
@@ -115,10 +147,15 @@ enum GeminiService {
     }
 
     private static func generateImage(prompt: String, inputImages: [UIImage]) async throws -> UIImage {
-        let url = URL(string: "\(baseURL)/models/\(model):generateContent?key=\(Config.geminiApiKey)")!
+        // Image gen is ~40x more expensive than text — ~$0.04 per call.
+        try await AICostMeter.checkCeiling(costEstimate: 0.04)
+        guard let url = URL(string: "\(baseURL)/models/\(model):generateContent") else {
+            throw GeminiError.badResponse("Couldn't build Gemini URL")
+        }
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        req.setValue(Config.geminiApiKey, forHTTPHeaderField: "x-goog-api-key")
         req.timeoutInterval = 120
 
         var parts: [[String: Any]] = [["text": prompt]]
@@ -261,6 +298,29 @@ enum PromptTemplates {
 
         Output ONLY the Hindi brief text. No explanations, no English headers, no markdown.
         """
+    }
+
+    static func renderGarmentFromReference(
+        garmentType: String?,
+        occasion: String?,
+        fabricDescription: String?,
+        fabricImageCount: Int,
+        styleNotes: String?
+    ) -> String {
+        var p = """
+        You are a fashion illustrator. The FIRST image is a reference photo of a \
+        garment the customer likes. Recreate that garment as a single photorealistic \
+        finished piece, preserving its silhouette, neckline, and overall design.
+        """
+        if fabricImageCount > 0 {
+            p += "\n\nThe next \(fabricImageCount) image(s) are fabric swatches — render the garment in this fabric."
+        }
+        if let d = fabricDescription, !d.isEmpty { p += "\nFabric: \(d)" }
+        if let g = garmentType { p += "\nGarment type: \(g)" }
+        if let o = occasion { p += "\nOccasion: \(o)" }
+        if let s = styleNotes, !s.isEmpty { p += "\nStyle notes: \(s)" }
+        p += "\n\nReturn a single image on a clean white studio background. Do not include the original reference photo's background or any person."
+        return p
     }
 
     static func virtualTryOn(garmentType: String?) -> String {

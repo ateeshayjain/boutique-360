@@ -23,7 +23,8 @@ enum AlterationsService {
     static func updateStatus(_ id: UUID, to status: AlterationStatus, completed: Bool = false) async throws -> Alteration {
         var patch: [String: String] = ["status": status.rawValue]
         if completed {
-            patch["completed_at"] = ISO8601DateFormatter().string(from: Date())
+            // M1 fix: use central Formatters.iso8601Basic instead of allocating per call.
+            patch["completed_at"] = Formatters.iso8601Basic.string(from: Date())
         }
         return try await SupabaseService.client.from("alterations")
             .update(patch)
@@ -34,8 +35,14 @@ enum AlterationsService {
             .value
     }
 
+    /// M12 fix: race-safe via `next_alteration_round` RPC (FOR UPDATE inside).
+    /// The previous client-side max+1 had a TOCTOU race when two iPads added
+    /// alteration requests against the same order simultaneously.
     static func nextRoundNumber(forOrder orderId: UUID) async throws -> Int {
-        let existing = try await listForOrder(orderId)
-        return (existing.map(\.roundNumber).max() ?? 0) + 1
+        struct P: Encodable { let p_order_id: UUID }
+        return try await SupabaseService.client
+            .rpc("next_alteration_round", params: P(p_order_id: orderId))
+            .execute()
+            .value
     }
 }

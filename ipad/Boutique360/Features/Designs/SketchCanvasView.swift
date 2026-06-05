@@ -16,8 +16,6 @@ struct SketchCanvasView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var drawing = PKDrawing()
     @State private var fabricOverlays: [FabricOverlay] = []
-    @State private var showPhotoPicker = false
-    @State private var photoSelection: [PhotosPickerItem] = []
     @State private var saving = false
     @State private var error: String?
     @State private var canvasFrame: CGRect = .zero
@@ -50,10 +48,9 @@ struct SketchCanvasView: View {
                     .disabled(saving)
             }
             ToolbarItemGroup(placement: .bottomBar) {
-                Button {
-                    showPhotoPicker = true
-                } label: {
-                    Label("Add fabric", systemImage: "square.grid.3x3.square")
+                // Camera + Library fabric input (fixes the library-only camera gap).
+                ImageInputPicker(allowedSources: [.camera, .library]) { img in
+                    addFabricOverlay(img)
                 }
                 Spacer()
                 Button(role: .destructive) {
@@ -69,10 +66,6 @@ struct SketchCanvasView: View {
                 }.disabled(fabricOverlays.isEmpty)
             }
         }
-        .photosPicker(isPresented: $showPhotoPicker, selection: $photoSelection, maxSelectionCount: 3, matching: .images)
-        .onChange(of: photoSelection) { _, items in
-            Task { await loadFabrics(from: items) }
-        }
         .alert("Couldn't save", isPresented: .constant(error != nil), actions: {
             Button("OK") { error = nil }
         }, message: {
@@ -81,19 +74,17 @@ struct SketchCanvasView: View {
         .task { await loadExisting() }
     }
 
-    private func loadFabrics(from items: [PhotosPickerItem]) async {
-        for item in items {
-            if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data) {
-                let overlay = FabricOverlay(
-                    image: img,
-                    position: CGPoint(x: canvasFrame.midX * 0.6, y: canvasFrame.midY * 0.5),
-                    scale: 0.4,
-                    rotation: .zero
-                )
-                fabricOverlays.append(overlay)
-            }
-        }
-        photoSelection = []
+    /// Places a fabric overlay near the upper-left of the canvas. Position is in
+    /// SCREEN coords (composeRaster divides by canvasFrame.width), matching the
+    /// prior multi-select behavior — just one image at a time now.
+    private func addFabricOverlay(_ img: UIImage) {
+        let overlay = FabricOverlay(
+            image: img,
+            position: CGPoint(x: canvasFrame.midX * 0.6, y: canvasFrame.midY * 0.5),
+            scale: 0.4,
+            rotation: .zero
+        )
+        fabricOverlays.append(overlay)
     }
 
     private func loadExisting() async {
@@ -174,17 +165,17 @@ struct PencilCanvas: UIViewRepresentable {
         canvas.isOpaque = false
         canvas.delegate = context.coordinator
 
-        if let window = canvas.window, let toolPicker = PKToolPicker.shared(for: window) {
+        // iOS 14+: each scene owns its own PKToolPicker — `PKToolPicker.shared(for:)`
+        // was deprecated because it tied the picker's lifecycle to a window. The
+        // coordinator holds the strong reference so it survives view updates.
+        let toolPicker = context.coordinator.toolPicker
+        toolPicker.setVisible(true, forFirstResponder: canvas)
+        toolPicker.addObserver(canvas)
+        canvas.becomeFirstResponder()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             toolPicker.setVisible(true, forFirstResponder: canvas)
             toolPicker.addObserver(canvas)
             canvas.becomeFirstResponder()
-        }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            if let window = canvas.window, let toolPicker = PKToolPicker.shared(for: window) {
-                toolPicker.setVisible(true, forFirstResponder: canvas)
-                toolPicker.addObserver(canvas)
-                canvas.becomeFirstResponder()
-            }
         }
         return canvas
     }
@@ -197,6 +188,9 @@ struct PencilCanvas: UIViewRepresentable {
 
     final class Coordinator: NSObject, PKCanvasViewDelegate {
         var parent: PencilCanvas
+        /// Own this picker so its lifetime matches the view. Without a strong
+        /// reference here, the picker would deallocate immediately and never show.
+        let toolPicker = PKToolPicker()
         init(_ p: PencilCanvas) { parent = p }
         func canvasViewDrawingDidChange(_ canvasView: PKCanvasView) {
             parent.drawing = canvasView.drawing
