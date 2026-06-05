@@ -80,12 +80,9 @@ struct DesignDetailView: View {
                 } label: {
                     Label("Customer virtual try-on", systemImage: "person.crop.rectangle.badge.plus")
                 }
-                .disabled(current.customerId == nil)
-
-                if current.customerId == nil {
-                    Text("Link this design to a customer first (use Edit) to enable try-on.")
-                        .font(.caption2).foregroundStyle(.tertiary)
-                }
+                // No longer gated on customerId: the VTO sheet links a customer
+                // in-flow (CustomerLinkSheet) when none is set — needed for
+                // reference-photo Designs that start customer-less.
 
                 Button {
                     showJobCardComposer = true

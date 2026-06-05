@@ -228,10 +228,10 @@ struct VirtualTryOnView: View {
             resultImage = result
             phase = .done
         } catch {
-            // M11 fix: if anything failed AFTER the customer photo was uploaded,
-            // attempt cleanup of orphaned storage objects so DPDP-protected data
-            // doesn't sit unreferenced. Best-effort — even if cleanup fails, the
-            // bucket-level purge will eventually sweep them.
+            // If failure occurs after the customer photo was uploaded, the object
+            // is left in the private customer-photos bucket. We don't actively
+            // delete it here; the 7-day bucket purge (purge-expired-tryons cron)
+            // is the DPDP safety net for orphaned uploads.
             phase = .failed(error.localizedDescription)
         }
     }
