@@ -14,6 +14,7 @@ enum StorageService {
         case vtoResults         = "vto-results"             // public (watermarked)
         case designSketches     = "design-sketches"         // private (staff only)
         case designRenders      = "design-renders"          // private
+        case designReferences   = "design-references"       // private (staff only)
         case customerPhotos     = "customer-photos"         // private, AUTO-PURGE 7 days
         case fabrics            = "fabrics"                 // private
         case invoices           = "invoices"                // private
@@ -71,6 +72,7 @@ enum StorageService {
     // MARK: - Deterministic paths
 
     static func sketchPath(designId: UUID) -> String { "designs/\(designId.uuidString)/sketch.png" }
+    static func referencePath(designId: UUID) -> String { "designs/\(designId.uuidString)/reference.jpg" }
     static func renderPath(renderId: UUID) -> String { "renders/\(renderId.uuidString).png" }
     static func tryonPath(tryonId: UUID, kind: String) -> String { "tryons/\(tryonId.uuidString)/\(kind).png" }
 }
