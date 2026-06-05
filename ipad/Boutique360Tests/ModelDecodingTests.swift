@@ -182,4 +182,39 @@ final class ModelDecodingTests: XCTestCase {
         let order = try orderDecoder().decode(Order.self, from: json)
         XCTAssertNil(order.fulfillmentMethod)
     }
+
+    // MARK: - Design.referenceImagePath
+
+    func testDesignDecodesWithoutReferencePath() throws {
+        let json = """
+        {
+            "id": "8a89e7c2-3e25-4b7f-9e8e-d5e10e0e10e0",
+            "boutique_id": "8a89e7c2-3e25-4b7f-9e8e-d5e10e0e10e0",
+            "name": "Test Design",
+            "status": "draft",
+            "created_at": "2026-05-31T08:00:00Z",
+            "updated_at": "2026-05-31T08:00:00Z"
+        }
+        """.data(using: .utf8)!
+
+        let d = try orderDecoder().decode(Design.self, from: json)
+        XCTAssertNil(d.referenceImagePath, "Missing column should decode as nil, not crash")
+    }
+
+    func testDesignDecodesWithReferencePath() throws {
+        let json = """
+        {
+            "id": "8a89e7c2-3e25-4b7f-9e8e-d5e10e0e10e0",
+            "boutique_id": "8a89e7c2-3e25-4b7f-9e8e-d5e10e0e10e0",
+            "name": "Test Design",
+            "status": "draft",
+            "created_at": "2026-05-31T08:00:00Z",
+            "updated_at": "2026-05-31T08:00:00Z",
+            "reference_image_path": "designs/abc/reference.jpg"
+        }
+        """.data(using: .utf8)!
+
+        let d = try orderDecoder().decode(Design.self, from: json)
+        XCTAssertEqual(d.referenceImagePath, "designs/abc/reference.jpg")
+    }
 }
