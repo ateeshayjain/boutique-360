@@ -17,7 +17,6 @@ struct VirtualTryOnView: View {
     @State private var renders: [DesignRender] = []
     @State private var selectedRender: DesignRender?
     @State private var customerImage: UIImage?
-    @State private var photoSelection: PhotosPickerItem?
     @State private var consentChecked = false
     @State private var consentSignerName = ""
     @State private var phase: Phase = .idle
@@ -52,8 +51,8 @@ struct VirtualTryOnView: View {
                         .frame(maxHeight: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
-                PhotosPicker(selection: $photoSelection, matching: .images) {
-                    Label(customerImage == nil ? "Pick photo" : "Replace photo", systemImage: "photo.on.rectangle")
+                ImageInputPicker(allowedSources: [.camera, .library]) { img in
+                    customerImage = img
                 }
                 Text("Front-facing, well-lit, full body or torso. Customer photo auto-deletes after 7 days unless saved to lookbook.")
                     .font(.caption2).foregroundStyle(.secondary)
@@ -110,9 +109,6 @@ struct VirtualTryOnView: View {
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
         }
-        .onChange(of: photoSelection) { _, item in
-            Task { await loadPhoto(item) }
-        }
         .task {
             renders = (try? await DesignRendersService.listForDesign(design.id)) ?? []
             selectedRender = renders.first { $0.status == .done }
@@ -134,12 +130,6 @@ struct VirtualTryOnView: View {
         && consentChecked && !consentSignerName.isEmpty && customer != nil
     }
 
-    private func loadPhoto(_ item: PhotosPickerItem?) async {
-        guard let item else { return }
-        if let data = try? await item.loadTransferable(type: Data.self), let img = UIImage(data: data) {
-            customerImage = img
-        }
-    }
 
     @MainActor
     private func runTryOn() async {
