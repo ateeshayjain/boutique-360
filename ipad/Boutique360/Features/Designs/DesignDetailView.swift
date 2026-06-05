@@ -13,6 +13,7 @@ struct DesignDetailView: View {
     @State private var jobCardPDF: Data?
     @State private var lastJobNumber: String = ""
     @State private var showJobCardPreview = false
+    @State private var showReferenceStudio = false
     @State private var customer: Customer?
 
     init(design: Design, customerName: String?) {
@@ -59,6 +60,12 @@ struct DesignDetailView: View {
                     showSketch = true
                 } label: {
                     Label(current.sketchImageUrl == nil ? "Sketch with Pencil" : "Edit sketch", systemImage: "pencil.and.scribble")
+                }
+
+                Button {
+                    showReferenceStudio = true
+                } label: {
+                    Label("Start from a photo", systemImage: "photo.badge.plus")
                 }
 
                 Button {
@@ -112,6 +119,16 @@ struct DesignDetailView: View {
                     }
                 }
             }
+        }
+        .sheet(isPresented: $showReferenceStudio) {
+            NavigationStack {
+                ReferenceStudioView(design: current) { _ in
+                    Task {
+                        if let updated = try? await DesignsService.get(id: current.id) { current = updated }
+                    }
+                }
+            }
+            .presentationDetents([.large])
         }
         .sheet(isPresented: $showRender) {
             NavigationStack {

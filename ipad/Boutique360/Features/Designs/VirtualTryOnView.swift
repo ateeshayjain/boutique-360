@@ -1,19 +1,21 @@
 import SwiftUI
-import PhotosUI
 
 /// Customer-facing VTO sheet. Hard requirement: explicit consent capture BEFORE
 /// the customer photo is even uploaded to Storage (DPDP Act compliance).
 ///
-/// Flow: select render → capture/pick customer photo → consent toggle + name →
-/// Gemini VTO → watermarked result. Customer photo auto-purges after 7 days
-/// (handled by `design_tryons.purge_at` default).
+/// Flow: (link customer if none) → select render → capture/pick customer photo →
+/// consent toggle + name → Gemini VTO → watermarked result. Customer photo
+/// auto-purges after 7 days (handled by `design_tryons.purge_at` default).
 struct VirtualTryOnView: View {
     let design: Design
-    let customer: Customer?
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var ctx: BoutiqueContext
 
+    // @State (not let): a reference-photo Design may have no customer yet; the
+    // gate links one mid-flow and assigns it here.
+    @State private var customer: Customer?
+    @State private var showCustomerLink = false
     @State private var renders: [DesignRender] = []
     @State private var selectedRender: DesignRender?
     @State private var customerImage: UIImage?
@@ -22,12 +24,31 @@ struct VirtualTryOnView: View {
     @State private var phase: Phase = .idle
     @State private var resultImage: UIImage?
 
+    init(design: Design, customer: Customer?) {
+        self.design = design
+        _customer = State(initialValue: customer)
+    }
+
     enum Phase: Equatable {
         case idle, calling, uploading, done, failed(String)
     }
 
     var body: some View {
         Form {
+            Section("Customer") {
+                if let c = customer {
+                    LabeledContent("Linked", value: c.name)
+                } else {
+                    Button {
+                        showCustomerLink = true
+                    } label: {
+                        Label("Link a customer", systemImage: "person.crop.circle.badge.plus")
+                    }
+                    Text("A try-on must be tied to a customer (consent + 7-day photo purge are per-customer).")
+                        .font(.caption2).foregroundStyle(.secondary)
+                }
+            }
+
             Section("Choose a render") {
                 if renders.isEmpty {
                     Label("No renders yet — generate one first.", systemImage: "exclamationmark.circle")
@@ -108,6 +129,18 @@ struct VirtualTryOnView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) { Button("Done") { dismiss() } }
+        }
+        .sheet(isPresented: $showCustomerLink) {
+            CustomerLinkSheet { picked in
+                Task {
+                    // DesignPatch.customer_id is UUID? (not String); pass picked.id directly.
+                    _ = try? await DesignsService.update(
+                        design.id,
+                        patch: .init(name: nil, status: nil, garment_type: nil,
+                                     occasion: nil, notes_md: nil, customer_id: picked.id))
+                    customer = picked
+                }
+            }
         }
         .task {
             renders = (try? await DesignRendersService.listForDesign(design.id)) ?? []

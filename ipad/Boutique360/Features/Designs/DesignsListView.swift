@@ -3,6 +3,7 @@ import SwiftUI
 /// HIG-aligned designs gallery. Grid on iPad with cover thumbnails.
 /// PencilKit sketch canvas comes in Plan 4 — for now, designs are text + ref images.
 struct DesignsListView: View {
+    @EnvironmentObject private var ctx: BoutiqueContext
     @State private var designs: [Design] = []
     @State private var customers: [UUID: Customer] = [:]
     @State private var filter: DesignStatus? = nil
@@ -10,6 +11,7 @@ struct DesignsListView: View {
     @State private var loading = false
     @State private var showCreate = false
     @State private var loadError: String?
+    @State private var newReferenceDesign: Design?
 
     private let columns = [GridItem(.adaptive(minimum: 220), spacing: 16)]
 
@@ -60,11 +62,24 @@ struct DesignsListView: View {
                 .pickerStyle(.menu)
             }
             ToolbarItem(placement: .primaryAction) {
-                Button { showCreate = true } label: { Label("New", systemImage: "plus") }
+                Menu {
+                    Button { showCreate = true } label: { Label("New design", systemImage: "plus") }
+                    Button { Task { await startFromPhoto() } } label: {
+                        Label("From inspo photo", systemImage: "photo.badge.plus")
+                    }
+                } label: {
+                    Label("New", systemImage: "plus")
+                }
             }
         }
         .navigationDestination(for: Design.self) { d in
             DesignDetailView(design: d, customerName: customers[d.customerId ?? UUID()]?.name)
+        }
+        .sheet(item: $newReferenceDesign) { d in
+            NavigationStack {
+                ReferenceStudioView(design: d) { _ in Task { await load() } }
+            }
+            .presentationDetents([.large])
         }
         .sheet(isPresented: $showCreate) {
             NavigationStack {
@@ -92,6 +107,27 @@ struct DesignsListView: View {
             }
         }
         return result
+    }
+
+    /// Create a draft Design seeded for a reference photo, then open the studio.
+    /// (Reference upload needs a design.id, so the row must exist first.)
+    private func startFromPhoto() async {
+        guard let bid = ctx.boutiqueId else { return }
+        let name = "Inspo — \(Date().formatted(date: .abbreviated, time: .omitted))"
+        do {
+            let d = try await DesignsService.create(NewDesign(
+                boutique_id: bid,
+                customer_id: nil,
+                name: name,
+                status: DesignStatus.draft.rawValue,
+                garment_type: nil,
+                occasion: nil,
+                notes_md: nil,
+                created_by_staff_id: nil))
+            newReferenceDesign = d
+        } catch {
+            loadError = error.localizedDescription
+        }
     }
 
     private func load() async {
