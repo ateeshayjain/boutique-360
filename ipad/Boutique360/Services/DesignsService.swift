@@ -73,6 +73,15 @@ enum DesignsService {
             .eq("id", value: designId)
             .execute()
     }
+
+    /// Persist the reference image's canonical path. Mirrors saveSketchPath.
+    static func saveReferenceImagePath(designId: UUID, path: String) async throws {
+        struct ReferencePatch: Encodable { let reference_image_path: String }
+        _ = try await SupabaseService.client.from("designs")
+            .update(ReferencePatch(reference_image_path: path))
+            .eq("id", value: designId)
+            .execute()
+    }
 }
 
 enum LookbooksService {
