@@ -61,6 +61,7 @@
 		78AA949DF3EB07E3678D8CEC /* SketchCanvasView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A35A89FB3A8A1E2ADD1A999 /* SketchCanvasView.swift */; };
 		7A85C706C713FE590D928ACD /* ModelDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794FBB04EB0EE2D819A44205 /* ModelDecodingTests.swift */; };
 		8815BF21F8E056D32B6A7A5F /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B00FCF5C94D1A41AFB521B6 /* Log.swift */; };
+		88B0947BE7CFB88991C39FF6 /* ReferenceStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3C298A5F658C09E577D6FC /* ReferenceStudioView.swift */; };
 		8DF54D169A390D036680A486 /* MeasurementFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA29427CF5F8C65947177AB4 /* MeasurementFormView.swift */; };
 		8FFAFB40924BC16D12DC0E38 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */; };
 		92CAEE3D77F9B3E01D4A2107 /* DesignRendersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 845EE245EB7CFC98E6E1253F /* DesignRendersService.swift */; };
@@ -170,6 +171,7 @@
 		78511745DEAA05544D97B302 /* AppEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEvents.swift; sourceTree = "<group>"; };
 		789DE6A8A8FAB2334510972E /* Boutique.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boutique.swift; sourceTree = "<group>"; };
 		794FBB04EB0EE2D819A44205 /* ModelDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDecodingTests.swift; sourceTree = "<group>"; };
+		7A3C298A5F658C09E577D6FC /* ReferenceStudioView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceStudioView.swift; sourceTree = "<group>"; };
 		7B5D169D90967E0A6EC89F9B /* Config.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Config.swift; sourceTree = "<group>"; };
 		7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		809AB65E410865D605DD1486 /* CustomerStyleProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerStyleProfileView.swift; sourceTree = "<group>"; };
@@ -297,6 +299,7 @@
 				2F5036E60A9CF0E902B748A6 /* DesignFormView.swift */,
 				531B614F104FBB0C1B8F63D6 /* DesignsListView.swift */,
 				EE00060E9A0163F499E59AB9 /* ImageInputPicker.swift */,
+				7A3C298A5F658C09E577D6FC /* ReferenceStudioView.swift */,
 				4551D6EF99333ED60155F040 /* RenderView.swift */,
 				9A35A89FB3A8A1E2ADD1A999 /* SketchCanvasView.swift */,
 				45D48599DC88D52C76C53913 /* VirtualTryOnView.swift */,
@@ -691,6 +694,7 @@
 				CC880316E58BB3BD3CBC5850 /* OrdersService.swift in Sources */,
 				D4B8B3D52DDA61929077A0D3 /* PaymentsSectionView.swift in Sources */,
 				1B442A269992631F22CAA512 /* PaymentsService.swift in Sources */,
+				88B0947BE7CFB88991C39FF6 /* ReferenceStudioView.swift in Sources */,
 				A46DD4170D5B99FDF7999675 /* RenderView.swift in Sources */,
 				A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */,
 				631A2B06BAA7191CB4DDB8AC /* SettingsView.swift in Sources */,
