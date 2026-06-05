@@ -49,6 +49,31 @@ enum GeminiService {
         return try await generateImage(prompt: prompt, inputImages: images)
     }
 
+    /// Renders a garment from a customer-supplied reference photo (e.g. a dress
+    /// from Pinterest/Instagram/camera roll), re-imagined in the chosen fabric.
+    /// The reference image is the FIRST input; optional fabric swatches follow.
+    /// `generateImage` enforces the per-boutique AICostMeter ceiling internally.
+    static func renderGarmentFromReference(
+        reference: UIImage,
+        fabricImages: [UIImage] = [],
+        fabricDescription: String? = nil,
+        garmentType: String?,
+        occasion: String?,
+        styleNotes: String? = nil
+    ) async throws -> UIImage {
+        guard !Config.geminiApiKey.isEmpty else { throw GeminiError.notConfigured }
+
+        let prompt = PromptTemplates.renderGarmentFromReference(
+            garmentType: garmentType,
+            occasion: occasion,
+            fabricDescription: fabricDescription,
+            fabricImageCount: fabricImages.count,
+            styleNotes: styleNotes
+        )
+        let images = [reference] + fabricImages
+        return try await generateImage(prompt: prompt, inputImages: images)
+    }
+
     /// Generates a Romanized-Hindi tailor brief from structured design data.
     /// Output is plain text suitable for the bottom of the Job Card PDF or
     /// pasting into a WhatsApp message to the karigar.
@@ -273,6 +298,29 @@ enum PromptTemplates {
 
         Output ONLY the Hindi brief text. No explanations, no English headers, no markdown.
         """
+    }
+
+    static func renderGarmentFromReference(
+        garmentType: String?,
+        occasion: String?,
+        fabricDescription: String?,
+        fabricImageCount: Int,
+        styleNotes: String?
+    ) -> String {
+        var p = """
+        You are a fashion illustrator. The FIRST image is a reference photo of a \
+        garment the customer likes. Recreate that garment as a single photorealistic \
+        finished piece, preserving its silhouette, neckline, and overall design.
+        """
+        if fabricImageCount > 0 {
+            p += "\n\nThe next \(fabricImageCount) image(s) are fabric swatches — render the garment in this fabric."
+        }
+        if let d = fabricDescription, !d.isEmpty { p += "\nFabric: \(d)" }
+        if let g = garmentType { p += "\nGarment type: \(g)" }
+        if let o = occasion { p += "\nOccasion: \(o)" }
+        if let s = styleNotes, !s.isEmpty { p += "\nStyle notes: \(s)" }
+        p += "\n\nReturn a single image on a clean white studio background. Do not include the original reference photo's background or any person."
+        return p
     }
 
     static func virtualTryOn(garmentType: String?) -> String {
