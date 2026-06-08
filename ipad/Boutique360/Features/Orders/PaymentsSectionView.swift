@@ -79,12 +79,12 @@ struct PaymentsSectionView: View {
             // and the suggested amount would be the full order total.
             .disabled(balanceDue <= 0 || loadError != nil)
 
-            if balanceDue > 0, let cust = customer, cust.consentWhatsapp, cust.phone != nil {
+            if balanceDue > 0, let cust = customer, cust.consentWhatsapp, cust.whatsappTarget != nil {
                 Button {
                     let firstName = cust.name.split(separator: " ").first.map(String.init) ?? cust.name
                     let boutiqueName = ctx.boutique?.name ?? "Boutique"
                     let msg = "Hi \(firstName), a gentle reminder — balance of \(format(balanceDue)) is pending on order \(order.orderNumber). UPI / card / cash all accepted. Thank you! — \(boutiqueName)"
-                    WhatsAppShareHelper.open(phone: cust.phone, message: msg)
+                    WhatsAppShareHelper.open(phone: cust.whatsappTarget, message: msg)
                 } label: {
                     Label("Send payment reminder on WhatsApp", systemImage: "message.fill")
                         .foregroundStyle(.green)

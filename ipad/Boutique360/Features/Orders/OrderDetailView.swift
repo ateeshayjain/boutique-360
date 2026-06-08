@@ -106,10 +106,10 @@ struct OrderDetailView: View {
                     .font(.caption2).foregroundStyle(.tertiary)
             }
 
-            if let cust = customer, cust.consentWhatsapp, cust.phone != nil {
+            if let cust = customer, cust.consentWhatsapp, cust.whatsappTarget != nil {
                 Section("WhatsApp customer") {
                     Button {
-                        WhatsAppShareHelper.open(phone: cust.phone, message: whatsAppMessage(for: current.status, customer: cust))
+                        WhatsAppShareHelper.open(phone: cust.whatsappTarget, message: whatsAppMessage(for: current.status, customer: cust))
                     } label: {
                         Label(whatsAppLabel(for: current.status), systemImage: "message.fill")
                             .foregroundStyle(.green)
@@ -201,8 +201,11 @@ struct OrderDetailView: View {
             boutiqueAddress: boutique.address ?? "",
             boutiqueGSTIN: boutique.gstin,
             customerName: customerName ?? "Customer",
-            customerPhone: nil,
-            customerAddress: nil,
+            // Wave 1: use the customer's billing phone (not WA #) on invoices,
+            // and the structured address when present. Falling back to nil
+            // keeps the existing "no address captured" layout.
+            customerPhone: customer?.phone,
+            customerAddress: customer?.address?.multiLine.nonEmpty,
             items: lines,
             subtotal: current.subtotal,
             gstAmount: current.gstAmount,
@@ -290,4 +293,10 @@ struct OrderDetailView: View {
     }
 
     private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
+}
+
+private extension String {
+    /// Returns nil instead of an empty string — useful for converting
+    /// "" sentinels into honest absence before passing to optional APIs.
+    var nonEmpty: String? { isEmpty ? nil : self }
 }

@@ -141,10 +141,10 @@ struct CustomerDetailView: View {
             Button { showAddInquiry = true } label: {
                 Label("New inquiry", systemImage: "envelope.badge.fill")
             }.buttonStyle(.borderedProminent)
-            if customer.consentWhatsapp, customer.phone != nil {
+            if customer.consentWhatsapp, customer.whatsappTarget != nil {
                 Button {
                     WhatsAppShareHelper.open(
-                        phone: customer.phone,
+                        phone: customer.whatsappTarget,
                         message: "Namaste \(customer.name.split(separator: " ").first.map(String.init) ?? customer.name)! "
                     )
                 } label: {

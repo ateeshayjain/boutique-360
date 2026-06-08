@@ -45,10 +45,10 @@ struct ImportantDatesListView: View {
                                         Text("in \(daysFromNow(item.date)) days")
                                             .font(.caption2).foregroundStyle(.tertiary)
                                     }
-                                    if let cust = item.customer, cust.consentWhatsapp, cust.phone != nil {
+                                    if let cust = item.customer, cust.consentWhatsapp, cust.whatsappTarget != nil {
                                         Button {
                                             WhatsAppShareHelper.open(
-                                                phone: cust.phone,
+                                                phone: cust.whatsappTarget,
                                                 message: greetingMessage(for: item.importantDate.occasion, customer: cust)
                                             )
                                         } label: {
