@@ -75,7 +75,9 @@ boutique-360/
 - **GSTIN:** 15-char checksummed format; validate with `GSTINValidator` at form submit. Empty is allowed (invoices just disabled).
 - **DPDP Act 2023 (legal, not optional):** customer VTO photos are sensitive data. Consent timestamp captured **at the moment of consent** (before the Gemini call), persisted to `design_tryons`. Photos auto-purge after **7 days** via the `purge-expired-tryons` Edge Function (daily pg_cron 02:30 IST) unless `saved_to_lookbook`. PII never logged. See `docs/dpdp-compliance.md`.
 - **AI cost ceiling:** every Gemini call goes through `AICostMeter.checkCeiling` → `record_ai_usage` RPC (server-side, tamper-proof). Default $5/boutique/day. Image gen ≈ $0.04/call, text ≈ $0.001.
-- **WhatsApp:** uses `wa.me` deep links (no Business API). Text messages only; images shared via SwiftUI `ShareLink`. Owner reviews every message before sending. India phone normalization in `WhatsAppShareHelper`. Only show the button when `customer.consentWhatsapp && phone != nil`.
+- **WhatsApp:** uses `wa.me` deep links (no Business API). Text messages only; images shared via SwiftUI `ShareLink`. Owner reviews every message before sending. India phone normalization in `WhatsAppShareHelper`. Use `customer.whatsappTarget` (NOT `customer.phone`) — falls back to phone when no separate WA # is set.
+- **Email / SMS / Razorpay are credential-gated.** Pattern: `Config.<service>Enabled` boolean, button shown with discoverable hint when disabled (`"add SENDGRID_API_KEY to enable"`), never silently hidden. New external-API integrations MUST follow this pattern — see Wave 3/4 in `docs/spec-gaps-waves-1-6.md`.
+- **DPDP consent is enforced in `CustomerNotifier`, not at call sites.** New send paths go through `CustomerNotifier.sendEmail/sendSMS` so the consent check is a single audit point.
 - **Job card / tailor brief:** hybrid PDF — structured visual top + AI-generated **Romanized Hindi (Hinglish)** brief for the karigar. The Hinglish prompt is a deliberate UX choice (older karigars read it faster).
 - **Status fields are advisory in the model** (`var status`), enforced by the UI consulting `nextOptions`. Don't leapfrog states in code.
 
@@ -131,8 +133,13 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | Supabase client | `Services/SupabaseService.swift` |
 | Current boutique/staff session | `Services/BoutiqueContext.swift` |
 | Storage upload + signed URLs + bucket enum | `Services/StorageService.swift` |
-| AI render / VTO / tailor brief + prompts | `Services/GeminiService.swift` |
+| AI render / VTO / tailor brief / style suggestions + prompts | `Services/GeminiService.swift` |
 | AI cost ceiling | `Services/AICostMeter.swift` |
+| Email (SendGrid) / SMS (Twilio) | `Services/SendGridClient.swift`, `Services/TwilioClient.swift` |
+| Unified WA + Email + SMS dispatch (DPDP consent enforced here) | `Services/CustomerNotifier.swift` |
+| Razorpay payment-link generation | `Services/RazorpayClient.swift` |
+| Per-customer spend aggregator (pure, tested) | `Utilities/CustomerSpend.swift` |
+| Garment template silhouettes for sketch canvas | `Features/Designs/GarmentTemplate.swift` |
 | Order create (atomic RPC) | `Services/OrdersService.swift` |
 | Customer journey aggregation | `Services/CustomerTimelineService.swift` |
 | GST invoice / job-card PDFs | `Services/InvoicePDFGenerator.swift`, `Services/JobCardPDFGenerator.swift` |
