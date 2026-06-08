@@ -26,6 +26,9 @@ struct CustomerDetailView: View {
                 journeySection
                 styleSection
                 datesSection
+                // Wave 2: per-customer spend report. Pure-render over the
+                // already-loaded `orders` array — no extra DB call.
+                CustomerSpendSummaryView(orders: orders)
                 ordersSection
                 measurementsSection
                 inquiriesSection
