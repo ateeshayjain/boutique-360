@@ -53,6 +53,23 @@ struct SettingsView: View {
                 LabeledContent("Supabase URL", value: Config.supabaseURL.host ?? "—")
                 LabeledContent("App version", value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—")
             }
+
+            // Wave 3+4: optional-integration status. Each row is purely
+            // diagnostic — the actual switch lives in Secrets.xcconfig.
+            // Helps the owner discover that these features exist + know
+            // exactly which credential is missing.
+            Section("Integrations") {
+                integrationRow("AI (Gemini)",        enabled: Config.aiEnabled,
+                               key: "GEMINI_API_KEY")
+                integrationRow("Email (SendGrid)",   enabled: Config.emailEnabled,
+                               key: "SENDGRID_API_KEY + SENDGRID_FROM")
+                integrationRow("SMS (Twilio)",       enabled: Config.smsEnabled,
+                               key: "TWILIO_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM")
+                integrationRow("Razorpay payments",  enabled: Config.razorpayEnabled,
+                               key: "RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET")
+                Text("Add credentials to Secrets.xcconfig (gitignored). WhatsApp link-flow always works regardless.")
+                    .font(.caption2).foregroundStyle(.tertiary)
+            }
             Section {
                 Button(role: .destructive) {
                     confirmSignOut = true
@@ -86,6 +103,21 @@ struct SettingsView: View {
             allowsMultipleSelection: false
         ) { result in
             Task { await handleImport(result: result) }
+        }
+    }
+
+    // MARK: - Integrations status row
+
+    @ViewBuilder
+    private func integrationRow(_ name: String, enabled: Bool, key: String) -> some View {
+        HStack {
+            Image(systemName: enabled ? "checkmark.circle.fill" : "circle")
+                .foregroundStyle(enabled ? .green : .secondary)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name)
+                Text(enabled ? "Enabled" : "Disabled — set \(key)")
+                    .font(.caption2).foregroundStyle(.secondary)
+            }
         }
     }
 
