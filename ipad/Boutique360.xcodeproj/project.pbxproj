@@ -38,6 +38,7 @@
 		47DCCD8355C934670FA1DE29 /* AppointmentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2AB779DCC412E6489076985 /* AppointmentsService.swift */; };
 		491C46CD7DD3C8FB990BE716 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562812B13F7D90510B109E44 /* AppShellView.swift */; };
 		496750A87198099EACC4CB27 /* EnumDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62D7FAC992BCFA6EEE2E5BB /* EnumDecodingTests.swift */; };
+		4B4B4778A1D9B12862832D95 /* StyleSuggestionsSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC73C87086D30EB4B20BEB12 /* StyleSuggestionsSheet.swift */; };
 		4C36CD68C4A50EFB987D6450 /* CalendarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1EE7AE14DC7655A5808B26EE /* CalendarView.swift */; };
 		543FBF536AEF6CDB326F3833 /* BoutiqueService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C4CFDA669F1F48B1EC4C45 /* BoutiqueService.swift */; };
 		56BD952314C4D2F871545F14 /* CustomerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62698AE8EF9998C8AFC44AFE /* CustomerFormView.swift */; };
@@ -244,6 +245,7 @@
 		EE48B5A70951F6D5B3A94BD6 /* TwilioNormalizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwilioNormalizeTests.swift; sourceTree = "<group>"; };
 		F2C5E3128DEEB781A8374FAA /* JobCardsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardsService.swift; sourceTree = "<group>"; };
 		FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersListView.swift; sourceTree = "<group>"; };
+		FC73C87086D30EB4B20BEB12 /* StyleSuggestionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleSuggestionsSheet.swift; sourceTree = "<group>"; };
 		FCA05E72225F45775FE60623 /* ImportantDateFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDateFormView.swift; sourceTree = "<group>"; };
 		FCC52E91DEA4DD15C24EAA01 /* Measurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Measurement.swift; sourceTree = "<group>"; };
 		FCDDEB6EF95DEBA783A69D77 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
@@ -308,6 +310,7 @@
 				809AB65E410865D605DD1486 /* CustomerStyleProfileView.swift */,
 				E5B6AE141D1CE0FBA708766E /* CustomerTimelineEventStyling.swift */,
 				FCA05E72225F45775FE60623 /* ImportantDateFormView.swift */,
+				FC73C87086D30EB4B20BEB12 /* StyleSuggestionsSheet.swift */,
 			);
 			path = Customers;
 			sourceTree = "<group>";
@@ -734,6 +737,7 @@
 				1B87E7C081BAB5D8BDC61BBC /* SignInView.swift in Sources */,
 				78AA949DF3EB07E3678D8CEC /* SketchCanvasView.swift in Sources */,
 				BD166544FC31E672D764DE35 /* StorageService.swift in Sources */,
+				4B4B4778A1D9B12862832D95 /* StyleSuggestionsSheet.swift in Sources */,
 				C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */,
 				D8D0B3C1D796238425E736FE /* TwilioClient.swift in Sources */,
 				75498B08BB481C1A9F0B6458 /* VirtualTryOnView.swift in Sources */,
