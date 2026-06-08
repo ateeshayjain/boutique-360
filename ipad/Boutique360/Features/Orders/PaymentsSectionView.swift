@@ -12,6 +12,10 @@ struct PaymentsSectionView: View {
     @State private var defaultAmount: Double = 0
     @State private var loadError: String?
     @State private var loading = false
+    // Wave 4: Razorpay link generation state.
+    @State private var generatingLink = false
+    @State private var lastLinkUrl: String?
+    @State private var linkError: String?
 
     typealias PaymentRow = PaymentsService.OrderHistoryRow
 
@@ -90,6 +94,38 @@ struct PaymentsSectionView: View {
                         .foregroundStyle(.green)
                 }
             }
+
+            // Wave 4: Razorpay payment link. Generates a hosted UPI/card/
+            // netbanking page on rzp.io and (when consented) hands it
+            // straight to WhatsApp as the message body. No on-device card
+            // collection → no PCI scope.
+            if balanceDue > 0, let cust = customer {
+                if Config.razorpayEnabled {
+                    Button {
+                        Task { await generateAndShareLink(customer: cust) }
+                    } label: {
+                        HStack {
+                            Label(lastLinkUrl == nil ? "Create payment link" : "Re-share payment link",
+                                  systemImage: "link.badge.plus")
+                            Spacer()
+                            if generatingLink { ProgressView() }
+                        }
+                    }
+                    .disabled(generatingLink)
+
+                    if let url = lastLinkUrl {
+                        Text(url).font(.caption.monospaced())
+                            .foregroundStyle(.secondary).textSelection(.enabled)
+                    }
+                    if let err = linkError {
+                        Text(err).font(.caption).foregroundStyle(.red)
+                    }
+                } else {
+                    Label("Payment links — add RAZORPAY_KEY_ID / SECRET to enable",
+                          systemImage: "link")
+                        .foregroundStyle(.secondary).font(.caption)
+                }
+            }
         } header: {
             Text("Payments")
         }
@@ -121,6 +157,33 @@ struct PaymentsSectionView: View {
     }
 
     private func format(_ v: Double) -> String { Formatters.inr(v) }
+
+    /// Wave 4: generate a Razorpay payment link for the balance due and
+    /// share via WhatsApp if consented. Network in flight → UI shows a
+    /// spinner. The generated link is also displayed inline for copy.
+    @MainActor
+    private func generateAndShareLink(customer cust: Customer) async {
+        generatingLink = true; linkError = nil; defer { generatingLink = false }
+        let boutiqueName = ctx.boutique?.name ?? "Boutique"
+        do {
+            let link = try await RazorpayClient.createPaymentLink(
+                amountInRupees: balanceDue,
+                description: "Balance for order \(order.orderNumber) — \(boutiqueName)",
+                customer: cust,
+                referenceId: order.orderNumber
+            )
+            lastLinkUrl = link.shortUrl
+            // If the customer consented to WhatsApp, hand the link straight
+            // to wa.me. Else just leave the URL on screen for manual copy.
+            if cust.consentWhatsapp, let target = cust.whatsappTarget {
+                let firstName = cust.name.split(separator: " ").first.map(String.init) ?? cust.name
+                let msg = "Hi \(firstName), here's the secure payment link for ₹\(Int(balanceDue)) on order \(order.orderNumber) — \(link.shortUrl). Pay via UPI/card/netbanking. Thank you! — \(boutiqueName)"
+                WhatsAppShareHelper.open(phone: target, message: msg)
+            }
+        } catch {
+            linkError = error.localizedDescription
+        }
+    }
 
     private func load() async {
         loading = true; defer { loading = false }
