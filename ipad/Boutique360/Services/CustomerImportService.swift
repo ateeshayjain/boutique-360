@@ -77,8 +77,14 @@ enum CustomerImportService {
                     boutique_id: boutiqueId,
                     name: row.name,
                     phone: row.phone,
+                    // Wave 1: CSV import doesn't know about WA # / structured
+                    // address yet (no source column). Leave nil — owner can
+                    // edit per-row after import. Adding columns to the import
+                    // schema is a separate, additive change.
+                    whatsapp_phone: nil,
                     email: row.email,
                     dob: row.dob,
+                    address_json: nil,
                     tags: row.tags,
                     vip_status: row.vip,
                     source: row.source,

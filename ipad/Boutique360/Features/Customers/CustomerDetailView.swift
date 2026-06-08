@@ -16,6 +16,7 @@ struct CustomerDetailView: View {
     @State private var showAddDate: Bool = false
     @State private var showEditStyle: Bool = false
     @State private var showEdit: Bool = false
+    @State private var showSuggestStyles: Bool = false
     @State private var refreshTrigger: Int = 0
 
     var body: some View {
@@ -26,6 +27,9 @@ struct CustomerDetailView: View {
                 journeySection
                 styleSection
                 datesSection
+                // Wave 2: per-customer spend report. Pure-render over the
+                // already-loaded `orders` array — no extra DB call.
+                CustomerSpendSummaryView(orders: orders)
                 ordersSection
                 measurementsSection
                 inquiriesSection
@@ -89,6 +93,18 @@ struct CustomerDetailView: View {
             }
             .presentationDetents([.medium])
         }
+        .sheet(isPresented: $showSuggestStyles) {
+            // Wave 6: Pass the inquiries we've already loaded as the
+            // history signal; upcomingOccasion = nearest important date's
+            // occasion if present (best free signal we have).
+            StyleSuggestionsSheet(
+                customer: customer,
+                recentInquiries: inquiries,
+                recentOrderItems: [],   // not loaded at this level — skip for now
+                upcomingOccasion: dates.sorted(by: { $0.date < $1.date }).first?.occasion
+            )
+            .presentationDetents([.medium, .large])
+        }
         .task(id: refreshTrigger) { await load() }
     }
 
@@ -141,10 +157,19 @@ struct CustomerDetailView: View {
             Button { showAddInquiry = true } label: {
                 Label("New inquiry", systemImage: "envelope.badge.fill")
             }.buttonStyle(.borderedProminent)
-            if customer.consentWhatsapp, customer.phone != nil {
+            // Wave 6: Gemini-powered next-look suggestions.
+            // Hidden when AI is off — pointless without a key.
+            if Config.aiEnabled {
+                Button { showSuggestStyles = true } label: {
+                    Label("Suggest a look", systemImage: "sparkles")
+                }
+                .buttonStyle(.bordered)
+                .tint(.purple)
+            }
+            if customer.consentWhatsapp, customer.whatsappTarget != nil {
                 Button {
                     WhatsAppShareHelper.open(
-                        phone: customer.phone,
+                        phone: customer.whatsappTarget,
                         message: "Namaste \(customer.name.split(separator: " ").first.map(String.init) ?? customer.name)! "
                     )
                 } label: {

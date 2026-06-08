@@ -52,8 +52,10 @@ enum CustomersService {
     struct CustomerPatch: Encodable {
         var name: String?
         var phone: String?
+        var whatsapp_phone: String?
         var email: String?
         var dob: String?
+        var address_json: Address?
         var vip_status: Bool?
         var consent_whatsapp: Bool?
         var consent_email: Bool?

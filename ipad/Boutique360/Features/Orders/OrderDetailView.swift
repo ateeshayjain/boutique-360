@@ -13,6 +13,8 @@ struct OrderDetailView: View {
     @State private var invoiceError: String?
     @State private var customer: Customer?
     @State private var statusError: String?
+    @State private var notifyMessage: String?     // success/error toast
+    @State private var sending: Bool = false
 
     init(order: Order, customerName: String?) {
         self.order = order
@@ -106,17 +108,12 @@ struct OrderDetailView: View {
                     .font(.caption2).foregroundStyle(.tertiary)
             }
 
-            if let cust = customer, cust.consentWhatsapp, cust.phone != nil {
-                Section("WhatsApp customer") {
-                    Button {
-                        WhatsAppShareHelper.open(phone: cust.phone, message: whatsAppMessage(for: current.status, customer: cust))
-                    } label: {
-                        Label(whatsAppLabel(for: current.status), systemImage: "message.fill")
-                            .foregroundStyle(.green)
-                    }
-                    Text("Opens WhatsApp with a pre-filled, editable message.")
-                        .font(.caption2).foregroundStyle(.tertiary)
-                }
+            // Wave 3: unified notify panel — WhatsApp (always when consented) +
+            // Email (consented + configured) + SMS (consented + configured).
+            // Each channel is independently gated; missing config = disabled
+            // button with a hint, so the feature's existence is discoverable.
+            if let cust = customer {
+                notifySection(customer: cust)
             }
 
             Section("Magic link (customer-facing)") {
@@ -201,8 +198,11 @@ struct OrderDetailView: View {
             boutiqueAddress: boutique.address ?? "",
             boutiqueGSTIN: boutique.gstin,
             customerName: customerName ?? "Customer",
-            customerPhone: nil,
-            customerAddress: nil,
+            // Wave 1: use the customer's billing phone (not WA #) on invoices,
+            // and the structured address when present. Falling back to nil
+            // keeps the existing "no address captured" layout.
+            customerPhone: customer?.phone,
+            customerAddress: customer?.address?.multiLine.nonEmpty,
             items: lines,
             subtotal: current.subtotal,
             gstAmount: current.gstAmount,
@@ -290,4 +290,107 @@ struct OrderDetailView: View {
     }
 
     private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
+
+    // MARK: - Wave 3: unified notify section
+
+    @ViewBuilder
+    private func notifySection(customer cust: Customer) -> some View {
+        let boutiqueName = ctx.boutique?.name ?? "Boutique"
+        let plan = CustomerNotifier.orderReadyPlan(
+            for: current, customer: cust, boutiqueName: boutiqueName
+        )
+
+        // Hide the whole section if there's literally no consented channel.
+        if plan.whatsapp == nil && plan.email == nil && plan.sms == nil
+           && cust.email?.isEmpty != false && cust.whatsappTarget == nil {
+            EmptyView()
+        } else {
+            Section("Notify customer") {
+                // WhatsApp — keeps the existing link-flow behavior.
+                if let wa = plan.whatsapp {
+                    Button {
+                        WhatsAppShareHelper.open(phone: wa.target,
+                                                 message: whatsAppMessage(for: current.status, customer: cust))
+                    } label: {
+                        Label(whatsAppLabel(for: current.status), systemImage: "message.fill")
+                            .foregroundStyle(.green)
+                    }
+                }
+
+                // Email — direct SendGrid send.
+                if let em = plan.email {
+                    Button {
+                        Task { await sendEmail(em, customer: cust) }
+                    } label: {
+                        HStack {
+                            Label("Email \(em.to)", systemImage: "envelope.fill")
+                            Spacer()
+                            if sending { ProgressView() }
+                        }
+                    }
+                    .disabled(sending)
+                } else if let email = cust.email, !email.isEmpty {
+                    Label(Config.emailEnabled
+                          ? "Email — customer hasn't consented"
+                          : "Email — add SENDGRID_API_KEY to enable",
+                          systemImage: "envelope")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+
+                // SMS — direct Twilio send.
+                if let sms = plan.sms {
+                    Button {
+                        Task { await sendSMS(sms, customer: cust) }
+                    } label: {
+                        HStack {
+                            Label("SMS \(sms.to)", systemImage: "bubble.left.fill")
+                            Spacer()
+                            if sending { ProgressView() }
+                        }
+                    }
+                    .disabled(sending)
+                } else if cust.whatsappTarget != nil {
+                    Label(Config.smsEnabled
+                          ? "SMS — uses WhatsApp consent flag"
+                          : "SMS — add TWILIO_SID/AUTH_TOKEN/FROM to enable",
+                          systemImage: "bubble.left")
+                        .foregroundStyle(.secondary)
+                        .font(.caption)
+                }
+
+                if let m = notifyMessage {
+                    Text(m).font(.caption).foregroundStyle(.secondary)
+                }
+            }
+        }
+    }
+
+    @MainActor
+    private func sendEmail(_ plan: CustomerNotifier.EmailPlan, customer cust: Customer) async {
+        sending = true; defer { sending = false }
+        do {
+            try await CustomerNotifier.sendEmail(plan, customer: cust)
+            notifyMessage = "Email sent to \(plan.to)."
+        } catch {
+            notifyMessage = "Couldn't send email: \(error.localizedDescription)"
+        }
+    }
+
+    @MainActor
+    private func sendSMS(_ plan: CustomerNotifier.SMSPlan, customer cust: Customer) async {
+        sending = true; defer { sending = false }
+        do {
+            try await CustomerNotifier.sendSMS(plan, customer: cust)
+            notifyMessage = "SMS sent to \(plan.to)."
+        } catch {
+            notifyMessage = "Couldn't send SMS: \(error.localizedDescription)"
+        }
+    }
+}
+
+private extension String {
+    /// Returns nil instead of an empty string — useful for converting
+    /// "" sentinels into honest absence before passing to optional APIs.
+    var nonEmpty: String? { isEmpty ? nil : self }
 }

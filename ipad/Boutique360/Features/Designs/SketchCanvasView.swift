@@ -19,12 +19,22 @@ struct SketchCanvasView: View {
     @State private var saving = false
     @State private var error: String?
     @State private var canvasFrame: CGRect = .zero
+    // Wave 5: optional template guide rendered as a faint dashed outline
+    // BELOW fabric overlays + strokes. Nil = no template, freeform canvas.
+    @State private var template: GarmentTemplate?
 
     var body: some View {
         ZStack {
             GeometryReader { geo in
                 ZStack {
                     Color(.systemBackground)
+
+                    // Wave 5: garment template guide BELOW everything.
+                    // `allowsHitTesting(false)` inside the overlay so
+                    // strokes still register on the PencilKit layer.
+                    if let t = template {
+                        GarmentTemplateOverlay(template: t)
+                    }
 
                     // Fabric overlays underneath the strokes
                     ForEach($fabricOverlays) { $overlay in
@@ -51,6 +61,19 @@ struct SketchCanvasView: View {
                 // Camera + Library fabric input (fixes the library-only camera gap).
                 ImageInputPicker(allowedSources: [.camera, .library]) { img in
                     addFabricOverlay(img)
+                }
+                Spacer()
+                // Wave 5: garment template picker. Menu so it's one tap
+                // to pick / remove without leaving the canvas.
+                Menu {
+                    Button("No template") { template = nil }
+                    Divider()
+                    ForEach(GarmentTemplate.allCases) { t in
+                        Button(t.displayName) { template = t }
+                    }
+                } label: {
+                    Label(template?.displayName ?? "Template",
+                          systemImage: template == nil ? "rectangle.dashed" : "rectangle.dashed.and.paperclip")
                 }
                 Spacer()
                 Button(role: .destructive) {
@@ -127,6 +150,20 @@ struct SketchCanvasView: View {
             // White background (good for AI input)
             UIColor.white.setFill()
             ctx.fill(CGRect(origin: .zero, size: size))
+
+            // Wave 5: bake the template outline into the raster so the AI
+            // renderer sees the silhouette the designer was tracing. Faint
+            // (alpha 0.25) so it nudges the AI without dominating strokes.
+            if let t = template {
+                let path = t.path(in: CGRect(origin: .zero, size: size))
+                UIColor.gray.withAlphaComponent(0.25).setStroke()
+                let cg = ctx.cgContext
+                cg.setLineWidth(2.0)
+                cg.setLineDash(phase: 0, lengths: [10, 6])
+                cg.addPath(path.cgPath)
+                cg.strokePath()
+                cg.setLineDash(phase: 0, lengths: [])    // reset for downstream draws
+            }
 
             // Scale + draw fabric overlays
             for overlay in fabricOverlays {

@@ -97,6 +97,51 @@ enum GeminiService {
         return try await generateText(prompt: prompt)
     }
 
+    // MARK: - Wave 6: AI style suggestions
+    /// Returns 3 next-look suggestions for a customer based on their order
+    /// history + style notes. Plain-text output (one suggestion per line,
+    /// `1. ... 2. ... 3. ...`) so the caller can split + render as cards
+    /// without parsing JSON. JSON would be more robust but adds a retry
+    /// loop for the times Gemini wraps the JSON in markdown fences.
+    static func suggestStyles(
+        customerName: String,
+        recentOccasions: [String],
+        recentGarmentTypes: [String],
+        styleNotes: String?,
+        upcomingOccasion: String?
+    ) async throws -> [String] {
+        guard !Config.geminiApiKey.isEmpty else { throw GeminiError.notConfigured }
+        let prompt = PromptTemplates.styleSuggestions(
+            customerName: customerName,
+            recentOccasions: recentOccasions,
+            recentGarmentTypes: recentGarmentTypes,
+            styleNotes: styleNotes,
+            upcomingOccasion: upcomingOccasion
+        )
+        let raw = try await generateText(prompt: prompt)
+        return parseSuggestionLines(raw)
+    }
+
+    /// Pull the 3 numbered lines out of the model's reply. Tolerant to
+    /// markdown bullets, blank lines, and "1)" vs "1." numbering.
+    private static func parseSuggestionLines(_ raw: String) -> [String] {
+        let lines = raw.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+        // Match lines starting with "1.", "1)", "- ", "•", or "*"
+        let pattern = #"^\s*(?:\d+[.)]|[-•*])\s+"#
+        let regex = try? NSRegularExpression(pattern: pattern)
+        let stripped = lines.compactMap { line -> String? in
+            guard let r = regex else { return line }
+            let range = NSRange(line.startIndex..., in: line)
+            let cleaned = r.stringByReplacingMatches(in: line, range: range, withTemplate: "")
+            return cleaned.isEmpty ? nil : cleaned
+        }
+        // Return the first 3 substantive lines (defensive cap — model
+        // sometimes adds a "hope this helps!" trailer we ignore).
+        return Array(stripped.prefix(3))
+    }
+
     /// Dresses a customer photo in the garment shown in `garmentImage`.
     /// The result preserves the customer's face/body while applying the garment realistically.
     static func virtualTryOn(
@@ -338,6 +383,52 @@ enum PromptTemplates {
         - Studio-quality fashion photography lighting
         - Neutral or softly-blurred background
         - No text overlays. Output a subtle 'Boutique 360 — preview' watermark at the bottom-right corner
+        """
+    }
+
+    // MARK: - Wave 6: Style suggestions
+
+    /// Builds the "what should this customer wear next" prompt. We give
+    /// the model the customer's recent history + the upcoming occasion
+    /// and ask for 3 concrete looks. Short, actionable language — the
+    /// designer should be able to walk into the next consultation
+    /// already knowing what to pull from the rack.
+    static func styleSuggestions(
+        customerName: String,
+        recentOccasions: [String],
+        recentGarmentTypes: [String],
+        styleNotes: String?,
+        upcomingOccasion: String?
+    ) -> String {
+        let firstName = customerName.split(separator: " ").first.map(String.init) ?? customerName
+        let occasionsStr = recentOccasions.isEmpty
+            ? "no specific occasions logged yet"
+            : recentOccasions.joined(separator: ", ")
+        let garmentsStr = recentGarmentTypes.isEmpty
+            ? "no specific garments logged yet"
+            : recentGarmentTypes.joined(separator: ", ")
+        let notesStr = styleNotes.map { "Style notes from the designer: \($0)" } ?? "No style notes yet."
+        let nextStr = upcomingOccasion.map { "Upcoming occasion: \($0)." } ?? "No specific upcoming occasion."
+
+        return """
+        You are a senior Indian boutique designer suggesting next looks for an existing customer.
+
+        Customer: \(firstName)
+        Recent occasions: \(occasionsStr)
+        Recent garment types: \(garmentsStr)
+        \(notesStr)
+        \(nextStr)
+
+        Output EXACTLY 3 concrete style suggestions, each on its own line, numbered 1–3.
+        Each suggestion must include:
+        - silhouette (e.g. anarkali, saree, sharara, lehenga, kurta set, fusion gown)
+        - one fabric (e.g. emerald Banarasi silk, ivory chanderi, kanjivaram brocade)
+        - one occasion this suits (haldi, sangeet, reception, festive, daywear)
+        - one signature detail (e.g. gota patti border, mirror work yoke, zardozi blouse)
+
+        Format: "1. <silhouette> in <fabric> — perfect for <occasion>, finished with <detail>."
+
+        Keep it tight (one sentence per number). Do NOT add headers, intros, or sign-offs. Do NOT use markdown bold/italic. Just the 3 numbered lines.
         """
     }
 }
