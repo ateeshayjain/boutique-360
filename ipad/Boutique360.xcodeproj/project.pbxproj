@@ -65,6 +65,7 @@
 		7A85C706C713FE590D928ACD /* ModelDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 794FBB04EB0EE2D819A44205 /* ModelDecodingTests.swift */; };
 		7C20E9A08730F26AD5E8AFBB /* SendGridClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAAD7B1458C3EE3EFBAA1C5A /* SendGridClient.swift */; };
 		8815BF21F8E056D32B6A7A5F /* Log.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B00FCF5C94D1A41AFB521B6 /* Log.swift */; };
+		8880119B63E872ED0384F0D4 /* GarmentTemplate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2E0DFFF6CFE3EA0D869CBF30 /* GarmentTemplate.swift */; };
 		88B0947BE7CFB88991C39FF6 /* ReferenceStudioView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7A3C298A5F658C09E577D6FC /* ReferenceStudioView.swift */; };
 		8DF54D169A390D036680A486 /* MeasurementFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA29427CF5F8C65947177AB4 /* MeasurementFormView.swift */; };
 		8FFAFB40924BC16D12DC0E38 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */; };
@@ -151,6 +152,7 @@
 		2184A70D6ED04D46C8289F81 /* StatusMachineTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusMachineTests.swift; sourceTree = "<group>"; };
 		224519E2F741ABBA0D3090E8 /* TwilioClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwilioClient.swift; sourceTree = "<group>"; };
 		261C703C9FEECA7301EE7CF9 /* CustomersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersService.swift; sourceTree = "<group>"; };
+		2E0DFFF6CFE3EA0D869CBF30 /* GarmentTemplate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GarmentTemplate.swift; sourceTree = "<group>"; };
 		2F5036E60A9CF0E902B748A6 /* DesignFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignFormView.swift; sourceTree = "<group>"; };
 		35A188402BDB0D4379A39B2F /* JobCardPDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardPDFGenerator.swift; sourceTree = "<group>"; };
 		368E0430D424AD8B2D3BB7C5 /* CustomerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerProfile.swift; sourceTree = "<group>"; };
@@ -317,6 +319,7 @@
 				67B75DFF054FA21FD73C7334 /* DesignDetailView.swift */,
 				2F5036E60A9CF0E902B748A6 /* DesignFormView.swift */,
 				531B614F104FBB0C1B8F63D6 /* DesignsListView.swift */,
+				2E0DFFF6CFE3EA0D869CBF30 /* GarmentTemplate.swift */,
 				EE00060E9A0163F499E59AB9 /* ImageInputPicker.swift */,
 				7A3C298A5F658C09E577D6FC /* ReferenceStudioView.swift */,
 				4551D6EF99333ED60155F040 /* RenderView.swift */,
@@ -691,6 +694,7 @@
 				56CFB9E4973ECABB108E88EB /* Formatters.swift in Sources */,
 				C3CACA179A86BF2EF3EA736C /* GSTINValidator.swift in Sources */,
 				36BDA2006336D7AF28A972F1 /* GSTReportExporter.swift in Sources */,
+				8880119B63E872ED0384F0D4 /* GarmentTemplate.swift in Sources */,
 				0E23288E6896CAB3D178D5C9 /* GeminiService.swift in Sources */,
 				D49FD1F5C9148B9E3BB42A10 /* ImageInputPicker.swift in Sources */,
 				74E9FB3FB01DC67AF00FFAC1 /* ImportantDateFormView.swift in Sources */,
