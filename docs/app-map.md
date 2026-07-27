@@ -195,23 +195,33 @@ transitions via enum `nextOptions` · money via `Money`/`Formatters.inr`.
 
 ---
 
-## 7. Where the map is heading (agreed direction, not yet built)
+## 7. Roadmap (agreed direction, not yet built)
 
-From the CRM-design discussion (see `customer-journey-3-month.md` lessons):
+**Everything here is iPad-native.** Web admin / storefront are retired from
+the roadmap (decision July 2026, reaffirming ADR 0001): the competitive
+teardown (`competitive/darzi-ai-teardown.md`) confirmed the CRM layer is
+commoditized web territory; the moat is the Pencil studio + Look lifecycle,
+which only the iPad delivers. A customer-facing magic-link order page remains
+a possible future; no owner-facing web app.
 
-1. **The Look lifecycle with a lock point** — discover → design → try-on →
-   **lock** (fabric code, meters, measurement-version pin, price breakup,
-   event-date back-planning, advance) → make → trial⟲alter → deliver.
-   Post-lock changes become change-orders.
-2. **`event_date` + slack engine** — slack = days-to-event − (work remaining +
-   alteration buffer + delivery). One primitive powers both the lock-time
-   "won't fit" warning and the morning board's risk sort.
-3. **Exception-first Dashboard** — needs-you list sorted by slack, money-due
-   tile, pipeline strip.
-4. **Fabric inventory** — bolts, codes, meters in/out, issue-to-job-card;
-   fills the "Fabrics" placeholder section.
-5. **Karigar ledger** — material issued, piece-rate dues, alteration-rate
-   quality metric.
+From the CRM-design discussion (`customer-journey-3-month.md` lessons) plus
+the competitive teardown:
 
-Build order: (2) → (3) → (1) → (4) → (5), because the slack primitive is the
-dependency for both the board and the lock screen.
+| # | Feature | Why | Source |
+|---|---|---|---|
+| R1 | **`event_date` + slack engine** — slack = days-to-event − (work remaining + alteration buffer + delivery) | One primitive powers R2 and R3; prevents the week-11 late delivery | Journey lesson 1 |
+| R2 | **Exception-first morning board** — needs-you list sorted by slack, money-due tile (incl. link-sent-unopened state), pipeline strip | The owner's question is "what goes wrong if I don't touch it today" | Morning-board design |
+| R3 | **Lock screen** — freeze render + fabric code + measurement-version pin + price breakup + date plan; advance required; post-lock changes = change-orders | The Look's one irreversible moment; stops spec disputes and date slips | CRM-design discussion |
+| R4a | **Auto-drafted reminders, one-tap approve** — trial/payment/ready messages drafted by status hooks, owner approves in bulk | Darzi AI fires these automatically; we keep review as a feature not a tax | Teardown §4.1 |
+| R4b | **PIN-scoped staff roles** — finance hidden from tailor/assistant PINs | Darzi shipped what we deferred; cheaper than full multi-auth RLS rework | Teardown §4.2 |
+| R4c | **Fabric-meters estimate on job cards** — Gemini already writes the brief; ask for meters too | Cheap, high daily utility | Teardown §4.3 |
+| R5 | **Fabric inventory** — bolts, codes, meters in/out, issue-to-job-card | Fills the "Fabrics" sidebar slot; feeds real costing + the lock screen's in-stock check | Flow-map gap |
+| R6 | **Karigar ledger** — material issued, piece-rate dues, alteration-rate per karigar | Fills production back-of-house; quality metric | Flow-map gap |
+
+Build order: R1 → R2 → R3 → R4 (a/b/c parallelizable) → R5 → R6.
+R1 is the dependency for R2 + R3; R4 items are independent absorbs; R5
+unblocks the lock screen's fabric-code check but the lock screen ships
+without it first (free-text fabric code until inventory exists).
+
+**Watch items** (from the teardown): Darzi AI shipping any sketch/design
+tool · pricing going public · an iPad app · a fabric-inventory module.

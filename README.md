@@ -1,37 +1,58 @@
 # Boutique 360
 
-iPad-native designer workflow + (planned) web admin + (planned) public storefront for a single boutique business in India. Currently in pilot stage with the iPad app fully functional against a live Supabase backend.
+**iPad-native CRM + AI design studio for a designer boutique in India.** One
+object — the *Look* — carried from inspiration to delivery: reference photo or
+Apple Pencil sketch → fabric → photoreal AI render → virtual try-on → order →
+Hinglish job card for the karigar → GST invoice → lookbook. In pilot, used
+daily against a live Supabase backend.
+
+**Strategy (July 2026):** iPad-native is the product, not a phase. The Indian
+tailoring-CRM market is crowded (Darzee, Boutique Page, Darzi AI — see
+[competitive teardown](docs/competitive/darzi-ai-teardown.md)) and the CRM
+layer is commoditized. The defensible ground is the **design studio + the Look
+lifecycle** — Pencil sketching, fabric draping, and a try-on that shows a
+garment that doesn't exist yet. Web surfaces (admin, storefront) are retired
+from the roadmap; a customer-facing magic-link order page remains a possible
+future, but no owner-facing web app.
 
 ## Documentation
 
 | Doc | What it covers |
 |---|---|
-| [docs/user-journeys.md](docs/user-journeys.md) | Day-in-the-life scenarios — 8 journeys grounded in the actual boutique owner persona |
-| [docs/user-flows.md](docs/user-flows.md) | Mermaid diagrams for auth, magic moment, status updates, error surfacing, DPDP lifecycle, etc. |
-| [docs/architecture.md](docs/architecture.md) | Stack, module map, core design rules (signed URL discipline, RPC atomicity, RLS belt-and-braces, error pipeline) + Service catalogue table |
-| [docs/architecture-diagrams.md](docs/architecture-diagrams.md) | C4 model — System Context, Container, Component diagrams (Mermaid) |
-| [docs/adr/](docs/adr/) | Architecture Decision Records — *why* the foundational choices (5 ADRs) |
-| [docs/observability.md](docs/observability.md) | Logging, metrics, alerting plan + what's shipped vs deferred |
-| [docs/testing-guide.md](docs/testing-guide.md) | How to run + add unit tests; what we test and (deliberately) don't |
-| [docs/runbooks/](docs/runbooks/) | Operational playbooks (bad-deploy rollback, Gemini outage, multi-tenant onboarding) |
-| [docs/privacy-policy.md](docs/privacy-policy.md) | DPDP-compliant customer-facing policy (ready for App Store once boutique-specific details filled) |
-| [docs/deployment.md](docs/deployment.md) | Environments, schema change workflow, Edge Function deploy, TestFlight, monitoring |
-| [docs/dpdp-compliance.md](docs/dpdp-compliance.md) | DPDP Act 2023 posture: what we collect, legal basis, retention, security controls, known gaps |
-| [docs/api-rpcs.md](docs/api-rpcs.md) | Postgres RPC reference (`create_order_with_items`, `next_sequence_value`, etc.) |
+| [docs/app-map.md](docs/app-map.md) | **Screen-by-screen map** — 33 views, journeys, department hats, integrations, data spine, roadmap |
+| [docs/customer-journey-3-month.md](docs/customer-journey-3-month.md) | The "Priya" journey — 4 orders, varied lifecycles, lessons → backlog |
+| [docs/competitive/darzi-ai-teardown.md](docs/competitive/darzi-ai-teardown.md) | Teardown of the closest competitor; threats to absorb + confirmed moat |
+| [docs/spec-gaps-waves-1-6.md](docs/spec-gaps-waves-1-6.md) | The 6-wave spec-coverage build (address/WA#, spend report, Email/SMS, Razorpay, templates, AI suggestions) |
+| [docs/user-journeys.md](docs/user-journeys.md) | Day-in-the-life scenarios — 8 journeys grounded in the owner persona |
+| [docs/user-flows.md](docs/user-flows.md) | Mermaid diagrams — auth, magic moment, status updates, DPDP lifecycle |
+| [docs/architecture.md](docs/architecture.md) | Stack, module map, core design rules + Service catalogue |
+| [docs/architecture-diagrams.md](docs/architecture-diagrams.md) | C4 model diagrams |
+| [docs/adr/](docs/adr/) | Architecture Decision Records (5) — *why* the foundational choices |
+| [docs/observability.md](docs/observability.md) | Logging, metrics, alerting — shipped vs deferred |
+| [docs/testing-guide.md](docs/testing-guide.md) | How to run + add tests; what we deliberately don't test |
+| [docs/runbooks/](docs/runbooks/) | Bad-deploy rollback, Gemini outage, multi-tenant onboarding |
+| [docs/privacy-policy.md](docs/privacy-policy.md) | DPDP-compliant customer-facing policy |
+| [docs/deployment.md](docs/deployment.md) | Environments, schema workflow, Edge Functions, TestFlight |
+| [docs/dpdp-compliance.md](docs/dpdp-compliance.md) | DPDP Act 2023 posture |
+| [docs/api-rpcs.md](docs/api-rpcs.md) | Postgres RPC reference |
 | [CHANGELOG.md](CHANGELOG.md) | Notable changes per release |
-| [audit-outputs/audit-2026-05-26.md](audit-outputs/audit-2026-05-26.md) | Comprehensive whole-codebase audit + fixes applied |
-| `docs/superpowers/specs/` | Original design specs |
-| `docs/superpowers/plans/` | Implementation plans (1 backend foundation through 10 launch) |
+| `docs/superpowers/specs/` + `plans/` | Original design specs + implementation plans |
 
 ---
 
-## Surfaces
+## The product
 
-1. **iPad app** (SwiftUI + PencilKit + PDFKit, iOS 17+) — primary designer surface. Sketch → AI render → virtual try-on → job card → invoice. Currently live, used daily.
-2. **Web admin** (Next.js, planned) — back-office CRM, analytics
-3. **Public website** (Next.js, planned) — order tracking via magic link, public lookbook, inquiry capture
+**One surface: the iPad app** (SwiftUI + PencilKit + PDFKit, iOS 17+).
+Consultation-table UX — the selling moment happens across a table with the
+customer, not at a desk after she leaves.
 
-All three share one Supabase backend.
+The Look lifecycle (see app-map §7): discover → design → try-on → **lock**
+(fabric code, measurement version, price, event-date plan, advance) → make →
+trial ⟲ alter → deliver → lookbook → repeat sale.
+
+Key-gated integrations (inert until keys in gitignored `Secrets.xcconfig`;
+status visible in Settings → Integrations): Gemini AI · SendGrid email ·
+Twilio SMS · Razorpay payment links. WhatsApp via `wa.me` links always works.
 
 ---
 
@@ -41,10 +62,8 @@ All three share one Supabase backend.
 
 - Project URL: `https://tdnwdlrkbrtoxjzcgusg.supabase.co`
 - Dashboard: https://supabase.com/dashboard/project/tdnwdlrkbrtoxjzcgusg
-- **26 migrations applied** (audit-fix cycle complete)
-- 32+ tables with RLS
-- 9 storage buckets configured
-- 1 Edge Function (`purge-expired-tryons`) on daily pg_cron
+- **27 migrations applied** · 32+ tables with RLS · 9 storage buckets
+- 1 Edge Function (`purge-expired-tryons`) on daily pg_cron (DPDP 7-day purge)
 - Seed: 1 boutique ("Aditi Designer Studio") + 3 loyalty tiers
 
 ### Smoke test
@@ -63,7 +82,7 @@ curl "${SUPABASE_URL}/rest/v1/loyalty_tiers?select=name,sort_order&order=sort_or
 brew install xcodegen
 cd ipad
 cp Boutique360/Configuration/Secrets.xcconfig.example Boutique360/Configuration/Secrets.xcconfig
-# Edit Secrets.xcconfig and set GEMINI_API_KEY = AIzaSy...
+# Edit Secrets.xcconfig — GEMINI_API_KEY required for AI; SendGrid/Twilio/Razorpay optional
 xcodegen generate
 open Boutique360.xcodeproj
 # Cmd+R to run; add `-auto-demo` launch arg to auto-sign-in as demo
@@ -75,7 +94,9 @@ See [docs/deployment.md](docs/deployment.md) for full setup.
 
 ## Testing
 
-Unit tests cover pure logic (formatters, validators, parsers, state machines, design tokens, money math). **118 test cases, all green, ~2 seconds local.**
+Unit tests cover pure logic (formatters, validators, parsers, state machines,
+money math, spend aggregation, phone normalization). **137 test cases, all
+green, under a second.**
 
 ```bash
 cd ipad
@@ -87,43 +108,25 @@ xcodebuild -project Boutique360.xcodeproj \
 ```
 
 CI runs the same on every PR touching `ipad/**` via `.github/workflows/ipad-tests.yml`.
-
-Test files (all in `ipad/Boutique360Tests/`):
-
-| File | Coverage | Cases |
-|---|---|---|
-| `ConfigTests` | Env.xcconfig values loaded | 2 |
-| `FormattersTests` | INR lakh-grouping, postgres date IST round-trip, ISO 8601 precision | 9 |
-| `WhatsAppShareHelperTests` | India phone normalization, URL building, emoji/newline encoding | 13 |
-| `GSTINValidatorTests` | Structural pattern, edge cases, case-insensitive, length errors | 11 |
-| `CustomerImportServiceTests` | RFC 4180 CSV parsing (quoted commas, escaped quotes, CRLF, booleans) | 13 |
-| `GSTReportExporterTests` | RFC 4180 CSV escape (commas, quotes, newlines, Hindi, Hinglish) | 10 |
-| `StatusMachineTests` | `OrderStatus.nextOptions` + `InquiryStatus.allowedNext` business rules | 11 |
-| `CustomerTimelineEventTests` | Composite ID hashability, Set dedup, icon coverage | 4 |
-| `EnumDecodingTests` | Forward-compat decode fallback (unknown DB values → safe default) | 7 |
-| `ModelDecodingTests` | `Boutique.defaultGstRate`, `OrderItem.gstRate`, `Order.fulfillmentMethod` | 6 |
-| `MoneyTests` | Paise rounding (regression test for L7 balance-drift bug) | 10 |
-| `PaymentsServiceModelTests` | Codable shapes returned by Supabase | 5 |
-| `ErrorBusTests` | Toast pipeline + Identifiable + replace-on-new-report | 5 |
-| `DesignTokensTests` | 8pt grid alignment, HIG animation duration ranges | 12 |
-
-**How to add tests**: see [docs/testing-guide.md](docs/testing-guide.md).
-
-Network/integration tests (against test Supabase project) are not yet written — see the testing guide's "We don't test" section for the rationale.
+**How to add tests**: [docs/testing-guide.md](docs/testing-guide.md).
 
 ---
 
-## Plan series
+## Roadmap (iPad-native, competitive-informed)
 
-- ✅ **Plan 1** — Backend Foundation
-- ✅ **Plan 2** — iPad App Foundation
-- ✅ **Plan 3** — iPad CRM Core
-- ✅ **Plan 4** — PencilKit sketch canvas
-- ✅ **Plan 5** — AI render + VTO ("magic moment")
-- ✅ **Audit cycle** — comprehensive review + fixes (see CHANGELOG)
-- ⏭️ **Plan 6-7** — Web Admin
-- ⏭️ **Plan 8** — Public Website + magic-link order tracking
-- ⏭️ **Plan 9-10** — Payments (Razorpay), observability, App Store launch
+Sequenced in [docs/app-map.md §7](docs/app-map.md); rationale in the
+[journey doc](docs/customer-journey-3-month.md) and
+[teardown](docs/competitive/darzi-ai-teardown.md).
+
+- ✅ Plans 1–5 — backend, app foundation, CRM core, sketch canvas, AI render + VTO
+- ✅ Audit cycle + spec-gap Waves 1–6
+- ⏭️ **R1 — `event_date` + slack engine** (one primitive powers R2 + R3)
+- ⏭️ **R2 — exception-first morning board** (needs-you list sorted by slack, money-due tile, pipeline strip)
+- ⏭️ **R3 — Lock screen** (freeze fabric/measurements/price/dates + advance; change-orders after)
+- ⏭️ **R4 — competitive absorbs**: auto-drafted reminders with one-tap approve · PIN-scoped staff roles · fabric-meters estimate on job cards
+- ⏭️ **R5 — fabric inventory** (bolts, codes, meters in/out → fills the "Fabrics" sidebar slot)
+- ⏭️ **R6 — karigar ledger** (material issued, piece-rate dues, alteration-rate quality metric)
+- ⏭️ TestFlight → App Store
 
 ---
 
@@ -132,26 +135,17 @@ Network/integration tests (against test Supabase project) are not yet written �
 ```
 boutique-360/
 ├── README.md                      ← this file
-├── CHANGELOG.md
-├── docs/
-│   ├── user-journeys.md
-│   ├── user-flows.md
-│   ├── architecture.md
-│   ├── deployment.md
-│   ├── dpdp-compliance.md
-│   ├── api-rpcs.md
-│   ├── superpowers/specs/         ← original design specs
-│   └── superpowers/plans/         ← implementation plans
+├── CHANGELOG.md · CLAUDE.md
+├── docs/                          ← see Documentation table above
+│   └── competitive/               ← market teardowns
 ├── audit-outputs/
-│   └── audit-2026-05-26.md
 ├── supabase/
-│   ├── config.toml
-│   ├── seed.sql
-│   └── migrations/                ← 26 migrations
+│   ├── config.toml · seed.sql
+│   └── migrations/                ← 27 migrations (00NN_*.sql, forward-only)
 ├── ipad/
-│   ├── project.yml                ← XcodeGen spec
-│   ├── Boutique360/               ← Swift source
-│   └── Boutique360Tests/          ← XCTest cases
-├── scripts/                       ← bucket setup, ops
+│   ├── project.yml                ← XcodeGen spec (source of truth)
+│   ├── Boutique360/               ← Swift source (Features / Services / Models / Utilities)
+│   └── Boutique360Tests/          ← 137 XCTest cases
+├── scripts/
 └── .gitignore
 ```
