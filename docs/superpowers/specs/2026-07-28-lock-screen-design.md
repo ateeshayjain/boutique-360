@@ -36,9 +36,7 @@ failures the journey doc surfaced.
 
 ## Design
 
-### Unit 1 — Migration 0030
-
-(0029 is reserved in case a hotfix lands first; use the next free number.)
+### Unit 1 — Migration (next free number — currently 0029)
 
 ```sql
 alter table public.orders
@@ -62,7 +60,13 @@ create table if not exists public.order_locks (
   locked_at timestamptz not null default now()
 );
 alter table public.order_locks enable row level security;
--- standard policy pair (authenticated via app.boutique_id, service_role all)
+-- Policy pair per migration 0010's rw pattern (NOT 0028's select-only pair —
+-- the app must insert):
+create policy "order_locks_rw" on public.order_locks for all to authenticated
+  using (boutique_id = (current_setting('app.boutique_id', true))::uuid)
+  with check (boutique_id = (current_setting('app.boutique_id', true))::uuid);
+create policy "order_locks_service" on public.order_locks for all to service_role
+  using (true) with check (true);
 
 create table if not exists public.change_orders (
   id uuid primary key default gen_random_uuid(),
@@ -75,7 +79,67 @@ create table if not exists public.change_orders (
 );
 create index if not exists change_orders_order_idx on public.change_orders(order_id, created_at);
 alter table public.change_orders enable row level security;
--- standard policy pair
+-- APPEND-ONLY enforced at the DB: authenticated gets select + insert only
+-- (no update/delete policies exist, so RLS denies them). Inserts normally
+-- arrive via the invoker RPC, which runs under the same policies.
+create policy "change_orders_select" on public.change_orders for select to authenticated
+  using (boutique_id = (current_setting('app.boutique_id', true))::uuid);
+create policy "change_orders_insert" on public.change_orders for insert to authenticated
+  with check (boutique_id = (current_setting('app.boutique_id', true))::uuid);
+create policy "change_orders_service" on public.change_orders for all to service_role
+  using (true) with check (true);
+
+-- Atomic lock: insert the lock row + patch orders.design_id in ONE
+-- transaction (house rule: multi-row writes via RPC). jsonb payload =
+-- NewOrderLock's encoded fields.
+create or replace function public.lock_order(p_lock jsonb)
+returns public.order_locks
+language plpgsql
+as $$
+declare
+  v_new public.order_locks;
+  v_lock public.order_locks;
+  v_order public.orders;
+begin
+  v_new := jsonb_populate_record(null::public.order_locks, p_lock);
+
+  -- Read the order first: (a) integrity — the lock's boutique must match
+  -- the order's (a mismatched payload must not create a cross-boutique
+  -- lock row); (b) server-side status gate, symmetric with
+  -- apply_change_order's lock check.
+  select * into v_order from public.orders where id = v_new.order_id for update;
+  if not found then raise exception 'order % not found', v_new.order_id; end if;
+  if v_order.boutique_id is distinct from v_new.boutique_id then
+    raise exception 'lock boutique does not match order boutique';
+  end if;
+  if v_order.status not in ('pending', 'confirmed') then
+    raise exception 'order % is % — only pending/confirmed orders can be locked',
+      v_new.order_id, v_order.status;
+  end if;
+
+  insert into public.order_locks
+    (id, boutique_id, order_id, design_id, render_image_path, fabric_code,
+     fabric_description, measurement_id, price_breakup, event_date,
+     alteration_buffer_days, must_finish_by, advance_amount, rush_accepted,
+     locked_at)
+  values
+    (coalesce(v_new.id, gen_random_uuid()), v_new.boutique_id, v_new.order_id,
+     v_new.design_id, v_new.render_image_path, v_new.fabric_code,
+     v_new.fabric_description, v_new.measurement_id, v_new.price_breakup,
+     v_new.event_date, v_new.alteration_buffer_days, v_new.must_finish_by,
+     coalesce(v_new.advance_amount, 0), coalesce(v_new.rush_accepted, false),
+     coalesce(v_new.locked_at, now()))
+  returning * into v_lock;
+  -- (Explicit column list + coalesce — NEVER `insert select *` from
+  -- jsonb_populate_record; see the 0028 RPC-repair lesson in api-rpcs.md.)
+
+  if v_lock.design_id is not null then
+    update public.orders set design_id = v_lock.design_id, updated_at = now()
+     where id = v_lock.order_id;
+  end if;
+  return v_lock;
+end;
+$$;
 
 -- Atomic CO application: insert CO + retarget order totals/event date.
 -- GST recomputed at the ORDER'S EFFECTIVE RATE = gst_amount / nullif(subtotal, 0)
@@ -91,23 +155,39 @@ as $$
 declare
   v_order public.orders;
   v_rate numeric;
+  v_new_subtotal numeric;
+  v_new_gst numeric;
   v_co public.change_orders;
 begin
   select * into v_order from public.orders where id = p_order_id for update;
   if not found then raise exception 'order % not found', p_order_id; end if;
 
+  -- Precondition: change orders exist only for LOCKED orders. The UI gates
+  -- this too; the RPC is the enforcement of record.
+  if not exists (select 1 from public.order_locks where order_id = p_order_id) then
+    raise exception 'order % is not locked — change orders apply to locked orders only', p_order_id;
+  end if;
+
+  v_new_subtotal := v_order.subtotal + p_price_delta;
+  if v_new_subtotal < 0 then
+    raise exception 'change order would make subtotal negative (% + % = %)',
+      v_order.subtotal, p_price_delta, v_new_subtotal;
+  end if;
+
   v_rate := case when v_order.subtotal > 0
                  then v_order.gst_amount / v_order.subtotal else 0 end;
+  v_new_gst := round(v_new_subtotal * v_rate, 2);
 
   insert into public.change_orders (boutique_id, order_id, description, price_delta, new_event_date)
   values (v_order.boutique_id, p_order_id, p_description, p_price_delta, p_new_event_date)
   returning * into v_co;
 
   update public.orders
-     set subtotal   = subtotal + p_price_delta,
-         gst_amount = round((subtotal + p_price_delta) * v_rate, 2),
-         total      = round((subtotal + p_price_delta) * (1 + v_rate), 2)
-                      + coalesce(shipping, 0),
+     set subtotal   = v_new_subtotal,
+         gst_amount = v_new_gst,
+         -- Reuse the already-rounded GST so total = subtotal + gst + shipping
+         -- holds exactly (no independent rounding drift).
+         total      = v_new_subtotal + v_new_gst + coalesce(shipping, 0),
          event_date = coalesce(p_new_event_date, event_date),
          updated_at = now()
    where id = p_order_id;
@@ -117,9 +197,9 @@ end;
 $$;
 ```
 
-Note the update reads `subtotal` pre-update inside one statement (Postgres
-uses the row's old values on the right-hand side — all three expressions see
-the pre-CO subtotal, which is the intent).
+**Accepted limitation:** a ₹0-subtotal order has effective rate 0, so COs on
+it carry 0 GST forever (the effective rate is derived from stored amounts;
+₹0 orders are demo/edge data, not real sales).
 
 ### Unit 2 — Models
 
@@ -165,7 +245,10 @@ Rules:
 ```swift
 enum OrderLocksService {
     static func get(orderId: UUID, boutiqueId: UUID) async throws -> OrderLock?
-    static func lock(_ input: NewOrderLock) async throws -> OrderLock   // plain insert; unique(order_id) makes double-lock a DB error
+    /// Calls the lock_order RPC — atomically inserts the lock row AND
+    /// patches orders.design_id (one transaction; unique(order_id) makes a
+    /// raced double-lock a clean DB error).
+    static func lock(_ input: NewOrderLock) async throws -> OrderLock
     static func changeOrders(orderId: UUID, boutiqueId: UUID) async throws -> [ChangeOrder]
     static func applyChangeOrder(orderId: UUID, description: String,
                                  priceDelta: Double, newEventDate: String?) async throws -> ChangeOrder
@@ -180,12 +263,14 @@ picker; latest render via `DesignRendersService.listForDesign` filtered
 ### Unit 5 — UI
 
 **`Features/Orders/LockSheet.swift`** — presented from OrderDetailView
-("Lock the look" button, visible only while no lock row exists):
+("Lock the look" button, visible only while no lock row exists AND order
+status ∈ {pending, confirmed} — you don't lock cancelled/returned/
+delivered/in-transit orders; the spec froze nothing they'd need):
 - Design picker: customer's designs (`DesignsService.list(customerId:)`),
   optional ("No design — off-rack"). Picking one shows its latest done
   render (signed URL) and stores `design_id` + `render_image_path` on the
-  lock AND patches `orders.design_id` (single-column update via
-  `OrdersService`).
+  lock; `orders.design_id` is patched atomically inside the lock_order RPC
+  (Unit 1) — no separate client write.
 - Fabric: code (free text) + description.
 - Measurement pin: picker over the customer's `CustomerMeasurement`
   snapshots (label: garmentType + `takenAt` date), defaulting to the most
@@ -200,8 +285,9 @@ picker; latest render via `DesignRendersService.listForDesign` filtered
   `PaymentsService.capturedSumsForOrders([orderId])`); the Lock button is
   disabled while `LockGate.blockers(...)` is non-empty, with the first
   blocker's message shown beneath.
-- Lock action: insert `order_locks` row; on unique-violation (double-tap /
-  raced lock) reload and show the existing lock (treat as success).
+- Lock action: call the `lock_order` RPC; a unique-violation (double-tap /
+  raced lock) arrives as a PostgREST error (SQLSTATE 23505 → HTTP 409) —
+  reload and show the existing lock (treat as success).
 
 **OrderDetailView changes:**
 - Summary section: when locked, a "Locked" `LabeledContent` row
@@ -215,6 +301,12 @@ picker; latest render via `DesignRendersService.listForDesign` filtered
   (description required, ₹ delta default 0, optional new event date) →
   `applyChangeOrder`. After applying, refresh the order (totals/event date
   changed) via the existing `.orderDidChange` notification.
+- **Breakup is a frozen historical artifact:** after a CO changes
+  `orders.subtotal`, the lock's `price_breakup` is NOT re-reconciled and no
+  mismatch warning is shown — it records what was agreed at lock time; the
+  CO ledger records what changed since. Likewise
+  `alteration_buffer_days` is immutable post-lock (read-only in UI, no CO
+  field) — deliberate: the buffer was part of the locked plan.
 
 ### Testing
 
@@ -225,10 +317,12 @@ picker; latest render via `DesignRendersService.listForDesign` filtered
   `ChangeOrder` (null new_event_date), `Order.designId` absent-key
   tolerance (custom init already exists — decodeIfPresent).
 - CO math is server-side: verified by rollback-wrapped live smoke via MCP
-  (create order → apply CO with delta + new date → assert new subtotal/
-  gst/total/event_date → rollback), same technique as 0028's RPC repair.
-- GST recompute rule tested in the smoke: order with 5% effective rate,
-  delta +1000 → gst +50, total +1050.
+  (create order → lock via lock_order → apply CO with delta + new date →
+  assert new subtotal/gst/total/event_date → rollback), same technique as
+  0028's RPC repair. Smoke cases: 5% effective rate delta +1000 → gst +50,
+  total +1050 · negative delta within floor · negative delta breaching the
+  floor → exception · CO on UNLOCKED order → exception · double lock →
+  unique violation.
 
 ### Error handling
 
