@@ -134,7 +134,9 @@ struct OrderCreateView: View {
                 currency: "INR",
                 magic_link_token: UUID().uuidString,
                 fulfillment_method: fulfillmentMethod.rawValue,
-                placed_at: Formatters.iso8601Basic.string(from: Date())
+                placed_at: Formatters.iso8601Basic.string(from: Date()),
+                event_date: nil,             // Task 7 wires the picker
+                alteration_buffer_days: 7
             )
             let lineDesc = lineDescription.trimmingCharacters(in: .whitespaces).isEmpty
                 ? nil

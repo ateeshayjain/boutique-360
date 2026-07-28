@@ -217,4 +217,49 @@ final class ModelDecodingTests: XCTestCase {
         let d = try orderDecoder().decode(Design.self, from: json)
         XCTAssertEqual(d.referenceImagePath, "designs/abc/reference.jpg")
     }
+
+    // MARK: - R1: Order event_date + alteration_buffer_days
+
+    func testOrderDecodesEventDateAndBuffer() throws {
+        let json = """
+        {"id":"11111111-1111-1111-1111-111111111111",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "order_number":"BQ-1","customer_id":"33333333-3333-3333-3333-333333333333",
+         "status":"pending","subtotal":100,"gst_amount":5,"total":105,"currency":"INR",
+         "event_date":"2026-09-19","alteration_buffer_days":14,
+         "created_at":"2026-07-28T10:00:00Z","updated_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!
+        let order = try orderDecoder().decode(Order.self, from: json)
+        XCTAssertEqual(order.eventDate, "2026-09-19")
+        XCTAssertEqual(order.alterationBufferDays, 14)
+    }
+
+    func testOrderDecodesWithoutEventDate() throws {
+        // Pre-0028 rows / cached payloads: event_date absent, buffer defaults 7.
+        let json = """
+        {"id":"11111111-1111-1111-1111-111111111111",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "order_number":"BQ-2","customer_id":"33333333-3333-3333-3333-333333333333",
+         "status":"pending","subtotal":100,"gst_amount":5,"total":105,"currency":"INR",
+         "created_at":"2026-07-28T10:00:00Z","updated_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!
+        let order = try orderDecoder().decode(Order.self, from: json)
+        XCTAssertNil(order.eventDate)
+        XCTAssertEqual(order.alterationBufferDays, 7)
+    }
+
+    // MARK: - R4d: JobCardEvent
+
+    func testJobCardEventDecodes() throws {
+        let json = """
+        {"id":"44444444-4444-4444-4444-444444444444",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "job_card_id":"55555555-5555-5555-5555-555555555555",
+         "event":"ready","wip_photo_path":null,
+         "created_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!
+        let e = try orderDecoder().decode(JobCardEvent.self, from: json)
+        XCTAssertEqual(e.event, .ready)
+        XCTAssertNil(e.wipPhotoPath)
+    }
 }

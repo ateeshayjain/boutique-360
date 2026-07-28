@@ -75,6 +75,8 @@ struct Order: Identifiable, Codable, Hashable {
     var trackingCourier: String?
     var magicLinkToken: String?
     var fulfillmentMethod: FulfillmentMethod?    // H9 fix: typed enum, was String?
+    var eventDate: String?            // YYYY-MM-DD — customer's occasion (R1 slack anchor)
+    var alterationBufferDays: Int     // R1 — absent-key tolerant, defaults 7
     var placedAt: Date?
     var createdAt: Date
     var updatedAt: Date
@@ -90,9 +92,37 @@ struct Order: Identifiable, Codable, Hashable {
         case trackingCourier = "tracking_courier"
         case magicLinkToken = "magic_link_token"
         case fulfillmentMethod = "fulfillment_method"
+        case eventDate = "event_date"
+        case alterationBufferDays = "alteration_buffer_days"
         case placedAt = "placed_at"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+
+    // Custom decode solely so alteration_buffer_days tolerates absence
+    // (pre-0028 cached payloads) — synthesized decoding would throw.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(UUID.self, forKey: .id)
+        boutiqueId = try c.decode(UUID.self, forKey: .boutiqueId)
+        orderNumber = try c.decode(String.self, forKey: .orderNumber)
+        customerId = try c.decode(UUID.self, forKey: .customerId)
+        status = try c.decode(OrderStatus.self, forKey: .status)
+        subtotal = try c.decode(Double.self, forKey: .subtotal)
+        gstAmount = try c.decode(Double.self, forKey: .gstAmount)
+        shipping = try c.decodeIfPresent(Double.self, forKey: .shipping)
+        total = try c.decode(Double.self, forKey: .total)
+        currency = try c.decode(String.self, forKey: .currency)
+        shippingAddressJson = try c.decodeIfPresent(AnyCodable.self, forKey: .shippingAddressJson)
+        trackingUrl = try c.decodeIfPresent(String.self, forKey: .trackingUrl)
+        trackingCourier = try c.decodeIfPresent(String.self, forKey: .trackingCourier)
+        magicLinkToken = try c.decodeIfPresent(String.self, forKey: .magicLinkToken)
+        fulfillmentMethod = try c.decodeIfPresent(FulfillmentMethod.self, forKey: .fulfillmentMethod)
+        eventDate = try c.decodeIfPresent(String.self, forKey: .eventDate)
+        alterationBufferDays = try c.decodeIfPresent(Int.self, forKey: .alterationBufferDays) ?? 7
+        placedAt = try c.decodeIfPresent(Date.self, forKey: .placedAt)
+        createdAt = try c.decode(Date.self, forKey: .createdAt)
+        updatedAt = try c.decode(Date.self, forKey: .updatedAt)
     }
 }
 
@@ -136,6 +166,8 @@ struct NewOrder: Encodable {
     let magic_link_token: String?
     let fulfillment_method: String     // 'pickup' | 'ship'
     let placed_at: String?
+    let event_date: String?            // R1 — YYYY-MM-DD or nil
+    let alteration_buffer_days: Int    // R1 — RPC coalesces if a stale build omits it
 }
 
 struct NewOrderItem: Encodable {
