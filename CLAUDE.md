@@ -10,9 +10,9 @@
 
 - **What:** iPad-native CRM + AI design studio for a single boutique business in India (pilot stage, used daily). Designer workflow: sketch/reference → AI render → customer virtual try-on → job card for the karigar → GST invoice. Customers never touch the iPad; they receive WhatsApp messages.
 - **Stack:** Swift / SwiftUI (**iOS 17+**, iPad-only) · PencilKit (sketch) · PDFKit (invoice/job-card) · **XcodeGen** (`ipad/project.yml` is the source of truth) · XCTest.
-- **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions + pg_cron. **26 migrations** applied. RLS on every boutique-scoped table.
+- **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions (`purge-expired-tryons`, `job-card-view`) + pg_cron. **28 migrations** applied. RLS on every boutique-scoped table.
 - **AI:** Google Gemini (`gemini-2.5-flash-image` for render/VTO, `gemini-2.5-flash` for text). Per-boutique daily cost ceiling enforced server-side.
-- **Scale:** ~81 Swift files · 16 test files · **118 tests** (pure-logic + Codable only, ~2s).
+- **Scale:** ~85 Swift files · 18 test files · **155 tests** (pure-logic + Codable only, ~2s).
 - **State:** iPad app feature-complete + stable. Web admin + public storefront are **planned, not built**. Currently on branch `feat/reference-photo-studio` (reference-photo → fabric → VTO flow, Phase 1 mid-build).
 - **Secrets:** `ipad/Boutique360/Configuration/Secrets.xcconfig` (GEMINI_API_KEY) is **gitignored** — never commit it. `Env.xcconfig` (Supabase URL + anon key) is tracked (anon key is RLS-protected, safe to ship).
 
@@ -139,6 +139,9 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | Unified WA + Email + SMS dispatch (DPDP consent enforced here) | `Services/CustomerNotifier.swift` |
 | Razorpay payment-link generation | `Services/RazorpayClient.swift` |
 | Per-customer spend aggregator (pure, tested) | `Utilities/CustomerSpend.swift` |
+| Deadline slack engine (pure, tested) + badge | `Utilities/OrderSlack.swift`, `Features/Orders/SlackBadge.swift` |
+| Karigar link events + token rotation | `Services/JobCardEventsService.swift` |
+| Karigar phone page (Edge Function) | `supabase/functions/job-card-view/index.ts` |
 | Garment template silhouettes for sketch canvas | `Features/Designs/GarmentTemplate.swift` |
 | Order create (atomic RPC) | `Services/OrdersService.swift` |
 | Customer journey aggregation | `Services/CustomerTimelineService.swift` |

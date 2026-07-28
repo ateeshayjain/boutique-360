@@ -4,6 +4,19 @@ Notable changes per release. Format roughly follows [Keep a Changelog](https://k
 
 ---
 
+## [Unreleased] — 2026-07-28 (Slack engine + karigar phone link — R1/R4c/R4d)
+
+### Added
+- **Deadline slack engine (R1)** — orders gain `event_date` + `alteration_buffer_days` (migration `0028`). Pure `OrderSlack` engine computes honest verdicts (`noEvent / noPlan / overdue / late / atRisk / comfortable`) with an overdue honesty guard (unfinished past-due job is always red). Order creation shows "production must finish by ⟨date⟩" with rush/impossible warnings (warn, never block). Slack badges on orders list + detail.
+- **Fabric-meters andaaza (R4c)** — the Hinglish tailor brief now asks Gemini to estimate meters needed, explicitly marked as an estimate to verify before cutting.
+- **Karigar phone link (R4d)** — `job-card-view` Edge Function serves a magic-link mobile page (no install/login; token = capability): design image, naap, brief, due date, and three big status buttons (Shuru kiya / Silai poori / Taiyaar hai) + optional WIP photo (5 MB, jpeg/png, rate-limited 30/day). Events appear on the iPad order timeline and job-card preview; a *Taiyaar* update zeroes work-remaining in slack. Share/regenerate link from JobCardPreviewView.
+
+### Fixed
+- **`create_order_with_items` RPC was latently broken** — the deployed version inserted the order header via `jsonb_populate_record` + `insert … select *`, writing explicit NULLs for absent keys and bypassing column defaults (a payload without `id` could not insert). Rewritten with an explicit column list + `coalesce` per defaulted column; verified against the live DB. Found by the plan-review agent probing production.
+
+### Tests
+- 155 total (was 137): OrderSlack engine 14, resolver ready-event path, prompt meters assertion, Order/JobCardEvent decode tolerance.
+
 ## [Unreleased] — 2026-06-05 (Reference Photo Studio — Phase 1)
 
 ### Added

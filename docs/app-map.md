@@ -75,9 +75,9 @@ list, at-risk tile, pipeline strip) — blocked on `event_date`; see §7.*
 ### Orders — money + fulfilment (7 views)
 | Screen | Purpose | Key actions |
 |---|---|---|
-| `OrdersListView` | All orders, status filter | Open detail |
-| `OrderCreateView` | Line items, GST, atomic create via RPC | Create (race-safe number) |
-| `OrderDetailView` | Status machine, items, invoice, **Notify customer** (WA/Email/SMS), magic link | Advance status, generate invoice PDF, notify |
+| `OrdersListView` | All orders, status filter, **slack badges** (R1) | Open detail |
+| `OrderCreateView` | Line items, GST, atomic create via RPC, **event date + buffer + must-finish-by warning** (R1) | Create (race-safe number) |
+| `OrderDetailView` | Status machine, items, invoice, **deadline slack row** (R1), **Notify customer** (WA/Email/SMS), magic link | Advance status, generate invoice PDF, notify |
 | `OrderTimelineView` | Status history | — |
 | `PaymentsSectionView` | Advance/balance ledger, record payment, WhatsApp reminder, **Razorpay payment link** | Record, remind, create link |
 | `AlterationsSectionView` | Trial → alteration rounds | Log alteration |
@@ -86,8 +86,8 @@ list, at-risk tile, pipeline strip) — blocked on `event_date`; see §7.*
 ### Job cards (2 views)
 | Screen | Purpose | Key actions |
 |---|---|---|
-| `JobCardComposerView` | Compose from design + order + measurements; AI Hinglish karigar brief | Generate |
-| `JobCardPreviewView` | Hybrid PDF: structured top + Romanized-Hindi brief | Share/print |
+| `JobCardComposerView` | Compose from design + order + measurements; AI Hinglish karigar brief incl. fabric-meters andaaza (R4c) | Generate |
+| `JobCardPreviewView` | Hybrid PDF + karigar phone-link panel (R4d): share/regenerate magic link, live progress events | Share/print, share karigar link |
 
 ### Important dates (1 view)
 | Screen | Purpose | Key actions |
@@ -163,7 +163,8 @@ needs auth rework; see `spec-gaps-waves-1-6.md`.*
 
 | Integration | Transport | Gating | Notes |
 |---|---|---|---|
-| Supabase (Mumbai) | supabase-swift SDK | Always on | Postgres 17 · 27 migrations · RLS on every boutique-scoped table · Storage buckets (sketches, renders, references, customer-photos, vto-results) · pg_cron 02:30 IST DPDP purge |
+| Supabase (Mumbai) | supabase-swift SDK | Always on | Postgres 17 · 28 migrations · RLS on every boutique-scoped table · Storage buckets (sketches, renders, references, customer-photos, vto-results, karigar-wip) · pg_cron 02:30 IST DPDP purge |
+| Karigar link (Edge Function `job-card-view`) | Mobile web, token-capability URL | Always on (verify_jwt off by design) | R4d: GET serves Hinglish job-card page; POST records started/silai-poori/taiyaar (+5MB WIP photo), rate-limited 30/day/card. `ready` zeroes work in slack. |
 | Gemini AI | REST, `x-goog-api-key` header | `GEMINI_API_KEY` | `gemini-2.5-flash-image` (render/VTO) + `gemini-2.5-flash` (briefs/suggestions); `AICostMeter` server-side $5/day ceiling |
 | WhatsApp | `wa.me` deep links | Consent flag | Owner reviews every message (ADR 0005); `customer.whatsappTarget` |
 | SendGrid (email) | REST v3 | `SENDGRID_API_KEY` + `SENDGRID_FROM` | Inert until keys set; consent via `CustomerNotifier` |
@@ -209,12 +210,13 @@ the competitive teardown:
 
 | # | Feature | Why | Source |
 |---|---|---|---|
-| R1 | **`event_date` + slack engine** — slack = days-to-event − (work remaining + alteration buffer + delivery) | One primitive powers R2 and R3; prevents the week-11 late delivery | Journey lesson 1 |
+| R1 ✅ | **`event_date` + slack engine** — SHIPPED July 2026: `OrderSlack` engine (6 verdicts incl. overdue honesty guard), must-finish-by warning at creation, badges on list/detail | One primitive powers R2 and R3; prevents the week-11 late delivery | Journey lesson 1 |
 | R2 | **Exception-first morning board** — needs-you list sorted by slack, money-due tile (incl. link-sent-unopened state), pipeline strip | The owner's question is "what goes wrong if I don't touch it today" | Morning-board design |
 | R3 | **Lock screen** — freeze render + fabric code + measurement-version pin + price breakup + date plan; advance required; post-lock changes = change-orders | The Look's one irreversible moment; stops spec disputes and date slips | CRM-design discussion |
 | R4a | **Auto-drafted reminders, one-tap approve** — trial/payment/ready messages drafted by status hooks, owner approves in bulk | Darzi AI fires these automatically; we keep review as a feature not a tax | Teardown §4.1 |
 | R4b | **PIN-scoped staff roles** — finance hidden from tailor/assistant PINs | Darzi shipped what we deferred; cheaper than full multi-auth RLS rework | Teardown §4.2 |
-| R4c | **Fabric-meters estimate on job cards** — Gemini already writes the brief; ask for meters too | Cheap, high daily utility | Teardown §4.3 |
+| R4c ✅ | **Fabric-meters estimate on job cards** — SHIPPED July 2026: andaaza line in the Hinglish brief | Cheap, high daily utility | Teardown §4.3 |
+| R4d ✅ | **Karigar phone link** — SHIPPED July 2026: `job-card-view` Edge Function, magic-link page, progress events feed slack | Owner iPad + karigar phone, per surface split decision | Karigar-UX decision |
 | R5 | **Fabric inventory** — bolts, codes, meters in/out, issue-to-job-card | Fills the "Fabrics" sidebar slot; feeds real costing + the lock screen's in-stock check | Flow-map gap |
 | R6 | **Karigar ledger** — material issued, piece-rate dues, alteration-rate per karigar | Fills production back-of-house; quality metric | Flow-map gap |
 

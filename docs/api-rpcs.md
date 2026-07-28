@@ -131,6 +131,26 @@ Auth: `verify_jwt = false`; pg_cron invokes via service role internally.
 
 ---
 
+## Edge Function HTTP endpoints (not RPCs, documented here for one-stop API reference)
+
+### `job-card-view` (R4d — karigar magic link; verify_jwt OFF, token = capability)
+
+| Method + path | Body | Returns |
+|---|---|---|
+| `GET /functions/v1/job-card-view/⟨share_token⟩` | — | 200 mobile HTML (Hinglish job card: image, naap, brief, status buttons); 404 bad token |
+| `POST /functions/v1/job-card-view/⟨share_token⟩/event` | multipart: `event` ∈ started·stitching_done·ready, optional `photo` (≤5 MB jpeg/png) | 303 back to GET (PRG); 400 bad event; 413/415 photo limits; 429 >30 events/24h/card |
+
+Token rotation: `job_cards.share_token` regenerated from JobCardPreviewView
+(old links die). Events land in `job_card_events` (RLS: owner read; inserts
+via service role inside the function only).
+
+Note on `create_order_with_items` (migration 0028): the order-header insert
+uses an explicit column list + `coalesce` per defaulted column — do NOT
+revert to `insert … select * from jsonb_populate_record(...)`; that form
+writes NULLs for absent keys and bypasses column defaults.
+
+---
+
 ## Naming conventions
 
 | Convention | Example |
