@@ -54,6 +54,7 @@
 		6D2A26D6EA6DBC84A99173EA /* OrdersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */; };
 		6E921B0A36CE7103E5F7801D /* DesignsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531B614F104FBB0C1B8F63D6 /* DesignsListView.swift */; };
 		6F73FA4C49F74B4B68CB220A /* CustomerStyleProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809AB65E410865D605DD1486 /* CustomerStyleProfileView.swift */; };
+		72B4089DBD5112F35AE0994E /* OrderSlack.swift in Sources */ = {isa = PBXBuildFile; fileRef = B65938960FE851593B10AD49 /* OrderSlack.swift */; };
 		72DD05843BB7F59E3FD1889B /* ReferencePromptTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB82B2C0DAF757B5B37CC1C4 /* ReferencePromptTests.swift */; };
 		74B81B98D5B264EC57737419 /* DesignsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BD68DFCE40193478DFA3D1A /* DesignsService.swift */; };
 		74E9FB3FB01DC67AF00FFAC1 /* ImportantDateFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCA05E72225F45775FE60623 /* ImportantDateFormView.swift */; };
@@ -115,6 +116,7 @@
 		EDCFBBA44E275A13BB718494 /* TwilioNormalizeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE48B5A70951F6D5B3A94BD6 /* TwilioNormalizeTests.swift */; };
 		EF11BCC61697AB0FDF85CD8F /* CustomerTimelineEvent.swift in Sources */ = {isa = PBXBuildFile; fileRef = 527CCCBA1350D9CD63BBC5B1 /* CustomerTimelineEvent.swift */; };
 		F24279E4E45E18AA2EF22BBD /* DesignFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2F5036E60A9CF0E902B748A6 /* DesignFormView.swift */; };
+		F3D19282A5CB25C5B8504DE3 /* OrderSlackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0C8C90A6AF6F34265D74C8A /* OrderSlackTests.swift */; };
 		F695085560EA4AE665ED9BE1 /* DesignRender.swift in Sources */ = {isa = PBXBuildFile; fileRef = 020C0D415830E4E07318D617 /* DesignRender.swift */; };
 		F887BC93E72781523EFFAE33 /* FormattersTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB11699DBDFE3D9332639D6A /* FormattersTests.swift */; };
 		FB6A57F56D7F4CD2CD065E58 /* InquiriesListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2991DA02D3E5617685B8D3F /* InquiriesListView.swift */; };
@@ -206,6 +208,7 @@
 		9A35A89FB3A8A1E2ADD1A999 /* SketchCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchCanvasView.swift; sourceTree = "<group>"; };
 		9A5B792D337D3CC5CDD8D3F5 /* ImportantDatesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDatesListView.swift; sourceTree = "<group>"; };
 		A0598C196A691999052AF60B /* Appointment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Appointment.swift; sourceTree = "<group>"; };
+		A0C8C90A6AF6F34265D74C8A /* OrderSlackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderSlackTests.swift; sourceTree = "<group>"; };
 		A1DFFBBD1FFE1E5F1709949A /* ErrorBusTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBusTests.swift; sourceTree = "<group>"; };
 		A2AB779DCC412E6489076985 /* AppointmentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentsService.swift; sourceTree = "<group>"; };
 		A7419FD8CFB36BD15950E398 /* CustomerSpendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSpendTests.swift; sourceTree = "<group>"; };
@@ -214,6 +217,7 @@
 		B38BBCF4DB447E22829528F7 /* OrderCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCreateView.swift; sourceTree = "<group>"; };
 		B3BC2DAB9F3A9E15EE732231 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
 		B51B9B78A325D13321B07EE6 /* MoneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyTests.swift; sourceTree = "<group>"; };
+		B65938960FE851593B10AD49 /* OrderSlack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderSlack.swift; sourceTree = "<group>"; };
 		B7310374FF5322D321637748 /* GSTReportExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GSTReportExporterTests.swift; sourceTree = "<group>"; };
 		B81CC7E069E03AA8A08C0491 /* CustomerTimelineService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTimelineService.swift; sourceTree = "<group>"; };
 		BB01486DAEC142C4097E3822 /* GSTINValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GSTINValidator.swift; sourceTree = "<group>"; };
@@ -279,6 +283,7 @@
 				8437F1A37C385BAC2AE3677E /* ImageURLValidatorTests.swift */,
 				794FBB04EB0EE2D819A44205 /* ModelDecodingTests.swift */,
 				B51B9B78A325D13321B07EE6 /* MoneyTests.swift */,
+				A0C8C90A6AF6F34265D74C8A /* OrderSlackTests.swift */,
 				0CE75C8A6318309AA0B9C9FE /* PaymentsServiceModelTests.swift */,
 				DB82B2C0DAF757B5B37CC1C4 /* ReferencePromptTests.swift */,
 				2184A70D6ED04D46C8289F81 /* StatusMachineTests.swift */,
@@ -448,6 +453,7 @@
 				498791B4D1735BE393917F2E /* Formatters.swift */,
 				BB01486DAEC142C4097E3822 /* GSTINValidator.swift */,
 				3B00FCF5C94D1A41AFB521B6 /* Log.swift */,
+				B65938960FE851593B10AD49 /* OrderSlack.swift */,
 				6E6566F16DD7D66E5D1755FE /* WhatsAppShareHelper.swift */,
 			);
 			path = Utilities;
@@ -723,6 +729,7 @@
 				7621FBC1259401B39D275864 /* Order.swift in Sources */,
 				B1E7A5ED2A56B43F13A7A0E1 /* OrderCreateView.swift in Sources */,
 				2EF8E600870EF1FD57E1BD32 /* OrderDetailView.swift in Sources */,
+				72B4089DBD5112F35AE0994E /* OrderSlack.swift in Sources */,
 				29F0F34F7694D9ECDAEA15F9 /* OrderTimelineView.swift in Sources */,
 				6D2A26D6EA6DBC84A99173EA /* OrdersListView.swift in Sources */,
 				CC880316E58BB3BD3CBC5850 /* OrdersService.swift in Sources */,
@@ -762,6 +769,7 @@
 				9540AD799BB488211D8CE6E5 /* ImageURLValidatorTests.swift in Sources */,
 				7A85C706C713FE590D928ACD /* ModelDecodingTests.swift in Sources */,
 				4624C704DF46081638434B73 /* MoneyTests.swift in Sources */,
+				F3D19282A5CB25C5B8504DE3 /* OrderSlackTests.swift in Sources */,
 				96C65521BE778AD5B16AC7F6 /* PaymentsServiceModelTests.swift in Sources */,
 				72DD05843BB7F59E3FD1889B /* ReferencePromptTests.swift in Sources */,
 				FFDB22488D6F4C3B7BFEA451 /* StatusMachineTests.swift in Sources */,
