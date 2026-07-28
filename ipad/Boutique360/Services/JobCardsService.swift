@@ -8,6 +8,18 @@ enum JobCardsService {
         return try await query.order("created_at", ascending: false).limit(200).execute().value
     }
 
+    /// R1 — batch fetch for slack badges: one query for a page of orders.
+    /// boutiqueId: RLS belt-and-braces per CLAUDE.md.
+    static func forOrders(_ orderIds: [UUID], boutiqueId: UUID) async throws -> [JobCard] {
+        guard !orderIds.isEmpty else { return [] }
+        return try await SupabaseService.client.from("job_cards")
+            .select()
+            .eq("boutique_id", value: boutiqueId)
+            .in("order_id", values: orderIds)
+            .execute()
+            .value
+    }
+
     static func get(id: UUID) async throws -> JobCard {
         try await SupabaseService.client.from("job_cards")
             .select().eq("id", value: id).single().execute().value

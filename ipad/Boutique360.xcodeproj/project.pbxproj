@@ -35,6 +35,7 @@
 		3FCD2D638C3843D00F04E944 /* CustomerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E35FAAA1DE3580CE4CA2368 /* CustomerDetailView.swift */; };
 		45734C8BB078AD0F53E25379 /* WhatsAppShareHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9BFC7650136A2BB654FC04E /* WhatsAppShareHelperTests.swift */; };
 		4624C704DF46081638434B73 /* MoneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51B9B78A325D13321B07EE6 /* MoneyTests.swift */; };
+		477A637B79BC53952C16185F /* SlackBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2B36D2550F269C7C0C5A8 /* SlackBadge.swift */; };
 		47DCCD8355C934670FA1DE29 /* AppointmentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2AB779DCC412E6489076985 /* AppointmentsService.swift */; };
 		491C46CD7DD3C8FB990BE716 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 562812B13F7D90510B109E44 /* AppShellView.swift */; };
 		496750A87198099EACC4CB27 /* EnumDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E62D7FAC992BCFA6EEE2E5BB /* EnumDecodingTests.swift */; };
@@ -213,6 +214,7 @@
 		A2AB779DCC412E6489076985 /* AppointmentsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentsService.swift; sourceTree = "<group>"; };
 		A7419FD8CFB36BD15950E398 /* CustomerSpendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSpendTests.swift; sourceTree = "<group>"; };
 		ACA9CD6936DFD9F296D13514 /* ImportantDatesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDatesService.swift; sourceTree = "<group>"; };
+		B1B2B36D2550F269C7C0C5A8 /* SlackBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlackBadge.swift; sourceTree = "<group>"; };
 		B2D42D75CCEE8F362E9D8426 /* JobCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardPreviewView.swift; sourceTree = "<group>"; };
 		B38BBCF4DB447E22829528F7 /* OrderCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCreateView.swift; sourceTree = "<group>"; };
 		B3BC2DAB9F3A9E15EE732231 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
@@ -526,6 +528,7 @@
 				FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */,
 				42B75FB38911DE4973558CCD /* OrderTimelineView.swift */,
 				596812C9E451E4F67282DEE2 /* PaymentsSectionView.swift */,
+				B1B2B36D2550F269C7C0C5A8 /* SlackBadge.swift */,
 			);
 			path = Orders;
 			sourceTree = "<group>";
@@ -743,6 +746,7 @@
 				631A2B06BAA7191CB4DDB8AC /* SettingsView.swift in Sources */,
 				1B87E7C081BAB5D8BDC61BBC /* SignInView.swift in Sources */,
 				78AA949DF3EB07E3678D8CEC /* SketchCanvasView.swift in Sources */,
+				477A637B79BC53952C16185F /* SlackBadge.swift in Sources */,
 				BD166544FC31E672D764DE35 /* StorageService.swift in Sources */,
 				4B4B4778A1D9B12862832D95 /* StyleSuggestionsSheet.swift in Sources */,
 				C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */,
