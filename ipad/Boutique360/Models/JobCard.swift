@@ -54,6 +54,7 @@ struct JobCard: Identifiable, Codable, Hashable {
     var renderImagePath: String?
     var currentStage: Int
     var stagesProgressJson: [StageProgress]
+    var shareToken: UUID?             // R4d — karigar magic-link capability (0028)
     var createdAt: Date
     var updatedAt: Date
 
@@ -75,8 +76,34 @@ struct JobCard: Identifiable, Codable, Hashable {
         case renderImagePath = "render_image_path"
         case currentStage = "current_stage"
         case stagesProgressJson = "stages_progress_json"
+        case shareToken = "share_token"
         case createdAt = "created_at"
         case updatedAt = "updated_at"
+    }
+}
+
+/// R4d — karigar progress event, inserted by the job-card-view Edge Function.
+/// Kind is strict (no unknown-case fallback): the DB check constraint
+/// guarantees exactly these three values.
+struct JobCardEvent: Identifiable, Codable, Hashable {
+    enum Kind: String, Codable {
+        case started
+        case stitchingDone = "stitching_done"
+        case ready
+    }
+    let id: UUID
+    var boutiqueId: UUID
+    var jobCardId: UUID
+    var event: Kind
+    var wipPhotoPath: String?
+    var createdAt: Date
+
+    enum CodingKeys: String, CodingKey {
+        case id, event
+        case boutiqueId = "boutique_id"
+        case jobCardId = "job_card_id"
+        case wipPhotoPath = "wip_photo_path"
+        case createdAt = "created_at"
     }
 }
 
