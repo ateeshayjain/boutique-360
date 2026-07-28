@@ -11,6 +11,19 @@ enum AlterationsService {
             .value
     }
 
+    /// R2 — boutique-wide open alterations for the morning board's
+    /// trial/alter lane. Deterministic order for stable UI.
+    static func listOpen(boutiqueId: UUID) async throws -> [Alteration] {
+        try await SupabaseService.client.from("alterations")
+            .select()
+            .eq("boutique_id", value: boutiqueId)
+            .in("status", values: [AlterationStatus.requested.rawValue,
+                                   AlterationStatus.in_progress.rawValue])
+            .order("created_at", ascending: true)
+            .execute()
+            .value
+    }
+
     static func create(_ input: NewAlteration) async throws -> Alteration {
         try await SupabaseService.client.from("alterations")
             .insert(input)
