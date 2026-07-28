@@ -149,6 +149,22 @@ uses an explicit column list + `coalesce` per defaulted column — do NOT
 revert to `insert … select * from jsonb_populate_record(...)`; that form
 writes NULLs for absent keys and bypasses column defaults.
 
+## R3 RPCs (migration 0029)
+
+### `lock_order(p_lock jsonb) returns order_locks`
+Atomic: inserts the lock row AND patches `orders.design_id`. Server-enforced:
+order must exist, payload boutique must match the order's, status ∈
+{pending, confirmed}. `unique(order_id)` → raced double-lock is a clean
+23505 (client treats as already-locked success).
+
+### `apply_change_order(p_order_id, p_description, p_price_delta, p_new_event_date) returns change_orders`
+Atomic: inserts the append-only CO row + updates the order's
+subtotal/gst/total/event_date. Server-enforced: order must be LOCKED;
+`subtotal + delta ≥ 0`; GST recomputed at the order's effective rate
+(gst/subtotal; ₹0-subtotal orders → rate 0, accepted limitation); exact
+invariant `total = subtotal + gst + shipping` (reuses the rounded GST).
+`change_orders` has select+insert policies only — append-only at the DB.
+
 ---
 
 ## Naming conventions

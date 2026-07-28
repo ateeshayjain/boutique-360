@@ -4,6 +4,18 @@ Notable changes per release. Format roughly follows [Keep a Changelog](https://k
 
 ---
 
+## [Unreleased] — 2026-07-28 (Lock the look + change-orders — R3)
+
+### Added
+- **Lock the look** — the Look's one irreversible moment. On pending/confirmed orders, `LockSheet` freezes the contract: design + latest render, fabric code/description (free text until R5), pinned measurement snapshot ("re-measures won't silently change the spec"), optional price breakup (must reconcile to subtotal), frozen event plan (event/buffer/must-finish-by), advance amount, rush flag. Hard rule: **no advance, no lock** (pure `LockGate` gates the button; must-finish-by-past needs an explicit "accept rush").
+- **Change orders** — post-lock price/date changes are append-only ledger entries applied atomically by the `apply_change_order` RPC: server-enforced lock precondition + subtotal floor, GST recomputed at the order's effective rate, exact total invariant. Append-only is enforced at the DB (no update/delete policies). `LockSummarySheet` shows the frozen contract + ledger + apply form.
+- `orders.design_id` closes the Look thread; patched atomically inside the `lock_order` RPC (which also enforces boutique-integrity + status gates server-side).
+
+### Tests
+- 175 total (was 164): LockGate 8, decode round-trips for OrderLock/ChangeOrder/designId. RPCs live-smoked (positive/negative deltas, floor breach, double lock, CO-on-unlocked, lock-on-cancelled).
+
+---
+
 ## [Unreleased] — 2026-07-28 (Morning board — R2)
 
 ### Added

@@ -10,10 +10,10 @@
 
 - **What:** iPad-native CRM + AI design studio for a single boutique business in India (pilot stage, used daily). Designer workflow: sketch/reference → AI render → customer virtual try-on → job card for the karigar → GST invoice. Customers never touch the iPad; they receive WhatsApp messages.
 - **Stack:** Swift / SwiftUI (**iOS 17+**, iPad-only) · PencilKit (sketch) · PDFKit (invoice/job-card) · **XcodeGen** (`ipad/project.yml` is the source of truth) · XCTest.
-- **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions (`purge-expired-tryons`, `job-card-view`) + pg_cron. **28 migrations** applied. RLS on every boutique-scoped table.
+- **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions (`purge-expired-tryons`, `job-card-view`) + pg_cron. **29 migrations** applied. RLS on every boutique-scoped table.
 - **AI:** Google Gemini (`gemini-2.5-flash-image` for render/VTO, `gemini-2.5-flash` for text). Per-boutique daily cost ceiling enforced server-side.
-- **Scale:** ~85 Swift files · 18 test files · **164 tests** (pure-logic + Codable only, ~2s).
-- **State:** iPad app feature-complete + stable, R1/R2/R4c/R4d shipped (slack engine, morning board, fabric-meters brief, karigar phone link). **iPad-native is the strategy** — web surfaces retired from the roadmap (July 2026; see README). Work happens on local `main`; remote push target is `origin boutique-360-ipad-app`.
+- **Scale:** ~85 Swift files · 18 test files · **175 tests** (pure-logic + Codable only, ~2s).
+- **State:** iPad app feature-complete + stable, R1/R2/R3/R4c/R4d shipped (slack engine, morning board, lock + change-orders, fabric-meters brief, karigar phone link). **iPad-native is the strategy** — web surfaces retired from the roadmap (July 2026; see README). Work happens on local `main`; remote push target is `origin boutique-360-ipad-app`.
 - **Secrets:** `ipad/Boutique360/Configuration/Secrets.xcconfig` (GEMINI_API_KEY) is **gitignored** — never commit it. `Env.xcconfig` (Supabase URL + anon key) is tracked (anon key is RLS-protected, safe to ship).
 
 ---
@@ -141,6 +141,8 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | Per-customer spend aggregator (pure, tested) | `Utilities/CustomerSpend.swift` |
 | Deadline slack engine (pure, tested) + badge | `Utilities/OrderSlack.swift`, `Features/Orders/SlackBadge.swift` |
 | Karigar link events + token rotation | `Services/JobCardEventsService.swift` |
+| Lock validation (pure) + lock/CO service | `Utilities/LockGate.swift`, `Services/OrderLocksService.swift` |
+| Lock + change-order UI | `Features/Orders/LockSheet.swift`, `Features/Orders/LockSummarySheet.swift` |
 | Karigar phone page (Edge Function) | `supabase/functions/job-card-view/index.ts` |
 | Garment template silhouettes for sketch canvas | `Features/Designs/GarmentTemplate.swift` |
 | Order create (atomic RPC) | `Services/OrdersService.swift` |

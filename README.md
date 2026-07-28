@@ -62,7 +62,7 @@ Twilio SMS · Razorpay payment links. WhatsApp via `wa.me` links always works.
 
 - Project URL: `https://tdnwdlrkbrtoxjzcgusg.supabase.co`
 - Dashboard: https://supabase.com/dashboard/project/tdnwdlrkbrtoxjzcgusg
-- **28 migrations applied** · 32+ tables with RLS · 10 storage buckets
+- **29 migrations applied** · 32+ tables with RLS · 10 storage buckets
 - 2 Edge Functions: `purge-expired-tryons` (daily pg_cron DPDP purge) · `job-card-view` (karigar magic-link page, R4d)
 - Seed: 1 boutique ("Aditi Designer Studio") + 3 loyalty tiers
 
@@ -95,7 +95,7 @@ See [docs/deployment.md](docs/deployment.md) for full setup.
 ## Testing
 
 Unit tests cover pure logic (formatters, validators, parsers, state machines,
-money math, spend aggregation, phone normalization). **164 test cases, all
+money math, spend aggregation, phone normalization). **175 test cases, all
 green, under a second.**
 
 ```bash
@@ -122,7 +122,7 @@ Sequenced in [docs/app-map.md §7](docs/app-map.md); rationale in the
 - ✅ Audit cycle + spec-gap Waves 1–6
 - ✅ **R1 — `event_date` + slack engine** — shipped July 2026 (OrderSlack verdicts, must-finish-by warning, badges)
 - ✅ **R2 — exception-first morning board** — shipped July 2026 (tiles + needs-you + pipeline, honest degradation)
-- ⏭️ **R3 — Lock screen** (freeze fabric/measurements/price/dates + advance; change-orders after)
+- ✅ **R3 — Lock screen** — shipped July 2026 (lock_order + apply_change_order RPCs, LockSheet, append-only CO ledger)
 - ⏭️ **R4 — competitive absorbs**: auto-drafted reminders with one-tap approve · PIN-scoped staff roles · ✅ fabric-meters estimate (R4c, shipped) · ✅ karigar phone link (R4d, shipped)
 - ⏭️ **R5 — fabric inventory** (bolts, codes, meters in/out → fills the "Fabrics" sidebar slot)
 - ⏭️ **R6 — karigar ledger** (material issued, piece-rate dues, alteration-rate quality metric)
@@ -141,11 +141,11 @@ boutique-360/
 ├── audit-outputs/
 ├── supabase/
 │   ├── config.toml · seed.sql
-│   └── migrations/                ← 28 migrations (00NN_*.sql, forward-only)
+│   └── migrations/                ← 29 migrations (00NN_*.sql, forward-only)
 ├── ipad/
 │   ├── project.yml                ← XcodeGen spec (source of truth)
 │   ├── Boutique360/               ← Swift source (Features / Services / Models / Utilities)
-│   └── Boutique360Tests/          ← 164 XCTest cases
+│   └── Boutique360Tests/          ← 175 XCTest cases
 ├── scripts/
 └── .gitignore
 ```

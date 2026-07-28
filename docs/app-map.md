@@ -77,7 +77,7 @@ pure aggregator: `Utilities/MorningBoard.swift`.)*
 |---|---|---|
 | `OrdersListView` | All orders, status filter, **slack badges** (R1) | Open detail |
 | `OrderCreateView` | Line items, GST, atomic create via RPC, **event date + buffer + must-finish-by warning** (R1) | Create (race-safe number) |
-| `OrderDetailView` | Status machine, items, invoice, **deadline slack row** (R1), **Notify customer** (WA/Email/SMS), magic link | Advance status, generate invoice PDF, notify |
+| `OrderDetailView` | Status machine, items, invoice, **deadline slack row** (R1), **lock row + change orders** (R3), **Notify customer** (WA/Email/SMS), magic link | Advance status, lock the look, apply change order, generate invoice PDF, notify |
 | `OrderTimelineView` | Status history | — |
 | `PaymentsSectionView` | Advance/balance ledger, record payment, WhatsApp reminder, **Razorpay payment link** | Record, remind, create link |
 | `AlterationsSectionView` | Trial → alteration rounds | Log alteration |
@@ -212,7 +212,7 @@ the competitive teardown:
 |---|---|---|---|
 | R1 ✅ | **`event_date` + slack engine** — SHIPPED July 2026: `OrderSlack` engine (6 verdicts incl. overdue honesty guard), must-finish-by warning at creation, badges on list/detail | One primitive powers R2 and R3; prevents the week-11 late delivery | Journey lesson 1 |
 | R2 ✅ | **Exception-first morning board** — SHIPPED July 2026: 3 tiles + slack-sorted needs-you + 5-lane pipeline, per-input honest degradation. (Link-sent-unopened state deferred to R4a.) | The owner's question is "what goes wrong if I don't touch it today" | Morning-board design |
-| R3 | **Lock screen** — freeze render + fabric code + measurement-version pin + price breakup + date plan; advance required; post-lock changes = change-orders | The Look's one irreversible moment; stops spec disputes and date slips | CRM-design discussion |
+| R3 ✅ | **Lock screen** — SHIPPED July 2026: order_locks + change_orders (DB-append-only), atomic lock_order + apply_change_order RPCs, LockSheet + ledger UI | The Look's one irreversible moment; stops spec disputes and date slips | CRM-design discussion |
 | R4a | **Auto-drafted reminders, one-tap approve** — trial/payment/ready messages drafted by status hooks, owner approves in bulk | Darzi AI fires these automatically; we keep review as a feature not a tax | Teardown §4.1 |
 | R4b | **PIN-scoped staff roles** — finance hidden from tailor/assistant PINs | Darzi shipped what we deferred; cheaper than full multi-auth RLS rework | Teardown §4.2 |
 | R4c ✅ | **Fabric-meters estimate on job cards** — SHIPPED July 2026: andaaza line in the Hinglish brief | Cheap, high daily utility | Teardown §4.3 |
