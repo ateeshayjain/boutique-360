@@ -16,6 +16,11 @@ struct OrderDetailView: View {
     @State private var notifyMessage: String?     // success/error toast
     @State private var sending: Bool = false
     @State private var jobCard: JobCard?          // R1: slack badge input
+    // R3: lock state. lockLoadFailed → never offer locking on unknown state.
+    @State private var lock: OrderLock?
+    @State private var lockLoadFailed = false
+    @State private var showLockSheet = false
+    @State private var showLockSummary = false
 
     init(order: Order, customerName: String?) {
         self.order = order
@@ -53,6 +58,27 @@ struct OrderDetailView: View {
                             Text("Event \(current.eventDate ?? "—") · buffer \(current.alterationBufferDays)d")
                                 .font(.caption2).foregroundStyle(.secondary)
                         }
+                    }
+                    if lock != nil {
+                        Text("Locked — changes via change order only.")
+                            .font(.caption2).foregroundStyle(.tertiary)
+                    }
+                }
+                // R3: the lock row / lock action.
+                if let lock {
+                    LabeledContent("Locked") {
+                        Button {
+                            showLockSummary = true
+                        } label: {
+                            Label(lock.lockedAt.formatted(date: .abbreviated, time: .omitted),
+                                  systemImage: "lock.fill")
+                        }
+                    }
+                } else if !lockLoadFailed, [.pending, .confirmed].contains(current.status) {
+                    Button {
+                        showLockSheet = true
+                    } label: {
+                        Label("Lock the look", systemImage: "lock")
                     }
                 }
             }
@@ -163,6 +189,30 @@ struct OrderDetailView: View {
             }
         }
         .task { await loadItems() }
+        .sheet(isPresented: $showLockSheet) {
+            NavigationStack {
+                LockSheet(order: current, customer: customer) { newLock in
+                    lock = newLock
+                }
+            }
+            .presentationDetents([.large])
+        }
+        .sheet(isPresented: $showLockSummary) {
+            if let lock {
+                NavigationStack {
+                    LockSummarySheet(order: current, lock: lock) {
+                        // Totals/event date changed server-side — refetch.
+                        NotificationCenter.default.post(name: .orderDidChange, object: nil)
+                        Task {
+                            if let refreshed = try? await OrdersService.get(id: current.id) {
+                                current = refreshed
+                            }
+                        }
+                    }
+                }
+                .presentationDetents([.large])
+            }
+        }
         .sheet(isPresented: $showingInvoice) {
             if let data = invoicePDF {
                 InvoicePreviewView(pdfData: data, invoiceNumber: invoiceNumberPreview())
@@ -238,6 +288,14 @@ struct OrderDetailView: View {
         // R1: this order's job card for the slack badge. Best-effort.
         if let bid = ctx.boutiqueId {
             jobCard = (try? await JobCardsService.forOrders([order.id], boutiqueId: bid))?.first
+            // R3: lock state — on failure, suppress the lock button (never
+            // offer locking on unknown state).
+            do {
+                lock = try await OrderLocksService.get(orderId: order.id, boutiqueId: bid)
+                lockLoadFailed = false
+            } catch {
+                lockLoadFailed = true
+            }
         }
     }
 
