@@ -15,6 +15,7 @@
 		11106FCE314038E586A51BAB /* ErrorBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C449608F074290180B2B427 /* ErrorBus.swift */; };
 		132F580C1AC00B8C85DCF0A0 /* CustomerProfilesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13E7CE976CB5309E17FA5A7B /* CustomerProfilesService.swift */; };
 		138FBD62AA1BB9FD570549F1 /* ImportantDatesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = ACA9CD6936DFD9F296D13514 /* ImportantDatesService.swift */; };
+		16AB9E5FDC258C0767FDAF69 /* MorningBoardTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A49934CCE69186D66047F49 /* MorningBoardTests.swift */; };
 		1B442A269992631F22CAA512 /* PaymentsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB67444A39A9A8225D475C2 /* PaymentsService.swift */; };
 		1B87E7C081BAB5D8BDC61BBC /* SignInView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BF745E6724DE0A69610EC6FE /* SignInView.swift */; };
 		1BA363E0E46EE31727105266 /* JobCardPreviewView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2D42D75CCEE8F362E9D8426 /* JobCardPreviewView.swift */; };
@@ -76,6 +77,7 @@
 		92CAEE3D77F9B3E01D4A2107 /* DesignRendersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 845EE245EB7CFC98E6E1253F /* DesignRendersService.swift */; };
 		9540AD799BB488211D8CE6E5 /* ImageURLValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8437F1A37C385BAC2AE3677E /* ImageURLValidatorTests.swift */; };
 		96C65521BE778AD5B16AC7F6 /* PaymentsServiceModelTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CE75C8A6318309AA0B9C9FE /* PaymentsServiceModelTests.swift */; };
+		96FC44B9DEA7858F0ED5A2B0 /* MorningBoard.swift in Sources */ = {isa = PBXBuildFile; fileRef = F6FBB3EB67076F070005DB38 /* MorningBoard.swift */; };
 		99A2F8172F28BA91A525D238 /* AuthService.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE9B6823C2C38656FC4E0D5D /* AuthService.swift */; };
 		9A61C6F6ECFEBFC693957BE8 /* GSTReportExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7310374FF5322D321637748 /* GSTReportExporterTests.swift */; };
 		9D4DF386C70BBD9531103853 /* AlterationsSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576D4A8FE13B65032686ECDD /* AlterationsSectionView.swift */; };
@@ -201,6 +203,7 @@
 		85CEA55E43BC3648A39E1849 /* OrdersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersService.swift; sourceTree = "<group>"; };
 		86A7D5B291D442D4A0D6AE5C /* InquiriesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InquiriesService.swift; sourceTree = "<group>"; };
 		89EC55AD960A6888307EF31B /* Boutique360App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boutique360App.swift; sourceTree = "<group>"; };
+		8A49934CCE69186D66047F49 /* MorningBoardTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBoardTests.swift; sourceTree = "<group>"; };
 		8A9D3F4F4226B8D309CCE16B /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = "<group>"; };
 		8D863245ED5ACE74EB5C9AB8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerLinkSheet.swift; sourceTree = "<group>"; };
@@ -252,6 +255,7 @@
 		EE00060E9A0163F499E59AB9 /* ImageInputPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageInputPicker.swift; sourceTree = "<group>"; };
 		EE48B5A70951F6D5B3A94BD6 /* TwilioNormalizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwilioNormalizeTests.swift; sourceTree = "<group>"; };
 		F2C5E3128DEEB781A8374FAA /* JobCardsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardsService.swift; sourceTree = "<group>"; };
+		F6FBB3EB67076F070005DB38 /* MorningBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBoard.swift; sourceTree = "<group>"; };
 		FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersListView.swift; sourceTree = "<group>"; };
 		FC73C87086D30EB4B20BEB12 /* StyleSuggestionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleSuggestionsSheet.swift; sourceTree = "<group>"; };
 		FCA05E72225F45775FE60623 /* ImportantDateFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDateFormView.swift; sourceTree = "<group>"; };
@@ -287,6 +291,7 @@
 				8437F1A37C385BAC2AE3677E /* ImageURLValidatorTests.swift */,
 				794FBB04EB0EE2D819A44205 /* ModelDecodingTests.swift */,
 				B51B9B78A325D13321B07EE6 /* MoneyTests.swift */,
+				8A49934CCE69186D66047F49 /* MorningBoardTests.swift */,
 				A0C8C90A6AF6F34265D74C8A /* OrderSlackTests.swift */,
 				0CE75C8A6318309AA0B9C9FE /* PaymentsServiceModelTests.swift */,
 				DB82B2C0DAF757B5B37CC1C4 /* ReferencePromptTests.swift */,
@@ -457,6 +462,7 @@
 				498791B4D1735BE393917F2E /* Formatters.swift */,
 				BB01486DAEC142C4097E3822 /* GSTINValidator.swift */,
 				3B00FCF5C94D1A41AFB521B6 /* Log.swift */,
+				F6FBB3EB67076F070005DB38 /* MorningBoard.swift */,
 				B65938960FE851593B10AD49 /* OrderSlack.swift */,
 				6E6566F16DD7D66E5D1755FE /* WhatsAppShareHelper.swift */,
 			);
@@ -732,6 +738,7 @@
 				CC587B49D585BB3C46D21B0C /* Measurement.swift in Sources */,
 				8DF54D169A390D036680A486 /* MeasurementFormView.swift in Sources */,
 				BEEC95627D524D70A2F0A8DF /* MeasurementsService.swift in Sources */,
+				96FC44B9DEA7858F0ED5A2B0 /* MorningBoard.swift in Sources */,
 				5BAAF970580377523EA91E6E /* NotificationsService.swift in Sources */,
 				7621FBC1259401B39D275864 /* Order.swift in Sources */,
 				B1E7A5ED2A56B43F13A7A0E1 /* OrderCreateView.swift in Sources */,
@@ -777,6 +784,7 @@
 				9540AD799BB488211D8CE6E5 /* ImageURLValidatorTests.swift in Sources */,
 				7A85C706C713FE590D928ACD /* ModelDecodingTests.swift in Sources */,
 				4624C704DF46081638434B73 /* MoneyTests.swift in Sources */,
+				16AB9E5FDC258C0767FDAF69 /* MorningBoardTests.swift in Sources */,
 				F3D19282A5CB25C5B8504DE3 /* OrderSlackTests.swift in Sources */,
 				96C65521BE778AD5B16AC7F6 /* PaymentsServiceModelTests.swift in Sources */,
 				72DD05843BB7F59E3FD1889B /* ReferencePromptTests.swift in Sources */,
