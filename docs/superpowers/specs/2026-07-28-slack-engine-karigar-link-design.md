@@ -43,6 +43,7 @@ alter table public.orders
 
 alter table public.job_cards
   add column if not exists share_token uuid not null default gen_random_uuid();
+create unique index if not exists job_cards_share_token_idx on public.job_cards(share_token);
 
 create table public.job_card_events (
   id uuid primary key default gen_random_uuid(),
@@ -52,11 +53,16 @@ create table public.job_card_events (
   wip_photo_path text,
   created_at timestamptz not null default now()
 );
+create index if not exists job_card_events_card_idx on public.job_card_events(job_card_id, created_at);
+alter table public.job_card_events enable row level security;
 -- RLS: owner read via boutique_id (standard policy pair);
 -- inserts arrive via the Edge Function using service role after token check.
 ```
 
-New storage bucket `karigar-wip` (private) for WIP photos.
+New storage bucket `karigar-wip` (private) for WIP photos. Retention:
+**keep indefinitely for now** — WIP photos are the boutique's own production
+record, not customer personal data, so the DPDP 7-day purge does not apply.
+Revisit if the bucket grows.
 
 ### Unit 2 — `Utilities/OrderSlack.swift` (pure engine)
 
@@ -65,6 +71,7 @@ enum OrderSlack {
   enum Verdict: Equatable {
     case noEvent                 // event_date nil — slack undefined, never at-risk
     case noPlan                  // event set, no job-card due date — honest "can't compute"
+    case overdue(daysOverdue: Int) // job card past due and NOT done — always red
     case late(days: Int)         // slack < 0
     case atRisk(days: Int)       // 0 ≤ slack ≤ 1
     case comfortable(days: Int)  // slack ≥ 2
@@ -73,29 +80,59 @@ enum OrderSlack {
                        orderStatus: OrderStatus, fulfillment: FulfillmentMethod?,
                        alterationBufferDays: Int, today: Date,
                        calendar: Calendar = .current) -> Verdict
+
+  /// The date production must finish by for the event to be safe:
+  /// event − alterationBufferDays − deliveryDays. Nil when eventDate is nil.
+  static func mustFinishBy(eventDate: Date?, fulfillment: FulfillmentMethod?,
+                           alterationBufferDays: Int,
+                           calendar: Calendar = .current) -> Date?
 }
 ```
 
 - `work_remaining = jobCardDone || order delivered ? 0 : max(0, due − today)`
 - `delivery_days = fulfillment == .ship ? 3 : 0` (constant, revisit with data)
 - `slack = (event − today) − work_remaining − alterationBufferDays − delivery_days`
+- **Overdue rule (honesty guard):** if `due < today && !jobCardDone && order
+  not delivered`, return `.overdue(daysOverdue: today − due)` regardless of
+  computed slack. An unfinished job past its due date must never show green —
+  remaining work is unknown-but-positive, so the badge is red and the label
+  says "production overdue Nd". (A delivered order with a never-closed job
+  card is NOT overdue — delivery supersedes; test this case.)
+- **Verdict precedence (full evaluation order):** cancelled/returned →
+  `.noEvent` · event nil → `.noEvent` · job-card due nil → `.noPlan` ·
+  overdue guard → `.overdue` · else slack classification
+  (`.late`/`.atRisk`/`.comfortable`).
 - `jobCardDone` derives from job-card completion OR a `ready` karigar event
-  (Unit 5) — callers pass the resolved boolean; the engine stays pure.
-- Latest-safe-start (for the creation warning) =
-  `event − production_days − buffer − delivery`, where production days come
-  from the job-card due date when present.
+  (Unit 5) — callers resolve the boolean; the engine stays pure.
+  `JobCard.dueDate` is a `String?` ("YYYY-MM-DD"); callers parse it with
+  `Formatters.postgresDate` (per CLAUDE.md) before calling the engine.
 - All-nil inputs degrade to `.noEvent`/`.noPlan` — never a crash, never a
   fake green. Cancelled/returned orders → `.noEvent` (deadline moot).
 
+**Creation-time semantics (no job card exists yet):** the engine cannot
+compute slack, and the spec does NOT invent a production-days estimate.
+Instead `OrderCreateView` shows the **must-finish-by date** from
+`mustFinishBy(...)`: *"Production must finish by ⟨date⟩ — ⟨N⟩ days from
+today"*. Display rules: red warning when `N < minimumProductionDays`
+(named constant, 7) — *"Only ⟨N⟩ days of production time before buffers —
+rush order"*; impossible (`must-finish-by < today`) → *"Won't fit: event is
+inside the alteration + delivery buffer"*. Warn, never block — the owner may
+knowingly accept rush work. Once a job card exists, its due date supersedes
+and the full slack verdict takes over on list/detail badges.
+
 ### Unit 3 — iPad surfacing (R1 scope)
 
-- `OrderCreateView`: optional event-date picker + buffer stepper (default 7).
-  If a computed slack is negative at save time, show an inline warning —
-  *"Won't fit: needs latest start by ⟨date⟩"* — warn, don't block (owner may
-  knowingly accept rush work).
+- `OrderCreateView`: optional event-date picker + buffer stepper (default 7),
+  with the must-finish-by line + rush/impossible warnings per Unit 2's
+  creation-time semantics.
 - `OrdersListView` rows + `OrderDetailView` header: slack badge —
-  red `.late` / amber `.atRisk` / green `.comfortable` / gray `.noEvent`
-  / hollow `.noPlan`. One shared badge view so R2 reuses it.
+  red `.overdue`/`.late` / amber `.atRisk` / green `.comfortable` /
+  gray `.noEvent` / hollow `.noPlan`. One shared badge view so R2 reuses it.
+- **List fetch strategy (avoid N+1):** after loading the orders page,
+  `JobCardsService` gains `forOrders(_ ids: [UUID]) -> [JobCard]` — a single
+  `.in("order_id", ids)` query — and the list builds an `orderId → (due,
+  done)` dictionary for badge computation. One extra query per screen, not
+  per row.
 - Model: `Order.eventDate`, `Order.alterationBufferDays` decoded; NewOrder +
   patch updated; OrderCreateView passes them through the existing atomic RPC
   (RPC gains two pass-through params).
@@ -121,7 +158,14 @@ No owner-facing web app (July 2026 strategy; ADR 0001).
     works on low-end Android. First name only — no customer phone/address.
   - `POST .../⟨token⟩/event` with `event` + optional photo (multipart) →
     validates token → inserts `job_card_events` row, stores photo in
-    `karigar-wip` bucket. Rate-limited per token (basic: reject >30/day).
+    `karigar-wip` bucket. Photo limits: max 5 MB, `image/jpeg` or
+    `image/png` only; oversized/other types → 413/415 with a Hinglish
+    message.
+  - **Rate limiting (mechanism):** before insert, `select count(*) from
+    job_card_events where job_card_id = ⟨id⟩ and created_at > now() −
+    interval '24 hours'`; count ≥ 30 → HTTP 429. GET is not rate-limited
+    (read-only; signed URLs generated with 1-hour TTL so repeated views
+    within the hour reuse browser cache).
 - **Sharing:** JobCardPreviewView gains "Share link with karigar" —
   `wa.me` message containing the link (alongside the existing PDF share).
 - **iPad feedback:** OrderTimelineView + JobCardPreviewView show
@@ -130,13 +174,18 @@ No owner-facing web app (July 2026 strategy; ADR 0001).
 - **Security model:** the token IS the capability — same trust level as
   forwarding the PDF today. Unguessable UUID; regenerating the token
   revokes old links ("Regenerate link" button in JobCardPreviewView).
-  Page contains no PII beyond customer first name.
+  Page contains no PII beyond customer first name. The regenerate
+  confirmation dialog notes that previously shared WhatsApp links will stop
+  working (expected — that's the point — but stated so it's not a surprise).
 
 ### Testing
 
 - `OrderSlackTests` (pure): noEvent, noPlan, exact-fit boundary, atRisk at
-  slack 0 and 1, late, delivered order zeroes work, ship-vs-pickup 3-day
-  delta, cancelled → noEvent, ready-event zeroes work.
+  slack 0 and 1, late, **overdue-unfinished job → .overdue even when raw
+  slack would be positive**, delivered order zeroes work, ship-vs-pickup
+  3-day delta, cancelled → noEvent, ready-event zeroes work, delivered
+  order with past-due unclosed job card → NOT overdue, mustFinishBy
+  arithmetic + rush threshold at exactly 7 days.
 - Prompt test: meters instruction present in `tailorBrief` output.
 - Codable round-trip: `Order.eventDate` / `alterationBufferDays`,
   `JobCardEvent` decode.
