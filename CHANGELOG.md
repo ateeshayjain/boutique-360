@@ -4,6 +4,18 @@ Notable changes per release. Format roughly follows [Keep a Changelog](https://k
 
 ---
 
+## [Unreleased] — 2026-07-28 (Morning board — R2)
+
+### Added
+- **Exception-first morning board** at the top of the Dashboard: three tiles (Today's fittings + deliveries · Money due with count + oldest age · At risk), a needs-you list sorted worst-first (overdue → late → at-risk → ready-to-deliver, each row with a derived action: chase karigar / decide today / deliver + collect ₹X) tapping through to the order, and a 5-lane pipeline strip (designing · to start · with karigar · trial/alter · ready) where every order lands in exactly one lane.
+- Pure `MorningBoard` aggregator (9 tests): ready-first membership (a finished-but-overdue order says "deliver", never "chase"), deterministic tie-breaks, `roundedToPaise` money guard, per-input honest degradation — a failed payments fetch blanks the money tile AND suppresses collect amounts instead of showing fake ₹.
+- `AlterationsService.listOpen`; shared payments fetch (one query now feeds both the board and the payments-overdue section).
+
+### Tests
+- 164 total (was 155).
+
+---
+
 ## [Unreleased] — 2026-07-28 (Slack engine + karigar phone link — R1/R4c/R4d)
 
 ### Added

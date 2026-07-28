@@ -29,10 +29,10 @@ Settings.
 ### Dashboard (1 view)
 | Screen | Purpose | Key actions |
 |---|---|---|
-| `DashboardView` | Morning glance: today's revenue widget, appointments, quick stats | Navigate into sections |
+| `DashboardView` | Exception-first morning board (R2): tiles + needs-you + pipeline strip, then revenue + appointments + stats | Tap needs-you row → order detail |
 
-*Planned evolution: exception-first morning board (slack-sorted "needs you"
-list, at-risk tile, pipeline strip) — blocked on `event_date`; see §7.*
+*(Shipped July 2026 — R2. Companion renderer: `MorningBoardView.swift`;
+pure aggregator: `Utilities/MorningBoard.swift`.)*
 
 ### Calendar (2 views)
 | Screen | Purpose | Key actions |
@@ -211,7 +211,7 @@ the competitive teardown:
 | # | Feature | Why | Source |
 |---|---|---|---|
 | R1 ✅ | **`event_date` + slack engine** — SHIPPED July 2026: `OrderSlack` engine (6 verdicts incl. overdue honesty guard), must-finish-by warning at creation, badges on list/detail | One primitive powers R2 and R3; prevents the week-11 late delivery | Journey lesson 1 |
-| R2 | **Exception-first morning board** — needs-you list sorted by slack, money-due tile (incl. link-sent-unopened state), pipeline strip | The owner's question is "what goes wrong if I don't touch it today" | Morning-board design |
+| R2 ✅ | **Exception-first morning board** — SHIPPED July 2026: 3 tiles + slack-sorted needs-you + 5-lane pipeline, per-input honest degradation. (Link-sent-unopened state deferred to R4a.) | The owner's question is "what goes wrong if I don't touch it today" | Morning-board design |
 | R3 | **Lock screen** — freeze render + fabric code + measurement-version pin + price breakup + date plan; advance required; post-lock changes = change-orders | The Look's one irreversible moment; stops spec disputes and date slips | CRM-design discussion |
 | R4a | **Auto-drafted reminders, one-tap approve** — trial/payment/ready messages drafted by status hooks, owner approves in bulk | Darzi AI fires these automatically; we keep review as a feature not a tax | Teardown §4.1 |
 | R4b | **PIN-scoped staff roles** — finance hidden from tailor/assistant PINs | Darzi shipped what we deferred; cheaper than full multi-auth RLS rework | Teardown §4.2 |

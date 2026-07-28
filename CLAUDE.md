@@ -12,8 +12,8 @@
 - **Stack:** Swift / SwiftUI (**iOS 17+**, iPad-only) · PencilKit (sketch) · PDFKit (invoice/job-card) · **XcodeGen** (`ipad/project.yml` is the source of truth) · XCTest.
 - **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions (`purge-expired-tryons`, `job-card-view`) + pg_cron. **28 migrations** applied. RLS on every boutique-scoped table.
 - **AI:** Google Gemini (`gemini-2.5-flash-image` for render/VTO, `gemini-2.5-flash` for text). Per-boutique daily cost ceiling enforced server-side.
-- **Scale:** ~85 Swift files · 18 test files · **155 tests** (pure-logic + Codable only, ~2s).
-- **State:** iPad app feature-complete + stable. Web admin + public storefront are **planned, not built**. Currently on branch `feat/reference-photo-studio` (reference-photo → fabric → VTO flow, Phase 1 mid-build).
+- **Scale:** ~85 Swift files · 18 test files · **164 tests** (pure-logic + Codable only, ~2s).
+- **State:** iPad app feature-complete + stable, R1/R2/R4c/R4d shipped (slack engine, morning board, fabric-meters brief, karigar phone link). **iPad-native is the strategy** — web surfaces retired from the roadmap (July 2026; see README). Work happens on local `main`; remote push target is `origin boutique-360-ipad-app`.
 - **Secrets:** `ipad/Boutique360/Configuration/Secrets.xcconfig` (GEMINI_API_KEY) is **gitignored** — never commit it. `Env.xcconfig` (Supabase URL + anon key) is tracked (anon key is RLS-protected, safe to ship).
 
 ---
@@ -27,7 +27,7 @@ boutique-360/
 │   ├── Boutique360/
 │   │   ├── Configuration/          # Config.swift reads Env.xcconfig + Secrets.xcconfig (gitignored)
 │   │   ├── Models/                 # 12 Codable structs mirroring Postgres rows
-│   │   ├── Services/               # 27 stateless `enum` namespaces (CRUD + AI + storage)
+│   │   ├── Services/               # 29 stateless `enum` namespaces (CRUD + AI + storage)
 │   │   ├── Features/               # SwiftUI views, one folder per area
 │   │   └── Utilities/              # Formatters, ErrorBus, Log, DesignTokens, WhatsAppShareHelper, GSTINValidator, AppEvents
 │   └── Boutique360Tests/           # XCTest (pure logic + Codable round-trip)

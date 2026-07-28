@@ -95,7 +95,7 @@ See [docs/deployment.md](docs/deployment.md) for full setup.
 ## Testing
 
 Unit tests cover pure logic (formatters, validators, parsers, state machines,
-money math, spend aggregation, phone normalization). **155 test cases, all
+money math, spend aggregation, phone normalization). **164 test cases, all
 green, under a second.**
 
 ```bash
@@ -121,7 +121,7 @@ Sequenced in [docs/app-map.md §7](docs/app-map.md); rationale in the
 - ✅ Plans 1–5 — backend, app foundation, CRM core, sketch canvas, AI render + VTO
 - ✅ Audit cycle + spec-gap Waves 1–6
 - ✅ **R1 — `event_date` + slack engine** — shipped July 2026 (OrderSlack verdicts, must-finish-by warning, badges)
-- ⏭️ **R2 — exception-first morning board** (needs-you list sorted by slack, money-due tile, pipeline strip)
+- ✅ **R2 — exception-first morning board** — shipped July 2026 (tiles + needs-you + pipeline, honest degradation)
 - ⏭️ **R3 — Lock screen** (freeze fabric/measurements/price/dates + advance; change-orders after)
 - ⏭️ **R4 — competitive absorbs**: auto-drafted reminders with one-tap approve · PIN-scoped staff roles · ✅ fabric-meters estimate (R4c, shipped) · ✅ karigar phone link (R4d, shipped)
 - ⏭️ **R5 — fabric inventory** (bolts, codes, meters in/out → fills the "Fabrics" sidebar slot)
@@ -145,7 +145,7 @@ boutique-360/
 ├── ipad/
 │   ├── project.yml                ← XcodeGen spec (source of truth)
 │   ├── Boutique360/               ← Swift source (Features / Services / Models / Utilities)
-│   └── Boutique360Tests/          ← 155 XCTest cases
+│   └── Boutique360Tests/          ← 164 XCTest cases
 ├── scripts/
 └── .gitignore
 ```
