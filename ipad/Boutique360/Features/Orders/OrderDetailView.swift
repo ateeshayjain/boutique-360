@@ -15,6 +15,7 @@ struct OrderDetailView: View {
     @State private var statusError: String?
     @State private var notifyMessage: String?     // success/error toast
     @State private var sending: Bool = false
+    @State private var jobCard: JobCard?          // R1: slack badge input
 
     init(order: Order, customerName: String?) {
         self.order = order
@@ -43,6 +44,16 @@ struct OrderDetailView: View {
                     let method = current.fulfillmentMethod ?? .pickup
                     Label(method.label, systemImage: method.systemImage)
                         .foregroundStyle(.secondary)
+                }
+                // R1: deadline slack against the customer's event date.
+                if current.eventDate != nil {
+                    LabeledContent("Deadline") {
+                        HStack(spacing: 8) {
+                            SlackBadge(verdict: OrderSlack.verdict(for: current, jobCard: jobCard))
+                            Text("Event \(current.eventDate ?? "—") · buffer \(current.alterationBufferDays)d")
+                                .font(.caption2).foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
 
@@ -224,6 +235,10 @@ struct OrderDetailView: View {
     private func loadItems() async {
         items = (try? await OrdersService.items(forOrder: order.id)) ?? []
         customer = try? await CustomersService.get(id: order.customerId)
+        // R1: this order's job card for the slack badge. Best-effort.
+        if let bid = ctx.boutiqueId {
+            jobCard = (try? await JobCardsService.forOrders([order.id], boutiqueId: bid))?.first
+        }
     }
 
     /// Status-aware WhatsApp button label.
