@@ -246,6 +246,55 @@ final class ModelDecodingTests: XCTestCase {
         let order = try orderDecoder().decode(Order.self, from: json)
         XCTAssertNil(order.eventDate)
         XCTAssertEqual(order.alterationBufferDays, 7)
+        XCTAssertNil(order.designId)
+    }
+
+    // MARK: - R3: designId + OrderLock + ChangeOrder
+    // Fixture dates are non-fractional ISO to suit orderDecoder(); production
+    // decoding uses the Supabase SDK's fractional-tolerant decoder.
+
+    func testOrderDecodesDesignId() throws {
+        let json = """
+        {"id":"11111111-1111-1111-1111-111111111111",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "order_number":"BQ-3","customer_id":"33333333-3333-3333-3333-333333333333",
+         "status":"pending","subtotal":100,"gst_amount":5,"total":105,"currency":"INR",
+         "design_id":"44444444-4444-4444-4444-444444444444",
+         "created_at":"2026-07-28T10:00:00Z","updated_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!
+        let order = try orderDecoder().decode(Order.self, from: json)
+        XCTAssertEqual(order.designId?.uuidString, "44444444-4444-4444-4444-444444444444")
+    }
+
+    func testOrderLockDecodes() throws {
+        let json = """
+        {"id":"11111111-1111-1111-1111-111111111111",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "order_id":"33333333-3333-3333-3333-333333333333",
+         "design_id":null,"render_image_path":null,"fabric_code":"BNRS-EM-01",
+         "fabric_description":"emerald banarasi","measurement_id":null,
+         "price_breakup":{"fabric":40000,"work":50000,"other":10000},
+         "event_date":"2026-09-19","alteration_buffer_days":7,
+         "must_finish_by":"2026-09-09","advance_amount":50000,
+         "rush_accepted":false,"locked_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!
+        let l = try orderDecoder().decode(OrderLock.self, from: json)
+        XCTAssertEqual(l.fabricCode, "BNRS-EM-01")
+        XCTAssertEqual(l.priceBreakup?.work, 50000)
+        XCTAssertEqual(l.mustFinishBy, "2026-09-09")
+    }
+
+    func testChangeOrderDecodesWithNullEventDate() throws {
+        let json = """
+        {"id":"11111111-1111-1111-1111-111111111111",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "order_id":"33333333-3333-3333-3333-333333333333",
+         "description":"sleeves added","price_delta":1000,
+         "new_event_date":null,"created_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!
+        let co = try orderDecoder().decode(ChangeOrder.self, from: json)
+        XCTAssertEqual(co.priceDelta, 1000)
+        XCTAssertNil(co.newEventDate)
     }
 
     // MARK: - R4d: JobCardEvent

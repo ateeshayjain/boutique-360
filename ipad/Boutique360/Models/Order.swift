@@ -75,6 +75,7 @@ struct Order: Identifiable, Codable, Hashable {
     var trackingCourier: String?
     var magicLinkToken: String?
     var fulfillmentMethod: FulfillmentMethod?    // H9 fix: typed enum, was String?
+    var designId: UUID?               // R3 — the Look thread link; patched by lock_order RPC
     var eventDate: String?            // YYYY-MM-DD — customer's occasion (R1 slack anchor)
     var alterationBufferDays: Int     // R1 — absent-key tolerant, defaults 7
     var placedAt: Date?
@@ -92,6 +93,7 @@ struct Order: Identifiable, Codable, Hashable {
         case trackingCourier = "tracking_courier"
         case magicLinkToken = "magic_link_token"
         case fulfillmentMethod = "fulfillment_method"
+        case designId = "design_id"
         case eventDate = "event_date"
         case alterationBufferDays = "alteration_buffer_days"
         case placedAt = "placed_at"
@@ -118,6 +120,7 @@ struct Order: Identifiable, Codable, Hashable {
         trackingCourier = try c.decodeIfPresent(String.self, forKey: .trackingCourier)
         magicLinkToken = try c.decodeIfPresent(String.self, forKey: .magicLinkToken)
         fulfillmentMethod = try c.decodeIfPresent(FulfillmentMethod.self, forKey: .fulfillmentMethod)
+        designId = try c.decodeIfPresent(UUID.self, forKey: .designId)
         eventDate = try c.decodeIfPresent(String.self, forKey: .eventDate)
         alterationBufferDays = try c.decodeIfPresent(Int.self, forKey: .alterationBufferDays) ?? 7
         placedAt = try c.decodeIfPresent(Date.self, forKey: .placedAt)
