@@ -81,6 +81,41 @@ final class OrderSlackTests: XCTestCase {
                                              alterationBufferDays: 7, calendar: cal))
     }
 
+    func testReadyEventZeroesWorkViaResolver() throws {
+        // The full app-convention path: Order + JobCard decoded from JSON,
+        // karigar `ready` event → done → work 0.
+        // event 8/27 (30d out), due 8/17 (20d work), buffer 7, pickup:
+        // without the event → comfortable(3); with ready → comfortable(23).
+        let decoder = JSONDecoder(); decoder.dateDecodingStrategy = .iso8601
+        let order = try decoder.decode(Order.self, from: """
+        {"id":"11111111-1111-1111-1111-111111111111",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "order_number":"BQ-9","customer_id":"33333333-3333-3333-3333-333333333333",
+         "status":"confirmed","subtotal":100,"gst_amount":5,"total":105,"currency":"INR",
+         "event_date":"2026-08-27","alteration_buffer_days":7,
+         "created_at":"2026-07-28T10:00:00Z","updated_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!)
+        let card = try decoder.decode(JobCard.self, from: """
+        {"id":"55555555-5555-5555-5555-555555555555",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "job_number":"JC-9","status":"in_progress","due_date":"2026-08-17",
+         "fabric_list_json":[],"current_stage":0,"stages_progress_json":[],
+         "created_at":"2026-07-28T10:00:00Z","updated_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!)
+        let readyEvent = try decoder.decode(JobCardEvent.self, from: """
+        {"id":"66666666-6666-6666-6666-666666666666",
+         "boutique_id":"22222222-2222-2222-2222-222222222222",
+         "job_card_id":"55555555-5555-5555-5555-555555555555",
+         "event":"ready","created_at":"2026-07-28T10:00:00Z"}
+        """.data(using: .utf8)!)
+
+        XCTAssertEqual(OrderSlack.verdict(for: order, jobCard: card, today: today),
+                       .comfortable(days: 3))
+        XCTAssertEqual(OrderSlack.verdict(for: order, jobCard: card,
+                                          latestEvent: readyEvent, today: today),
+                       .comfortable(days: 23))
+    }
+
     func testRushThresholdBoundary() {
         // Exactly minimumProductionDays (7) of production time is NOT rush;
         // 6 is. Pins the `<` (not `<=`) comparison used by the create view.

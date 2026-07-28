@@ -7,6 +7,8 @@ struct OrdersListView: View {
     // R1: order-id → job card for slack badges. Best-effort — failure of
     // this secondary fetch must not clobber the orders list.
     @State private var jobCardsByOrder: [UUID: JobCard] = [:]
+    // R4d: card-id → latest karigar event (a `ready` zeroes work in slack).
+    @State private var latestEventByCard: [UUID: JobCardEvent] = [:]
     @State private var filter: OrderStatus? = nil       // nil = "All"
     @State private var search: String = ""
     @State private var loading: Bool = false
@@ -42,7 +44,8 @@ struct OrdersListView: View {
                             NavigationLink(value: o) {
                                 OrderRow(order: o,
                                          customerName: customers[o.customerId]?.name ?? "—",
-                                         jobCard: jobCardsByOrder[o.id])
+                                         jobCard: jobCardsByOrder[o.id],
+                                         latestEvent: jobCardsByOrder[o.id].flatMap { latestEventByCard[$0.id] })
                             }
                             .swipeActions(edge: .trailing) {
                                 ForEach(o.status.nextOptions.prefix(1), id: \.self) { next in
@@ -128,6 +131,10 @@ struct OrdersListView: View {
                 let cards = (try? await JobCardsService.forOrders(orders.map(\.id), boutiqueId: bid)) ?? []
                 jobCardsByOrder = Dictionary(cards.compactMap { c in c.orderId.map { ($0, c) } },
                                              uniquingKeysWith: { a, _ in a })
+                let evs = (try? await JobCardEventsService.forJobCards(cards.map(\.id), boutiqueId: bid)) ?? []
+                // Newest-first ordering → first occurrence per card is latest.
+                latestEventByCard = Dictionary(evs.map { ($0.jobCardId, $0) },
+                                               uniquingKeysWith: { a, _ in a })
             }
             let custIds = Set(orders.map(\.customerId))
             if !custIds.isEmpty {
@@ -157,6 +164,7 @@ private struct OrderRow: View {
     let order: Order
     let customerName: String
     var jobCard: JobCard? = nil
+    var latestEvent: JobCardEvent? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -173,7 +181,8 @@ private struct OrderRow: View {
                     Text(order.createdAt.formatted(date: .abbreviated, time: .omitted))
                         .font(.caption).foregroundStyle(.secondary)
                     // R1: slack badge — compact, so no-event orders stay quiet.
-                    SlackBadge(verdict: OrderSlack.verdict(for: order, jobCard: jobCard),
+                    SlackBadge(verdict: OrderSlack.verdict(for: order, jobCard: jobCard,
+                                                           latestEvent: latestEvent),
                                compact: true)
                 }
             }

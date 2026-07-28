@@ -19,6 +19,7 @@ enum StorageService {
         case fabrics            = "fabrics"                 // private
         case invoices           = "invoices"                // private
         case measurementsPhotos = "measurements-photos"     // private
+        case karigarWip         = "karigar-wip"             // private, WIP photos from karigar link
 
         var isPublic: Bool {
             switch self {

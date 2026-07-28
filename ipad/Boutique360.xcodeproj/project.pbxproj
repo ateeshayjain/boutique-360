@@ -107,6 +107,7 @@
 		D5C75A09B2E8609D5A23FC13 /* CustomerLinkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */; };
 		D74F92B0DD307B8704982DB9 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 523DA0A5E070A5E8B5D07DB0 /* Customer.swift */; };
 		D8D0B3C1D796238425E736FE /* TwilioClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224519E2F741ABBA0D3090E8 /* TwilioClient.swift */; };
+		DB2BEDA4DA670597B9138AC5 /* JobCardEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579590890B7FE39510E4E3F1 /* JobCardEventsService.swift */; };
 		DB750B47E2B4AA19875E1C20 /* RazorpayClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = C71EA4A6ACE6BB46179437D6 /* RazorpayClient.swift */; };
 		DC3DDC6F8EAB9563B8862E49 /* DesignTokens.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCDDEB6EF95DEBA783A69D77 /* DesignTokens.swift */; };
 		DE3FBD723F5E1CDF0852F2A4 /* InquiriesService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86A7D5B291D442D4A0D6AE5C /* InquiriesService.swift */; };
@@ -175,6 +176,7 @@
 		531B614F104FBB0C1B8F63D6 /* DesignsListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignsListView.swift; sourceTree = "<group>"; };
 		562812B13F7D90510B109E44 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
 		576D4A8FE13B65032686ECDD /* AlterationsSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlterationsSectionView.swift; sourceTree = "<group>"; };
+		579590890B7FE39510E4E3F1 /* JobCardEventsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardEventsService.swift; sourceTree = "<group>"; };
 		596812C9E451E4F67282DEE2 /* PaymentsSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaymentsSectionView.swift; sourceTree = "<group>"; };
 		5973CEB0663435B0AC5A175A /* CustomerSpendSummaryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSpendSummaryView.swift; sourceTree = "<group>"; };
 		5AC3CD27F4688007BB2AF109 /* BoutiqueContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BoutiqueContext.swift; sourceTree = "<group>"; };
@@ -502,6 +504,7 @@
 				ACA9CD6936DFD9F296D13514 /* ImportantDatesService.swift */,
 				86A7D5B291D442D4A0D6AE5C /* InquiriesService.swift */,
 				E96BC2A0EE59D1E6860B3587 /* InvoicePDFGenerator.swift */,
+				579590890B7FE39510E4E3F1 /* JobCardEventsService.swift */,
 				35A188402BDB0D4379A39B2F /* JobCardPDFGenerator.swift */,
 				F2C5E3128DEEB781A8374FAA /* JobCardsService.swift */,
 				7F2E1320084D3C6F4A716C4E /* KeychainStore.swift */,
@@ -720,6 +723,7 @@
 				213A32169149B7F1D8D8B01A /* InvoicePreviewView.swift in Sources */,
 				761FD51BDE3A3FFF1B08168B /* JobCard.swift in Sources */,
 				A94D4F4D659D6F2EB37B01F8 /* JobCardComposerView.swift in Sources */,
+				DB2BEDA4DA670597B9138AC5 /* JobCardEventsService.swift in Sources */,
 				2416929843F5AE83245BD772 /* JobCardPDFGenerator.swift in Sources */,
 				1BA363E0E46EE31727105266 /* JobCardPreviewView.swift in Sources */,
 				D3A1035B25F04968CB373AB9 /* JobCardsService.swift in Sources */,

@@ -12,6 +12,7 @@ struct DesignDetailView: View {
     @State private var showJobCardComposer = false
     @State private var jobCardPDF: Data?
     @State private var lastJobNumber: String = ""
+    @State private var lastJobCard: JobCard?     // R4d: karigar link panel input
     @State private var showJobCardPreview = false
     @State private var showReferenceStudio = false
     @State private var customer: Customer?
@@ -149,7 +150,7 @@ struct DesignDetailView: View {
         }
         .sheet(isPresented: $showJobCardPreview) {
             if let pdf = jobCardPDF {
-                JobCardPreviewView(pdfData: pdf, jobNumber: lastJobNumber)
+                JobCardPreviewView(pdfData: pdf, jobNumber: lastJobNumber, jobCard: lastJobCard)
             }
         }
         .task {
@@ -198,6 +199,7 @@ struct DesignDetailView: View {
         )
         jobCardPDF = JobCardPDFGenerator.render(input)
         lastJobNumber = jobCard.jobNumber
+        lastJobCard = jobCard
         showJobCardComposer = false
         showJobCardPreview = true
     }
