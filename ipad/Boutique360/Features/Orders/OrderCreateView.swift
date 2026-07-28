@@ -21,6 +21,10 @@ struct OrderCreateView: View {
     @State private var error: String?
 
     /// Sub-total = qty × unitPrice. GST = sub-total × rate/100. Total = sub-total + GST.
+    @State private var hasEventDate = false
+    @State private var eventDate = Date()
+    @State private var alterationBufferDays = 7
+
     private var unitPrice: Double { Double(linePriceText) ?? 0 }
     private var subtotal: Double { Double(lineQty) * unitPrice }
     private var gstAmount: Double { subtotal * gstRate / 100 }
@@ -73,6 +77,21 @@ struct OrderCreateView: View {
                     Label("Ship to address", systemImage: "shippingbox").tag(FulfillmentMethod.ship)
                 }
                 .pickerStyle(.segmented)
+            }
+
+            // R1: event-date anchoring. Creation-time semantics per spec —
+            // no job card exists yet, so we show the must-finish-by date
+            // (event − buffer − delivery) and warn on rush/impossible.
+            // Warn, never block: the owner may knowingly accept rush work.
+            Section("Event deadline") {
+                Toggle("Tied to an event date", isOn: $hasEventDate)
+                if hasEventDate {
+                    DatePicker("Event date", selection: $eventDate,
+                               in: Date()..., displayedComponents: .date)
+                    Stepper("Alteration buffer: \(alterationBufferDays) days",
+                            value: $alterationBufferDays, in: 0...30)
+                    mustFinishByLine
+                }
             }
 
             Section("Totals") {
@@ -135,8 +154,8 @@ struct OrderCreateView: View {
                 magic_link_token: UUID().uuidString,
                 fulfillment_method: fulfillmentMethod.rawValue,
                 placed_at: Formatters.iso8601Basic.string(from: Date()),
-                event_date: nil,             // Task 7 wires the picker
-                alteration_buffer_days: 7
+                event_date: hasEventDate ? Formatters.postgresDate.string(from: eventDate) : nil,
+                alteration_buffer_days: alterationBufferDays
             )
             let lineDesc = lineDescription.trimmingCharacters(in: .whitespaces).isEmpty
                 ? nil
@@ -157,4 +176,30 @@ struct OrderCreateView: View {
     }
 
     private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
+
+    /// R1 creation-time guidance: production must finish by
+    /// event − buffer − delivery. Red when < minimumProductionDays remain.
+    @ViewBuilder private var mustFinishByLine: some View {
+        if let mf = OrderSlack.mustFinishBy(eventDate: eventDate,
+                                            fulfillment: fulfillmentMethod,
+                                            alterationBufferDays: alterationBufferDays) {
+            let days = Calendar.current.dateComponents(
+                [.day],
+                from: Calendar.current.startOfDay(for: Date()),
+                to: mf).day ?? 0
+            if days < 0 {
+                Label("Won't fit: the event is inside the alteration + delivery buffer.",
+                      systemImage: "exclamationmark.octagon.fill")
+                    .font(.caption).foregroundStyle(.red)
+            } else if days < OrderSlack.minimumProductionDays {
+                Label("Production must finish by \(mf.formatted(date: .abbreviated, time: .omitted)) — only \(days) days. Rush order.",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption).foregroundStyle(.red)
+            } else {
+                Label("Production must finish by \(mf.formatted(date: .abbreviated, time: .omitted)) — \(days) days from today.",
+                      systemImage: "calendar.badge.clock")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+        }
+    }
 }
