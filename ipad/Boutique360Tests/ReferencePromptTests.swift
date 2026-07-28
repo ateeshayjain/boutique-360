@@ -20,4 +20,15 @@ final class ReferencePromptTests: XCTestCase {
         XCTAssertFalse(p.isEmpty)
         XCTAssertTrue(p.lowercased().contains("reference"))
     }
+
+    // MARK: - R4c: fabric-meters estimate in the tailor brief
+
+    func testTailorBriefAsksForFabricMetersEstimate() {
+        let brief = PromptTemplates.tailorBrief(
+            garmentType: "lehenga", occasion: "sangeet", customerNotes: nil,
+            fabricList: [], measurements: ["bust": 36], embellishments: nil,
+            dueDate: nil, karigarName: nil)
+        XCTAssertTrue(brief.contains("meter"), "brief must request a meters estimate")
+        XCTAssertTrue(brief.contains("andaaza"), "estimate must be marked approximate in Hinglish")
+    }
 }

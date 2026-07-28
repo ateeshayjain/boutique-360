@@ -329,7 +329,7 @@ enum PromptTemplates {
         return """
         You are writing a brief for a master tailor (karigar) in India. Karigars read Romanized Hindi (Hindi words in English script) faster than Devanagari on phone screens.
 
-        Take the structured design info below and write a short, friendly, practical brief in Romanized Hindi (Hinglish). Use simple tailor vocabulary like 'chati' (chest), 'kamar' (waist), 'lambai' (length), 'astar' (lining), 'lace', 'border'. Keep numbers in digits. Mention due date clearly. End with "Doubt ho to call kar lena."
+        Take the structured design info below and write a short, friendly, practical brief in Romanized Hindi (Hinglish). Use simple tailor vocabulary like 'chati' (chest), 'kamar' (waist), 'lambai' (length), 'astar' (lining), 'lace', 'border'. Keep numbers in digits. Mention due date clearly. Kapde ki zaroorat ka andaaza bhi likhna — kitne meter fabric lagega is \(garment) ke liye, measurements dekh kar. Saaf likhna ki ye sirf andaaza hai — cutting se pehle khud check karo. End with "Doubt ho to call kar lena."
 
         Style:
         - 5 to 8 short sentences
