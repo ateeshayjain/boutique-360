@@ -20,6 +20,9 @@ struct DashboardView: View {
     @State private var todayNewOrders: Int = 0
     @State private var loadFailed: Bool = false        // H1: surface stale-data banner
     @State private var lastRefreshAt: Date?
+    // R2: exception-first morning board.
+    @State private var board: MorningBoard.Board?
+    @State private var ordersById: [UUID: Order] = [:]
 
     var body: some View {
         ScrollView {
@@ -29,6 +32,9 @@ struct DashboardView: View {
                 if loading {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
+                    if let board {
+                        MorningBoardView(board: board, ordersById: ordersById)
+                    }
                     todaysRevenueCard
                     quickStatsGrid
                     todaySection
@@ -41,6 +47,11 @@ struct DashboardView: View {
             .padding(32)
         }
         .navigationTitle("Dashboard")
+        // R2: needs-you rows push straight into the order (same pattern as
+        // OrdersListView).
+        .navigationDestination(for: Order.self) { o in
+            OrderDetailView(order: o, customerName: customers[o.customerId]?.name)
+        }
         .task { await load(); await primeNotifications() }
         .refreshable { await load() }
         // H4 fix: re-fetch when the app returns from background.
@@ -330,10 +341,77 @@ struct DashboardView: View {
         self.openInquiries = openInq.filter { ![.delivered, .lost, .ready].contains($0.status) }.count
         self.ordersInProgress = activeOrders.filter { [.pending, .confirmed, .packed, .shipped].contains($0.status) }.count
 
-        // H5 fix: single grouped query instead of N-way waterfall.
-        self.paymentsOverdue = await filterOverdue(orders: activeOrders, anyFailed: &anyFailed)
-
         self.customers = Dictionary(uniqueKeysWithValues: allCust.map { ($0.id, $0) })
+
+        // ── R2: morning-board inputs + shared payments fetch.
+        var failures: Set<MorningBoard.Input> = []
+        if f1 { failures.insert(.appointments) }
+        if f3 { failures.insert(.orders) }
+
+        let bid = BoutiqueContext.shared.boutiqueId
+
+        var jobCardsByOrder: [UUID: JobCard] = [:]
+        var latestEventByCard: [UUID: JobCardEvent] = [:]
+        if let bid {
+            do {
+                let cards = try await JobCardsService.forOrders(activeOrders.map(\.id), boutiqueId: bid)
+                jobCardsByOrder = Dictionary(cards.compactMap { c in c.orderId.map { ($0, c) } },
+                                             uniquingKeysWith: { a, _ in a })
+                do {
+                    let evs = try await JobCardEventsService.forJobCards(cards.map(\.id), boutiqueId: bid)
+                    latestEventByCard = Dictionary(evs.map { ($0.jobCardId, $0) },
+                                                   uniquingKeysWith: { a, _ in a })
+                } catch { failures.insert(.events) }
+            } catch { failures.insert(.jobCards) }
+        } else { failures.insert(.jobCards) }
+
+        var openAlterations: [Alteration] = []
+        if let bid {
+            do { openAlterations = try await AlterationsService.listOpen(boutiqueId: bid) }
+            catch { failures.insert(.alterations) }
+        } else { failures.insert(.alterations) }
+
+        var designingCount = 0
+        do {
+            let designs = try await DesignsService.list()
+            designingCount = designs.filter {
+                [.draft, .rendered, .shared_with_customer].contains($0.status)
+            }.count
+        } catch { failures.insert(.designs) }
+
+        // Shared payments fetch: ONE query for the union candidate set,
+        // consumed by both the board's moneyDue and the overdue section.
+        var receivedByOrder: [UUID: Double] = [:]
+        let nonCancelled = activeOrders.filter { ![.cancelled, .returned].contains($0.status) }
+        if !nonCancelled.isEmpty {
+            do {
+                let sums = try await PaymentsService.capturedSumsForOrders(nonCancelled.map(\.id))
+                for p in sums { receivedByOrder[p.order_id, default: 0] += p.amount }
+            } catch { failures.insert(.payments) }
+        }
+
+        // Overdue section: same candidate filters + threshold as before,
+        // now applied to the shared payment sums (behavior unchanged).
+        self.paymentsOverdue = failures.contains(.payments)
+            ? []
+            : filterOverdue(orders: activeOrders, receivedByOrder: receivedByOrder)
+        if failures.contains(.payments) { anyFailed = true }
+
+        anyFailed = anyFailed || !failures.isEmpty
+
+        let todayFittings = weekAppts.filter { cal.isDateInToday($0.scheduledAt) && $0.status == .scheduled }.count
+        self.board = MorningBoard.build(
+            orders: activeOrders,
+            jobCardsByOrder: jobCardsByOrder,
+            latestEventByCard: latestEventByCard,
+            openAlterations: openAlterations,
+            designingCount: designingCount,
+            todaysAppointments: todayFittings,
+            customersById: self.customers,
+            receivedByOrder: receivedByOrder,
+            failures: failures
+        )
+        self.ordersById = Dictionary(uniqueKeysWithValues: activeOrders.map { ($0.id, $0) })
 
         await loadTodayMetrics(orders: activeOrders, customers: allCust, todayStart: todayStart, anyFailed: &anyFailed)
 
@@ -400,34 +478,14 @@ struct DashboardView: View {
         self.todayNewOrders = orders.filter { $0.createdAt >= todayStart }.count
     }
 
-    /// H5 fix: single grouped query — fetches all captured payments for the
-    /// candidate orders, sums per order, then computes overdue locally. Replaces
-    /// the N-way waterfall that froze the dashboard for several seconds.
-    private func filterOverdue(orders: [Order], anyFailed: inout Bool) async -> [Order] {
-        let candidates = orders.filter { ![.cancelled, .returned, .pending].contains($0.status) }
+    /// H5 fix (R2-refactored): overdue = candidate orders (not cancelled/
+    /// returned/pending, ≥7 days old) whose received < total. Payment sums
+    /// now arrive from load()'s single shared fetch — same candidate filters
+    /// and threshold as before, one fewer query.
+    private func filterOverdue(orders: [Order], receivedByOrder: [UUID: Double]) -> [Order] {
+        orders.filter { ![.cancelled, .returned, .pending].contains($0.status) }
             .filter { (Calendar.current.dateComponents([.day], from: $0.placedAt ?? $0.createdAt, to: Date()).day ?? 0) >= 7 }
-        guard !candidates.isEmpty else { return [] }
-
-        let payments: [PaymentsService.PerOrderSum]
-        do {
-            // Audit-fix: through Service layer.
-            payments = try await PaymentsService.capturedSumsForOrders(candidates.map(\.id))
-        } catch {
-            anyFailed = true
-            return []
-        }
-
-        // Sum once, lookup O(1).
-        var receivedByOrder: [UUID: Double] = [:]
-        for p in payments { receivedByOrder[p.order_id, default: 0] += p.amount }
-        var result: [Order] = []
-        for o in candidates {
-            let received = receivedByOrder[o.id] ?? 0
-            if received < o.total {
-                result.append(o)
-            }
-        }
-        return result
+            .filter { (receivedByOrder[$0.id] ?? 0) < $0.total }
     }
 }
 
