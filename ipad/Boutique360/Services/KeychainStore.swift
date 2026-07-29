@@ -6,8 +6,15 @@ import Security
 enum KeychainStore {
     private static let service = Bundle.main.bundleIdentifier ?? "com.boutique360.designer.ipad"
 
+    /// - Parameter accessible: Keychain accessibility class. The default
+    ///   preserves the session-token behaviour every existing caller relies
+    ///   on. R4b's PIN and role state pass
+    ///   `kSecAttrAccessibleWhenUnlockedThisDeviceOnly`, which additionally
+    ///   **excludes the item from iCloud/iTunes backups** (Security §2:
+    ///   "backups don't leak sensitive data").
     @discardableResult
-    static func save(_ value: String, forKey key: String) -> Bool {
+    static func save(_ value: String, forKey key: String,
+                     accessible: CFString = kSecAttrAccessibleAfterFirstUnlock) -> Bool {
         guard let data = value.data(using: .utf8) else { return false }
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -17,7 +24,7 @@ enum KeychainStore {
         SecItemDelete(query as CFDictionary)
         var attrs = query
         attrs[kSecValueData as String] = data
-        attrs[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlock
+        attrs[kSecAttrAccessible as String] = accessible
         return SecItemAdd(attrs as CFDictionary, nil) == errSecSuccess
     }
 
