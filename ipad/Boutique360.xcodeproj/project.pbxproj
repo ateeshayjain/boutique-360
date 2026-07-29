@@ -10,6 +10,7 @@
 		00669ED5BB9BE9FF5614782C /* CustomerNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A023D2A9519853B5691FF65 /* CustomerNotifier.swift */; };
 		015AC3572CA55852CFD84F6F /* CustomersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A61B87A34BA4C847248AA8D /* CustomersListView.swift */; };
 		05D8DB011D28105FFA388D78 /* ErrorBusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1DFFBBD1FFE1E5F1709949A /* ErrorBusTests.swift */; };
+		0860D0C6EE8C6A6995A2B6C6 /* StaffRoleContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = F130C3CAE3C4C1B689BC7C7C /* StaffRoleContext.swift */; };
 		0E23288E6896CAB3D178D5C9 /* GeminiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97BB0D1E591FD5933A287C0 /* GeminiService.swift */; };
 		110E5EC55ADC1F4AB9E1DC57 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BC2DAB9F3A9E15EE732231 /* Design.swift */; };
 		11106FCE314038E586A51BAB /* ErrorBus.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C449608F074290180B2B427 /* ErrorBus.swift */; };
@@ -286,6 +287,7 @@
 		EBC9DBA55BD1E48E3F1FEB6A /* JobCardComposerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardComposerView.swift; sourceTree = "<group>"; };
 		EE00060E9A0163F499E59AB9 /* ImageInputPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageInputPicker.swift; sourceTree = "<group>"; };
 		EE48B5A70951F6D5B3A94BD6 /* TwilioNormalizeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TwilioNormalizeTests.swift; sourceTree = "<group>"; };
+		F130C3CAE3C4C1B689BC7C7C /* StaffRoleContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffRoleContext.swift; sourceTree = "<group>"; };
 		F2C5E3128DEEB781A8374FAA /* JobCardsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardsService.swift; sourceTree = "<group>"; };
 		F6FBB3EB67076F070005DB38 /* MorningBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBoard.swift; sourceTree = "<group>"; };
 		FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersListView.swift; sourceTree = "<group>"; };
@@ -567,6 +569,7 @@
 				C71EA4A6ACE6BB46179437D6 /* RazorpayClient.swift */,
 				C1B8B311865FE7C138D7A723 /* RemindersService.swift */,
 				CAAD7B1458C3EE3EFBAA1C5A /* SendGridClient.swift */,
+				F130C3CAE3C4C1B689BC7C7C /* StaffRoleContext.swift */,
 				7042FB90D8CA3275DF9AB71E /* StorageService.swift */,
 				745AFC98ADFD99D1BFBED28F /* SupabaseService.swift */,
 				224519E2F741ABBA0D3090E8 /* TwilioClient.swift */,
@@ -821,6 +824,7 @@
 				1B87E7C081BAB5D8BDC61BBC /* SignInView.swift in Sources */,
 				78AA949DF3EB07E3678D8CEC /* SketchCanvasView.swift in Sources */,
 				477A637B79BC53952C16185F /* SlackBadge.swift in Sources */,
+				0860D0C6EE8C6A6995A2B6C6 /* StaffRoleContext.swift in Sources */,
 				BD166544FC31E672D764DE35 /* StorageService.swift in Sources */,
 				4B4B4778A1D9B12862832D95 /* StyleSuggestionsSheet.swift in Sources */,
 				C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */,

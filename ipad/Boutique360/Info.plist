@@ -56,6 +56,8 @@
   <string>Boutique 360 lets you attach photos from your library to designs as reference material.</string>
   <key>NSPhotoLibraryAddUsageDescription</key>
   <string>Boutique 360 saves AI-generated design renders to your photo library when you tap Save.</string>
+  <key>NSFaceIDUsageDescription</key>
+  <string>Boutique 360 uses Face ID to restore owner mode when the assistant PIN is locked out.</string>
   <key>SUPABASE_URL</key>
   <string>$(SUPABASE_URL)</string>
   <key>SUPABASE_ANON_KEY</key>

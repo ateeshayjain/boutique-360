@@ -4,12 +4,14 @@ import SwiftUI
 struct Boutique360App: App {
     @StateObject private var auth = AuthService()
     @StateObject private var boutiqueCtx = BoutiqueContext.shared
+    @StateObject private var roleCtx = StaffRoleContext.shared
 
     var body: some Scene {
         WindowGroup {
             RootView()
                 .environmentObject(auth)
                 .environmentObject(boutiqueCtx)
+                .environmentObject(roleCtx)
                 .onOpenURL { url in
                     Task { await auth.handleAuthCallback(url: url) }
                 }

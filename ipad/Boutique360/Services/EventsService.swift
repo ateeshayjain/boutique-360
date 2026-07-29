@@ -27,6 +27,22 @@ enum EventsService {
             .execute()
             .value
     }
+
+    /// R4b — audit trail for security-relevant actions (Security §12).
+    /// `events.actor_type` already permits 'ipad' (migration 0004).
+    static func record(boutiqueId: UUID, eventName: String,
+                       payload: [String: String], actorType: String = "ipad") async throws {
+        struct NewEvent: Encodable {
+            let boutique_id: UUID
+            let actor_type: String
+            let event_name: String
+            let payload_json: [String: String]
+        }
+        _ = try await SupabaseService.client.from("events")
+            .insert(NewEvent(boutique_id: boutiqueId, actor_type: actorType,
+                             event_name: eventName, payload_json: payload))
+            .execute()
+    }
 }
 
 /// Tiny JSON wrapper for decoding payload_json without a full Codable model per event type.
