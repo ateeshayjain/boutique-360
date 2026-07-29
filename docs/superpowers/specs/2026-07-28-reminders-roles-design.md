@@ -108,6 +108,9 @@ enum ReminderDrafts {
         "\(kind.rawValue)-\(subjectId.uuidString.lowercased())-\(forDate)"
     }
 
+    /// `logged` is non-optional by design: the caller MUST NOT call build()
+    /// when the reminder-log fetch failed (no dedup ⇒ re-sends). That rule
+    /// is the caller's contract, not this function's — see Unit 7.
     static func build(appointments: [Appointment],
                       orders: [Order],
                       jobCardsByOrder: [UUID: JobCard],
@@ -115,6 +118,7 @@ enum ReminderDrafts {
                       receivedByOrder: [UUID: Double],
                       customersById: [UUID: Customer],
                       logged: Set<String>,
+                      failedInputs: Set<MorningBoard.Input>,
                       boutiqueName: String,
                       today: Date,
                       calendar: Calendar = .current) -> [Draft]
@@ -177,11 +181,15 @@ kind entirely** — never a partial draft:
 - `.jobCards` / `.events` failed → no ready drafts (the done-signal is
   unknown; better silent than wrong).
 - `.appointments` failed → no fitting drafts.
-- reminder-log fetch failed → **no drafts at all** (without dedup the owner
-  re-sends).
 
-`build(...)` therefore takes `failedInputs: Set<MorningBoard.Input>` and
-applies these suppressions before any other rule.
+`build(...)` takes `failedInputs: Set<MorningBoard.Input>` and applies these
+suppressions before any other rule.
+
+**Caller's contract (not a `build` rule):** if the reminder-log fetch failed,
+the caller **must not call `build(...)` at all** and the section renders
+hidden — without dedup the owner re-sends messages. `logged` stays
+non-optional so this can't be fudged by passing an empty set (which would
+look like "nothing handled yet" and re-surface every draft).
 
 ## Unit 3 — `Services/RemindersService.swift`
 
@@ -211,20 +219,29 @@ enum PinPolicy {
     static let lockoutSeconds: TimeInterval = 30
 
     enum SetError: Equatable { case tooShort, tooLong, notNumeric, tooSimple }
-    /// Security §6 weak-credential rule. `tooSimple` rejects a PIN where
-    /// EITHER every digit is identical (0000, 111111) OR every adjacent
-    /// pair differs by exactly +1 (1234, 456789) or exactly −1 (4321).
-    /// Mixed sequences are fine: 1235 ✓, 112233 ✓, 1357 ✓.
+    /// Security §6 weak-credential rule. `tooSimple` rejects a PIN that is
+    /// EITHER all-identical digits (0000, 111111) OR a **strictly monotonic
+    /// run** — every step +1 (1234, 456789) or every step −1 (4321).
+    /// Anything else is fine: 1235 ✓, 112233 ✓, 1357 ✓, 1212 ✓.
     static func validate(_ pin: String) -> SetError?
 
     struct AttemptState: Equatable, Codable {
         var failures: Int = 0
         var lockedUntil: Date?
-        /// Monotonic across lockouts; only an OWNER unlock resets it.
-        /// Backstop for the attacker-controlled clock (see below).
+        /// Monotonic across lockouts. Reset ONLY by a correct PIN entry or
+        /// by device-owner re-auth (see hardAttemptCap). Backstop for the
+        /// attacker-controlled clock (see Unit 6).
         var failuresSinceOwnerUnlock: Int = 0
     }
-    static let hardAttemptCap = 25   // reached → locked until an owner unlock
+    /// Reaching this many failures since the last successful owner unlock
+    /// stops accepting PIN attempts entirely — clock-independently.
+    /// **Escape hatch: device-owner authentication** (Unit 5), NOT another
+    /// PIN attempt. Without an escape this would deadlock: an assistant
+    /// could tap 25 wrong PINs and permanently lock the owner out of their
+    /// own till, with Keychain state surviving even app deletion. That
+    /// would trade a confidentiality control for an availability
+    /// vulnerability — not an acceptable exchange.
+    static let hardAttemptCap = 25
     /// Pure. Rules:
     /// - while locked (`isLocked`), an attempt is a NO-OP: state unchanged,
     ///   lockout is NOT extended (a wrong tap during cooldown shouldn't
@@ -234,11 +251,20 @@ enum PinPolicy {
     ///   maxAttempts, set lockedUntil = now + lockoutSeconds and reset
     ///   failures (but NOT failuresSinceOwnerUnlock) to 0.
     static func afterAttempt(correct: Bool, state: AttemptState, now: Date) -> AttemptState
-    /// Locked if lockedUntil is in the future OR failuresSinceOwnerUnlock
-    /// >= hardAttemptCap. The cap is clock-independent, so winding the
-    /// device clock forward cannot clear it.
-    static func isLocked(_ state: AttemptState, now: Date) -> Bool
-    static func secondsRemaining(_ state: AttemptState, now: Date) -> Int
+    /// Two distinct locked states — the UI must tell them apart, because
+    /// only one of them has a countdown (Content §3):
+    enum LockState: Equatable {
+        case open
+        case cooldown(secondsRemaining: Int)   // timed; wait it out
+        case capped                            // needs device-owner re-auth
+    }
+    /// `.capped` takes precedence over `.cooldown`. Capped is
+    /// clock-independent — winding the device clock forward cannot clear it.
+    static func lockState(_ state: AttemptState, now: Date) -> LockState
+    static func isLocked(_ state: AttemptState, now: Date) -> Bool   // != .open
+    /// Clears failures + the cap. Called ONLY after a successful PIN entry
+    /// or a successful device-owner re-auth.
+    static func cleared() -> AttemptState
 }
 
 enum RolePolicy {
@@ -292,8 +318,24 @@ Injected alongside `BoutiqueContext`.
 - `handOverToAssistant()` — no PIN needed to *reduce* privilege; persists +
   audits.
 - `unlockToOwner(pin:) -> UnlockResult` where
-  `enum UnlockResult { case ok, wrong(remaining: Int), locked(seconds: Int) }`
+  `enum UnlockResult { case ok, wrong(remaining: Int), cooldown(seconds: Int), capped }`
   — drives `PinPolicy`, persists the new `AttemptState`, audits.
+- **`unlockToOwnerWithDeviceAuth() async -> Bool`** — the cap's escape
+  hatch. Runs `LAContext.evaluatePolicy(.deviceOwnerAuthentication, …)`
+  (LocalAuthentication, a system framework — Security §7, no new
+  dependency): Face ID / Touch ID with **device-passcode fallback**. Success
+  → `AttemptState = .cleared()`, role → owner, persisted, audited as
+  `staff.unlock_device_auth`. Rationale: the owner controls the iPad's
+  passcode; the assistant does not. This is a *stronger* factor than the
+  app PIN, so using it as the recovery path raises the floor rather than
+  bypassing the control. Available whenever `.capped` — and offered as a
+  secondary "Unlock with device passcode" affordance at any time.
+  - `NSFaceIDUsageDescription` must be added to `Info.plist` ("Unlock owner
+    mode to view payments and settings") — Security §5: every permission
+    maps to a reachable shipping feature, and this one does.
+  - If the device has no passcode set, `evaluatePolicy` fails; the UI then
+    states plainly that a device passcode is required to recover owner mode
+    (Content §3).
 - **Audit (Security §12):** every role change records via new
   `EventsService.record(...)`: `event_name "staff.role_changed"`,
   payload `{from, to}`, `actor_type "ipad"`. Failed unlock attempts record
@@ -323,11 +365,20 @@ Also honest: a 4-digit PIN with a 30-second lockout after 5 attempts is
 brute-forceable in ~17 hours of continuous tapping. Mitigations chosen: 6
 digits allowed, weak PINs rejected, lockout persists across restarts, every
 failed attempt is audit-logged, and a **clock-independent hard cap** (25
-failures since the last owner unlock) locks the device out entirely until an
-owner unlocks — because `lockedUntil` is wall-clock and **an assistant on a
-shared iPad can wind the device clock forward in iOS Settings to clear a
-timed lockout**. The cap is the answer to that; the timed lockout alone is
-not. Escalating lockout durations deferred (YAGNI at pilot scale) — recorded,
+failures since the last owner unlock) stops accepting PIN attempts entirely —
+because `lockedUntil` is wall-clock and **an assistant on a shared iPad can
+wind the device clock forward in iOS Settings to clear a timed lockout**. The
+cap is the answer to that; the timed lockout alone is not.
+
+**The cap's escape is device-owner authentication, never another PIN
+attempt.** A cap with no escape would be worse than no cap: an assistant
+taps 25 wrong PINs and permanently locks the owner out of their own till
+(Keychain state survives app deletion) — trading confidentiality for an
+availability vulnerability an adversary can trigger at will. Face ID /
+device passcode is a factor the owner holds and the assistant doesn't, so
+recovery raises the security floor instead of punching a hole in it.
+
+Escalating lockout durations deferred (YAGNI at pilot scale) — recorded,
 not hidden.
 
 ## Unit 7 — UI
@@ -370,8 +421,18 @@ the two callbacks; `DashboardView` owns the state and passes them down.
   unlock / change PIN, states per `pinIsSet` + `role`.
 - **`Features/Settings/PinEntrySheet.swift`** — secure numeric entry, modes
   set/change/unlock, plain-language `PinPolicy` errors ("PIN must be 4–6
-  digits", "Choose a less predictable PIN"), lockout countdown ("Too many
-  attempts. Try again in 24s.") — Content §3: disabled actions say why.
+  digits", "Choose a less predictable PIN"). The three `LockState` cases get
+  three distinct treatments (Content §3 — a blocked action says why AND how
+  to fix it):
+  - `.open` → normal entry.
+  - `.cooldown(s)` → entry disabled + live countdown: "Too many attempts.
+    Try again in 24s."
+  - `.capped` → entry disabled, **no countdown** (there isn't one), and a
+    prominent **"Unlock with Face ID / device passcode"** button:
+    "Too many wrong PINs. Use this iPad's passcode to restore owner mode."
+    This is the recovery path; a stuck timer here would be a lie.
+  - A secondary "Unlock with device passcode" affordance is available in
+    the `.open` state too — the owner who forgot the PIN is not stranded.
 - **Assistant-mode indicator:** persistent badge in the app shell so the
   active role is never ambiguous (Apple Design Principle 1).
 - **Gated surfaces** consult `RolePolicy.canSee`: `PaymentsSectionView`,
@@ -426,9 +487,13 @@ the two callbacks; `DashboardView` owns the state and passes them down.
 - `PinPolicyTests`: 4 ok / 3 short / 7 long / non-numeric; `0000` and `1234`
   and `4321` rejected; `1235`, `112233`, `1357` accepted; 4 failures no
   lock; 5th locks; attempt while locked is a no-op (lockout not extended);
-  correct resets everything including `failuresSinceOwnerUnlock`; lockout
-  expiry; `secondsRemaining`; **hard cap: 25 failures → `isLocked` stays
-  true even with `now` far in the future** (clock-winding defence).
+  correct resets everything including `failuresSinceOwnerUnlock`;
+  `lockState` returns `.cooldown` with the right seconds, then `.open`
+  after expiry; **hard cap: 25 failures → `lockState == .capped` even with
+  `now` far in the future** (clock-winding defence); **`.capped` takes
+  precedence over `.cooldown`**; **recovery: `cleared()` from the capped
+  state returns `.open`** (the deadlock test — the cap must be escapable,
+  and this is the pure half of the device-auth path).
 - `RolePolicyTests`: owner sees all; assistant sees none; **exhaustiveness
   is enforced by asserting `Surface.allCases.count == 10`** so adding a
   surface fails until the count and its classification are reviewed (the
@@ -438,8 +503,12 @@ the two callbacks; `DashboardView` owns the state and passes them down.
   is not unit-testable — noted).
 - Manual QA (Release §9, Testing PDF): set PIN → hand over → verify every
   gated surface hidden → **force-quit and relaunch → still assistant** →
-  wrong PIN ×5 → lockout copy → **force-quit → lockout still active** →
-  correct PIN → owner restored → audit rows present in `events`.
+  wrong PIN ×5 → cooldown copy with countdown → **force-quit → cooldown
+  still active** → correct PIN → owner restored → audit rows present in
+  `events`. Then the cap path: wrong PIN ×25 → `.capped` copy with **no
+  countdown** and the device-passcode button → **wind the device clock
+  forward in iOS Settings → still capped** → device passcode / Face ID →
+  owner restored, `staff.unlock_device_auth` logged.
 
 ## Error handling
 
@@ -461,6 +530,7 @@ the two callbacks; `DashboardView` owns the state and passes them down.
 
 Migration 0030 (+ RLS round-trip verification) → ReminderDrafts + tests →
 RemindersService → PinPolicy/RolePolicy + tests → KeychainStore
-accessibility param + hashing helpers → StaffRoleContext +
+accessibility param + hashing helpers → `NSFaceIDUsageDescription` in
+Info.plist → StaffRoleContext (incl. LocalAuthentication recovery) +
 EventsService.record → `xcodegen generate` → Reminders UI → role UI +
 surface gating → compliance docs → living docs.
