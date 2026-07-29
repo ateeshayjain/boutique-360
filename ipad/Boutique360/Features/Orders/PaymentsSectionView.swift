@@ -6,6 +6,7 @@ struct PaymentsSectionView: View {
     let order: Order
     var customer: Customer? = nil
     @EnvironmentObject private var ctx: BoutiqueContext
+    @EnvironmentObject private var roles: StaffRoleContext
 
     @State private var payments: [PaymentRow] = []
     @State private var showAdd = false
@@ -19,7 +20,17 @@ struct PaymentsSectionView: View {
 
     typealias PaymentRow = PaymentsService.OrderHistoryRow
 
+    /// R4b — gated inside the view rather than at the call site, so a future
+    /// second call site can't reintroduce the leak. `.task { load() }` sits
+    /// on the inner section, so an assistant doesn't even fetch the history.
+    @ViewBuilder
     var body: some View {
+        if RolePolicy.canSee(.payments, role: roles.role) {
+            paymentsSection
+        }
+    }
+
+    private var paymentsSection: some View {
         Section {
             if let err = loadError {
                 // B1 fix: NEVER show a balance derived from a failed fetch — that

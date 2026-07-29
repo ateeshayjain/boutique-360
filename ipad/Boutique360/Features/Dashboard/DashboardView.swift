@@ -3,6 +3,7 @@ import SwiftUI
 /// Today-focused dashboard. The single-owner's morning briefing:
 /// "What needs my attention RIGHT NOW?"
 struct DashboardView: View {
+    @EnvironmentObject private var roles: StaffRoleContext
     @State private var boutique: Boutique?
     @State private var todaysAppointments: [Appointment] = []
     @State private var weekAppointments: [Appointment] = []
@@ -39,7 +40,7 @@ struct DashboardView: View {
                         MorningBoardView(
                             board: board,
                             ordersById: ordersById,
-                            drafts: reminderDrafts,
+                            drafts: visibleDrafts,
                             remindersLoading: loading,
                             onSendReminder: { draft in
                                 WhatsAppShareHelper.open(phone: draft.whatsappTarget,
@@ -50,12 +51,16 @@ struct DashboardView: View {
                             }
                         )
                     }
-                    todaysRevenueCard
+                    if RolePolicy.canSee(.revenueTile, role: roles.role) {
+                        todaysRevenueCard
+                    }
                     quickStatsGrid
                     todaySection
                     weekSection
                     upcomingDatesSection
-                    paymentsOverdueSection
+                    if RolePolicy.canSee(.paymentReminders, role: roles.role) {
+                        paymentsOverdueSection
+                    }
                     dormantSection
                 }
             }
@@ -73,6 +78,16 @@ struct DashboardView: View {
         .onReceive(NotificationCenter.default.publisher(for: .appDidForeground)) { _ in
             Task { await load() }
         }
+    }
+
+    /// R4b — payment reminders carry a rupee amount in the message body, so
+    /// an assistant must not see them at all. Filtering here (rather than
+    /// inside RemindersSectionView) means the section's header count is
+    /// computed from the filtered list — no "5 reminders" above three rows.
+    private var visibleDrafts: [ReminderDrafts.Draft] {
+        RolePolicy.canSee(.paymentReminders, role: roles.role)
+            ? reminderDrafts
+            : reminderDrafts.filter { $0.kind != .payment }
     }
 
     private var headerSection: some View {

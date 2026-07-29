@@ -11,6 +11,7 @@ struct LockSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var ctx: BoutiqueContext
+    @EnvironmentObject private var roles: StaffRoleContext
 
     @State private var designs: [Design] = []
     @State private var selectedDesignId: UUID?
@@ -35,9 +36,18 @@ struct LockSheet: View {
             designSection
             fabricSection
             measurementSection
-            breakupSection
+            // R4b — price breakup and advance are `.lockPricing`. Design,
+            // fabric, measurements and event date stay visible: an assistant
+            // can still walk a customer through the non-money half of the
+            // lock, they just can't complete it (the Lock button needs the
+            // advance, which LockGate requires).
+            if RolePolicy.canSee(.lockPricing, role: roles.role) {
+                breakupSection
+            }
             eventSection
-            advanceSection
+            if RolePolicy.canSee(.lockPricing, role: roles.role) {
+                advanceSection
+            }
             lockSection
         }
         .navigationTitle("Lock the look")

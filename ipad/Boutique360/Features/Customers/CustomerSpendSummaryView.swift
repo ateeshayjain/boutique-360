@@ -9,13 +9,22 @@ import Charts
 /// Stateless — all math comes from `CustomerSpend.summarize`. Pass in the
 /// orders the parent already loaded, no extra round-trip.
 struct CustomerSpendSummaryView: View {
+    @EnvironmentObject private var roles: StaffRoleContext
     let orders: [Order]
 
     private var summary: CustomerSpend.Summary {
         CustomerSpend.summarize(orders)
     }
 
+    /// R4b — gated inside the view so any future call site inherits it.
+    @ViewBuilder
     var body: some View {
+        if RolePolicy.canSee(.spendPanel, role: roles.role) {
+            panel
+        }
+    }
+
+    private var panel: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Spend & history").font(.headline)
 

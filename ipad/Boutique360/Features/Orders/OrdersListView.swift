@@ -161,6 +161,7 @@ struct OrdersListView: View {
 }
 
 private struct OrderRow: View {
+    @EnvironmentObject private var roles: StaffRoleContext
     let order: Order
     let customerName: String
     var jobCard: JobCard? = nil
@@ -188,13 +189,21 @@ private struct OrderRow: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text(formatINR(order.total)).font(.body.weight(.semibold)).monospacedDigit()
+                // R4b — a browsable list of every order's value is exactly the
+                // revenue picture the gate exists to withhold. The row still
+                // shows customer, number and status, which is what an
+                // assistant needs to find an order.
+                if RolePolicy.canSee(.payments, role: roles.role) {
+                    Text(formatINR(order.total)).font(.body.weight(.semibold)).monospacedDigit()
+                }
                 Text(order.status.label).font(.caption2).foregroundStyle(tint)
             }
         }
         .padding(.vertical, 4)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(customerName), order \(order.orderNumber), \(formatINR(order.total)), \(order.status.label)")
+        .accessibilityLabel(RolePolicy.canSee(.payments, role: roles.role)
+            ? "\(customerName), order \(order.orderNumber), \(formatINR(order.total)), \(order.status.label)"
+            : "\(customerName), order \(order.orderNumber), \(order.status.label)")
     }
 
     private var tint: Color {

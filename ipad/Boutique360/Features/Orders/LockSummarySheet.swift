@@ -10,6 +10,7 @@ struct LockSummarySheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var ctx: BoutiqueContext
+    @EnvironmentObject private var roles: StaffRoleContext
 
     @State private var renderURL: URL?
     @State private var pinnedMeasurement: CustomerMeasurement?
@@ -59,7 +60,7 @@ struct LockSummarySheet: View {
                     Text("not pinned").foregroundStyle(.secondary)
                 }
             }
-            if let b = lock.priceBreakup {
+            if let b = lock.priceBreakup, RolePolicy.canSee(.lockPricing, role: roles.role) {
                 LabeledContent("Fabric ₹", value: Formatters.inr(b.fabric))
                 LabeledContent("Work ₹", value: Formatters.inr(b.work))
                 LabeledContent("Other ₹", value: Formatters.inr(b.other))
@@ -73,7 +74,9 @@ struct LockSummarySheet: View {
             if let mf = lock.mustFinishBy {
                 LabeledContent("Must finish by (at lock)", value: mf)
             }
-            LabeledContent("Advance at lock", value: Formatters.inr(lock.advanceAmount))
+            if RolePolicy.canSee(.lockPricing, role: roles.role) {
+                LabeledContent("Advance at lock", value: Formatters.inr(lock.advanceAmount))
+            }
             if lock.rushAccepted {
                 Label("Rush accepted at lock", systemImage: "hare.fill")
                     .font(.caption).foregroundStyle(.orange)
@@ -100,7 +103,7 @@ struct LockSummarySheet: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(co.description).font(.subheadline)
                         HStack(spacing: 8) {
-                            if co.priceDelta != 0 {
+                            if co.priceDelta != 0, RolePolicy.canSee(.lockPricing, role: roles.role) {
                                 Text("\(co.priceDelta > 0 ? "+" : "−")\(Formatters.inr(abs(co.priceDelta)))")
                                     .font(.caption.weight(.medium))
                                     .foregroundStyle(co.priceDelta > 0 ? .orange : .green)
@@ -125,11 +128,15 @@ struct LockSummarySheet: View {
             TextField("What changed (e.g. sleeves added)", text: $coDescription,
                       axis: .vertical)
                 .lineLimit(1...2)
-            LabeledContent("Price delta ₹ (±)") {
-                TextField("0", text: $coDeltaText)
-                    .multilineTextAlignment(.trailing)
-                    .keyboardType(.numbersAndPunctuation)
-                    .frame(width: 140)
+            // R4b — an assistant can log "sleeves added"; repricing it is the
+            // owner's call. The delta submits as 0 when hidden.
+            if RolePolicy.canSee(.lockPricing, role: roles.role) {
+                LabeledContent("Price delta ₹ (±)") {
+                    TextField("0", text: $coDeltaText)
+                        .multilineTextAlignment(.trailing)
+                        .keyboardType(.numbersAndPunctuation)
+                        .frame(width: 140)
+                }
             }
             Toggle("New event date", isOn: $coHasNewDate)
             if coHasNewDate {

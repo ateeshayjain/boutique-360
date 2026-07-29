@@ -4,6 +4,7 @@ import SwiftUI
 /// degradation map per spec: "—" only for tiles/lanes whose input failed,
 /// real zeros for genuinely empty data.
 struct MorningBoardView: View {
+    @EnvironmentObject private var roles: StaffRoleContext
     let board: MorningBoard.Board
     let ordersById: [UUID: Order]
     // R4a — the Reminders section renders between the needs-you list and the
@@ -42,12 +43,14 @@ struct MorningBoardView: View {
                  caption: "appointments + hand-overs",
                  tint: .blue)
 
-            tile(title: "Money due",
-                 value: board.failed.contains(.payments) ? "—" : Formatters.inr(board.moneyDue.total),
-                 caption: board.failed.contains(.payments)
-                    ? "couldn't load payments"
-                    : "\(board.moneyDue.orderCount) orders · oldest \(board.moneyDue.oldestDays)d",
-                 tint: board.moneyDue.total > 0 ? .orange : .green)
+            if RolePolicy.canSee(.moneyDueTile, role: roles.role) {
+                tile(title: "Money due",
+                     value: board.failed.contains(.payments) ? "—" : Formatters.inr(board.moneyDue.total),
+                     caption: board.failed.contains(.payments)
+                        ? "couldn't load payments"
+                        : "\(board.moneyDue.orderCount) orders · oldest \(board.moneyDue.oldestDays)d",
+                     tint: board.moneyDue.total > 0 ? .orange : .green)
+            }
 
             tile(title: "At risk",
                  value: boardBlocked ? "—" : "\(board.atRiskCount)",
@@ -124,7 +127,13 @@ struct MorningBoardView: View {
         switch a {
         case .chaseKarigar:              "Chase karigar"
         case .decideToday:               "Decide today"
-        case .deliverAndCollect(let v):  "Deliver + collect \(Formatters.inr(v))"
+        // R4b — the action itself still needs doing in assistant mode; only
+        // the amount is withheld. Dropping the whole row would hide a
+        // delivery the assistant is meant to hand over.
+        case .deliverAndCollect(let v):
+            RolePolicy.canSee(.paymentReminders, role: roles.role)
+                ? "Deliver + collect \(Formatters.inr(v))"
+                : "Deliver + collect balance"
         case .deliver:                   "Deliver"
         }
     }

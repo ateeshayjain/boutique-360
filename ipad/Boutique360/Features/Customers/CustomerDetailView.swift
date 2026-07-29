@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct CustomerDetailView: View {
+    @EnvironmentObject private var roles: StaffRoleContext
     let customer: Customer
 
     @State private var measurements: [CustomerMeasurement] = []
@@ -288,9 +289,13 @@ struct CustomerDetailView: View {
             }
             Spacer()
             VStack(alignment: .trailing, spacing: 2) {
-                Text(Formatters.inr(o.total))
-                    .font(.subheadline.weight(.semibold))
-                    .monospacedDigit()
+                // R4b — per-order value is the same data the spend panel
+                // aggregates, so it rides on the same surface.
+                if RolePolicy.canSee(.spendPanel, role: roles.role) {
+                    Text(Formatters.inr(o.total))
+                        .font(.subheadline.weight(.semibold))
+                        .monospacedDigit()
+                }
                 Text(o.status.label)
                     .font(.caption2)
                     .padding(.horizontal, 8).padding(.vertical, 2)

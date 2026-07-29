@@ -5,6 +5,7 @@ struct OrderDetailView: View {
     let customerName: String?
 
     @EnvironmentObject private var ctx: BoutiqueContext
+    @EnvironmentObject private var roles: StaffRoleContext
     @State private var current: Order
     @State private var items: [OrderItem] = []
     @State private var changing = false
@@ -98,21 +99,27 @@ struct OrderDetailView: View {
                                 Text("Qty \(item.qty)").font(.caption).foregroundStyle(.secondary)
                             }
                             Spacer()
-                            Text(formatINR(Double(item.qty) * item.unitPrice)).monospacedDigit()
+                            // R4b — line value rides with `.invoice`: the
+                            // same numbers the invoice PDF prints.
+                            if RolePolicy.canSee(.invoice, role: roles.role) {
+                                Text(formatINR(Double(item.qty) * item.unitPrice)).monospacedDigit()
+                            }
                         }
                     }
                 }
             }
 
-            Section("Totals") {
-                LabeledContent("Subtotal", value: formatINR(current.subtotal))
-                LabeledContent("GST", value: formatINR(current.gstAmount))
-                if let s = current.shipping, s > 0 {
-                    LabeledContent("Shipping", value: formatINR(s))
+            if RolePolicy.canSee(.invoice, role: roles.role) {
+                Section("Totals") {
+                    LabeledContent("Subtotal", value: formatINR(current.subtotal))
+                    LabeledContent("GST", value: formatINR(current.gstAmount))
+                    if let s = current.shipping, s > 0 {
+                        LabeledContent("Shipping", value: formatINR(s))
+                    }
+                    LabeledContent {
+                        Text(formatINR(current.total)).fontWeight(.semibold).monospacedDigit()
+                    } label: { Text("Total").fontWeight(.semibold) }
                 }
-                LabeledContent {
-                    Text(formatINR(current.total)).fontWeight(.semibold).monospacedDigit()
-                } label: { Text("Total").fontWeight(.semibold) }
             }
 
             if let url = current.trackingUrl {
@@ -123,26 +130,28 @@ struct OrderDetailView: View {
                 }
             }
 
-            Section("Invoice") {
-                Button {
-                    if let pdf = generateInvoicePDF() {
-                        invoicePDF = pdf
-                        showingInvoice = true
+            if RolePolicy.canSee(.invoice, role: roles.role) {
+                Section("Invoice") {
+                    Button {
+                        if let pdf = generateInvoicePDF() {
+                            invoicePDF = pdf
+                            showingInvoice = true
+                        }
+                    } label: {
+                        Label("Generate GST invoice", systemImage: "doc.text.fill")
                     }
-                } label: {
-                    Label("Generate GST invoice", systemImage: "doc.text.fill")
+                    .disabled(ctx.boutique?.gstin == nil)
+                    if ctx.boutique?.gstin == nil {
+                        Label("Add your GSTIN in Settings before generating invoices.", systemImage: "exclamationmark.triangle")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                    }
+                    if let err = invoiceError {
+                        Text(err).font(.caption).foregroundStyle(.red)
+                    }
+                    Text("PDF preview opens in-app. Tap Share to email, print, or save.")
+                        .font(.caption2).foregroundStyle(.tertiary)
                 }
-                .disabled(ctx.boutique?.gstin == nil)
-                if ctx.boutique?.gstin == nil {
-                    Label("Add your GSTIN in Settings before generating invoices.", systemImage: "exclamationmark.triangle")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                }
-                if let err = invoiceError {
-                    Text(err).font(.caption).foregroundStyle(.red)
-                }
-                Text("PDF preview opens in-app. Tap Share to email, print, or save.")
-                    .font(.caption2).foregroundStyle(.tertiary)
             }
 
             // Wave 3: unified notify panel — WhatsApp (always when consented) +
@@ -315,10 +324,15 @@ struct OrderDetailView: View {
     private func whatsAppMessage(for status: OrderStatus, customer: Customer) -> String {
         let firstName = customer.name.split(separator: " ").first.map(String.init) ?? customer.name
         let boutiqueName = ctx.boutique?.name ?? "Boutique"
+        // R4b — an assistant composing a status message must not carry the
+        // order value out to the customer (same rule as ReminderDrafts).
         let amount = Formatters.inr(current.total)
+        let showAmount = RolePolicy.canSee(.invoice, role: roles.role)
         switch status {
         case .pending, .confirmed:
-            return "Namaste \(firstName)! Your order \(current.orderNumber) for \(amount) is confirmed. We'll keep you updated. — \(boutiqueName)"
+            return showAmount
+                ? "Namaste \(firstName)! Your order \(current.orderNumber) for \(amount) is confirmed. We'll keep you updated. — \(boutiqueName)"
+                : "Namaste \(firstName)! Your order \(current.orderNumber) is confirmed. We'll keep you updated. — \(boutiqueName)"
         case .packed:
             return "Hi \(firstName), your order \(current.orderNumber) is packed and ready. We'll dispatch shortly. — \(boutiqueName)"
         case .shipped:

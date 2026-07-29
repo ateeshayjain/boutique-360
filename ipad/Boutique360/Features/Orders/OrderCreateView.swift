@@ -95,6 +95,11 @@ struct OrderCreateView: View {
             }
 
             Section("Totals") {
+                // R4b triage — deliberately NOT gated. Every input to these
+                // sums (unit price × qty, GST rate) is being typed on this
+                // same screen by whoever is filling the form, so hiding the
+                // derived total hides nothing they can't add up. Gating it
+                // would only mean an assistant quotes a price blind.
                 LabeledContent("Subtotal", value: formatINR(subtotal))
                 LabeledContent("GST (\(Int(gstRate))%)", value: formatINR(gstAmount))
                 LabeledContent {

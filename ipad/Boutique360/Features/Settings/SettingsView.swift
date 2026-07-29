@@ -4,6 +4,7 @@ import UniformTypeIdentifiers
 struct SettingsView: View {
     @EnvironmentObject private var auth: AuthService
     @EnvironmentObject private var ctx: BoutiqueContext
+    @EnvironmentObject private var roles: StaffRoleContext
     @State private var confirmSignOut = false
     @State private var showEditBoutique = false
 
@@ -35,10 +36,16 @@ struct SettingsView: View {
                     Label("GSTIN missing — invoices disabled.", systemImage: "exclamationmark.triangle")
                         .font(.caption).foregroundStyle(.orange)
                 }
-                Button {
-                    showEditBoutique = true
-                } label: {
-                    Label("Edit boutique details", systemImage: "pencil")
+                // R4b — GSTIN, address and place of supply are the boutique's
+                // statutory identity; editing them changes every future
+                // invoice. `.settingsSensitive` covers the entry point, so
+                // the sheet is unreachable rather than merely disabled.
+                if RolePolicy.canSee(.settingsSensitive, role: roles.role) {
+                    Button {
+                        showEditBoutique = true
+                    } label: {
+                        Label("Edit boutique details", systemImage: "pencil")
+                    }
                 }
             } header: { Text("Boutique") }
             Section("Account") {
@@ -48,7 +55,9 @@ struct SettingsView: View {
 
             StaffRoleSection()
 
-            gstExportSection
+            if RolePolicy.canSee(.gstExport, role: roles.role) {
+                gstExportSection
+            }
             customerImportSection
 
             Section("App") {
@@ -60,17 +69,19 @@ struct SettingsView: View {
             // diagnostic — the actual switch lives in Secrets.xcconfig.
             // Helps the owner discover that these features exist + know
             // exactly which credential is missing.
-            Section("Integrations") {
-                integrationRow("AI (Gemini)",        enabled: Config.aiEnabled,
-                               key: "GEMINI_API_KEY")
-                integrationRow("Email (SendGrid)",   enabled: Config.emailEnabled,
-                               key: "SENDGRID_API_KEY + SENDGRID_FROM")
-                integrationRow("SMS (Twilio)",       enabled: Config.smsEnabled,
-                               key: "TWILIO_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM")
-                integrationRow("Razorpay payments",  enabled: Config.razorpayEnabled,
-                               key: "RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET")
-                Text("Add credentials to Secrets.xcconfig (gitignored). WhatsApp link-flow always works regardless.")
-                    .font(.caption2).foregroundStyle(.tertiary)
+            if RolePolicy.canSee(.settingsSensitive, role: roles.role) {
+                Section("Integrations") {
+                    integrationRow("AI (Gemini)",        enabled: Config.aiEnabled,
+                                   key: "GEMINI_API_KEY")
+                    integrationRow("Email (SendGrid)",   enabled: Config.emailEnabled,
+                                   key: "SENDGRID_API_KEY + SENDGRID_FROM")
+                    integrationRow("SMS (Twilio)",       enabled: Config.smsEnabled,
+                                   key: "TWILIO_SID + TWILIO_AUTH_TOKEN + TWILIO_FROM")
+                    integrationRow("Razorpay payments",  enabled: Config.razorpayEnabled,
+                                   key: "RAZORPAY_KEY_ID + RAZORPAY_KEY_SECRET")
+                    Text("Add credentials to Secrets.xcconfig (gitignored). WhatsApp link-flow always works regardless.")
+                        .font(.caption2).foregroundStyle(.tertiary)
+                }
             }
             Section {
                 Button(role: .destructive) {
