@@ -98,11 +98,27 @@ rollback;
   is therefore the EXPECTED outcome even in a perfectly healthy setup** —
   record it and proceed. This step is a cheap early signal, not a gate.
 
+  **The discriminator is NOT the HTTP status** — PostgREST returns 401 for an
+  RLS rejection on an unauthenticated (`anon`) request and 403 for an
+  authenticated one, so the status only tells you which role you used. What
+  discriminates is **whether `reminder_log` behaves differently from a
+  shipped table with the same policy shape.** Always run the control:
+
+  ```bash
+  # same anon INSERT against change_orders (0029) and events (0004) —
+  # both are tables the app demonstrably writes to in production
+  ```
+
   | Result | Meaning | Action |
   |---|---|---|
-  | **201** + row | Insert path works even for `anon` | Delete the probe row via MCP `execute_sql`, proceed |
-  | **403** `violates row-level security policy` | Expected — the probe's role, not necessarily a bug | Record verbatim, **proceed to A2** |
-  | **401**, 404, or a schema/column error | The table or grants are wrong | **STOP** — report to the human; do not guess |
+  | **201** + row | Insert path works even for `anon` | Delete the probe row, proceed |
+  | **401/403 `42501 violates row-level security policy`, AND the controls return the same** | Expected — `anon` isn't `authenticated`; `reminder_log` matches known-good tables | Record verbatim, **proceed to A2** |
+  | **401/403 on `reminder_log` but the controls return 201** | `reminder_log`'s policy really is different | **STOP** — report to the human |
+  | **404, `42P01`, or a column/schema error** | Table or grants are wrong | **STOP** — report to the human |
+
+  *(Recorded result, 2026-07-28: `reminder_log` → 401 `42501`; controls
+  `change_orders` → 401 `42501`, `events` → 401 `42501`. Identical to
+  known-good tables ⇒ proceeded.)*
 
   Task A3 Step 3 re-runs this **through the app's own authenticated
   session** and is the definitive gate.
