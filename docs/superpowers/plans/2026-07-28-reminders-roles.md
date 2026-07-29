@@ -75,18 +75,38 @@ rollback;
 
 - [ ] **Step 4: VERIFICATION TASK — client-level RLS probe. DO THIS NOW, before writing any Swift.** *(Reviewer-flagged: verification task with its own pass criteria — must not be waved through. Moved ahead of the engine work: `current_setting('app.boutique_id', true)` is transaction-local and there is **no client call site** for `set_boutique_id_from_user()` anywhere in `ipad/Boutique360/`, so there is a material chance the anon/authenticated role sees nothing. Discovering that after building a 21-test engine wastes the engine.)*
 
-  Probe with the app's own anon key over PostgREST — same path the SDK uses:
+  **It must be an INSERT probe, not a read.** Under RLS a `select` with no
+  matching policy returns **200 with `[]`** — indistinguishable from "the
+  table is simply empty," so a read probe passes in exactly the failure case
+  it exists to catch. An insert whose `with check` fails returns **403
+  `new row violates row-level security policy`**, which discriminates.
+
   ```bash
   cd /Users/ateeshayjain/WIPApps/boutique-360
   ANON=$(grep SUPABASE_ANON_KEY ipad/Boutique360/Configuration/Env.xcconfig | sed 's/.*= *//')
   URL="https://tdnwdlrkbrtoxjzcgusg.supabase.co/rest/v1/reminder_log"
-  # read probe — expect HTTP 200 (an empty [] is fine; 401/403 is not)
-  curl -s -o /dev/null -w "read: %{http_code}\n" "$URL?select=id&limit=1" \
-    -H "apikey: $ANON" -H "Authorization: Bearer $ANON"
+  BID=$(curl -s "https://tdnwdlrkbrtoxjzcgusg.supabase.co/rest/v1/boutiques?select=id&limit=1" \
+        -H "apikey: $ANON" -H "Authorization: Bearer $ANON" | python3 -c 'import sys,json; print(json.load(sys.stdin)[0]["id"])')
+  curl -s -w "\nHTTP %{http_code}\n" -X POST "$URL" \
+    -H "apikey: $ANON" -H "Authorization: Bearer $ANON" \
+    -H "Content-Type: application/json" -H "Prefer: return=representation" \
+    -d "{\"boutique_id\":\"$BID\",\"kind\":\"payment\",\"subject_id\":\"$(uuidgen | tr 'A-Z' 'a-z')\",\"for_date\":\"$(date +%F)\"}"
   ```
-  **Pass criteria:** read returns **200**. If it returns 401/403, **STOP** — do not add a service-role workaround, and do not proceed to A2. Report to the human with the exact response; this is a project-wide RLS/session question (it would affect every shipped table equally), not an R4a question.
 
-  A full insert+read round-trip through the real app session is re-verified in Task A3 Step 3 once `RemindersService` exists. Record both results in the A3 commit message.
+  **Pass criteria:** HTTP **201** and a returned row. Then delete the probe
+  row via MCP `execute_sql`.
+
+  **On 403 (`violates row-level security policy`): STOP.** Do not add a
+  service-role workaround, do not proceed to A2. Report to the human with
+  the exact response body — this is a project-wide RLS/session question (it
+  would affect every shipped boutique-scoped table equally), not an R4a
+  question.
+
+  Note the probe runs as role `anon`, while the policies target
+  `authenticated` — so a 403 here may reflect the probe's role rather than a
+  real app failure. That is why Task A3 Step 3 re-runs the round-trip
+  **through the app's own authenticated session**, which is the definitive
+  gate. This step is the cheap early signal; A3 Step 3 is the proof.
 
 - [ ] **Step 5: Commit**
 
@@ -471,7 +491,16 @@ enum RemindersService {
 
 - [ ] **Step 2: `xcodegen generate` + build** — green.
 
-- [ ] **Step 3: Run the Task A1 Step 4 verification** (app-level RLS round-trip). Record pass/fail + evidence.
+- [ ] **Step 3: VERIFICATION TASK — app-session RLS round-trip. This is the definitive gate** (A1 Step 4 was the cheap early signal; this runs through the app's own authenticated session, which is what actually ships).
+
+  Procedure — add a temporary `#if DEBUG` probe (a button in `SettingsView`, or a one-shot call in `DashboardView.task`), run it in the simulator signed in as the demo user, and:
+  1. Call `RemindersService.markDone(boutiqueId: bid, kind: .payment, subjectId: <fresh UUID>, forDate: <today>)`.
+  2. Call `RemindersService.loggedKeys(boutiqueId: bid, from: <today>, to: <today>)`.
+  3. Confirm the key from step 1 is present in the returned set.
+
+  **Pass criteria:** the key comes back. **If `loggedKeys` returns empty, or the insert throws an RLS error — STOP.** Do not add a service-role workaround, do not switch the policy to `anon`, do not proceed to A4. Report to the human with the exact error: every shipped boutique-scoped table uses this same policy shape, so a failure here is a project-wide finding, not an R4a one.
+
+  Remove the temporary probe before committing. Record the result (pass/fail + the observed key) in this task's commit message alongside the A1 Step 4 result.
 
 - [ ] **Step 4: Commit** `feat: RemindersService (append-only dedup ledger)` — include the RLS verification result in the commit body.
 
@@ -524,6 +553,7 @@ if let bid {
 
 ```swift
 let drafts: [ReminderDrafts.Draft]
+let remindersLoading: Bool
 let onSend: (ReminderDrafts.Draft) -> Void
 let onMarkDone: (ReminderDrafts.Draft) -> Void
 ```
@@ -538,7 +568,7 @@ empty states (spec Unit 7 requires both), so it must render to show them.
 `DashboardView` passes `remindersLoading` (true while `load()` is in flight)
 and renders nothing itself.
 
-Update the existing `MorningBoardView(board:ordersById:)` call site in `DashboardView` to pass the three new arguments.
+Update the existing `MorningBoardView(board:ordersById:)` call site in `DashboardView` (DashboardView.swift:36) to pass the four new arguments (`drafts: reminderDrafts`, `remindersLoading: loading`, and the two closures).
 
 - [ ] **Step 3: `RemindersSectionView`** — stateless renderer. Requirements (all from spec Unit 7; each is a checklist item, not a nicety):
 
