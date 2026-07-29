@@ -105,6 +105,7 @@
 		C3CACA179A86BF2EF3EA736C /* GSTINValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01486DAEC142C4097E3822 /* GSTINValidator.swift */; };
 		C8E2551C217BFF528F3ED4CA /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D169D90967E0A6EC89F9B /* Config.swift */; };
 		CA7A8FD6F054BB00F00EBC09 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6FE16090EB97CBE5A71BBAC7 /* Supabase */; };
+		CBECB3C52F690A0BA9B6F2DF /* RemindersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B8B311865FE7C138D7A723 /* RemindersService.swift */; };
 		CC587B49D585BB3C46D21B0C /* Measurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC52E91DEA4DD15C24EAA01 /* Measurement.swift */; };
 		CC880316E58BB3BD3CBC5850 /* OrdersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 85CEA55E43BC3648A39E1849 /* OrdersService.swift */; };
 		CD1D3D6C3D8616DE6F369D08 /* AppointmentFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 17DBAF1C0E4D8E2F5346AC65 /* AppointmentFormView.swift */; };
@@ -246,6 +247,7 @@
 		BE8C06BFD8E8B9AAD96E47B1 /* MorningBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBoardView.swift; sourceTree = "<group>"; };
 		BE9B6823C2C38656FC4E0D5D /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		BF745E6724DE0A69610EC6FE /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
+		C1B8B311865FE7C138D7A723 /* RemindersService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersService.swift; sourceTree = "<group>"; };
 		C2991DA02D3E5617685B8D3F /* InquiriesListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InquiriesListView.swift; sourceTree = "<group>"; };
 		C33B3B4DCF4C747688BBF407 /* Boutique360.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Boutique360.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		C71EA4A6ACE6BB46179437D6 /* RazorpayClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RazorpayClient.swift; sourceTree = "<group>"; };
@@ -543,6 +545,7 @@
 				85CEA55E43BC3648A39E1849 /* OrdersService.swift */,
 				0CB67444A39A9A8225D475C2 /* PaymentsService.swift */,
 				C71EA4A6ACE6BB46179437D6 /* RazorpayClient.swift */,
+				C1B8B311865FE7C138D7A723 /* RemindersService.swift */,
 				CAAD7B1458C3EE3EFBAA1C5A /* SendGridClient.swift */,
 				7042FB90D8CA3275DF9AB71E /* StorageService.swift */,
 				745AFC98ADFD99D1BFBED28F /* SupabaseService.swift */,
@@ -785,6 +788,7 @@
 				DB750B47E2B4AA19875E1C20 /* RazorpayClient.swift in Sources */,
 				88B0947BE7CFB88991C39FF6 /* ReferenceStudioView.swift in Sources */,
 				CEBD1121A8E76DEEE0AD9306 /* ReminderDrafts.swift in Sources */,
+				CBECB3C52F690A0BA9B6F2DF /* RemindersService.swift in Sources */,
 				A46DD4170D5B99FDF7999675 /* RenderView.swift in Sources */,
 				A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */,
 				7C20E9A08730F26AD5E8AFBB /* SendGridClient.swift in Sources */,
