@@ -15,7 +15,7 @@
 **Build/test:**
 ```bash
 cd ipad && xcodegen generate && xcodebuild -project Boutique360.xcodeproj -scheme Boutique360 \
-  -destination 'platform=iOS Simulator,id=092B3063-9443-4E76-AD24-3918E9A0695C' test -only-testing:Boutique360Tests/<Suite>
+  -destination 'platform=iOS Simulator,id=E75AFC8A-90CA-4264-8CBE-5245E071763E' test -only-testing:Boutique360Tests/<Suite>
 ```
 Full suite: drop the `-only-testing` flag. Baseline before this plan: **175 tests, 0 failures.**
 
