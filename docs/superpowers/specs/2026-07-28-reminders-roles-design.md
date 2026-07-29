@@ -150,15 +150,38 @@ deterministic for tests.
 
 ### Message copy (Content §1–2, §4)
 
-Copied **verbatim** from the shipped strings so the customer hears one voice:
-- payment — matches `PaymentsSectionView.swift:90` exactly:
+One voice with the shipped strings (Content §4), with one deliberate
+divergence for security:
+- payment — matches `PaymentsSectionView.swift:90` **verbatim**:
   `"Hi {first}, a gentle reminder — balance of {inr} is pending on order {orderNo}. UPI / card / cash all accepted. Thank you! — {boutique}"`
-- ready — matches `CustomerNotifier.orderReadyPlan` exactly, including the
-  `Total:` clause.
+- ready — matches `CustomerNotifier.orderReadyPlan` **minus its `Total:`
+  clause**: `"Hi {first}, your order {orderNo} from {boutique} is ready! Drop by or reply for delivery."`
+  **Why the divergence:** ready drafts are visible in assistant mode (only
+  payment drafts are gated). Carrying the total would re-open exactly the
+  leak `paymentReminders` closes. Money belongs in gated surfaces only, so
+  **no draft that renders un-gated may contain a rupee amount** — this is the
+  rule, and the copy follows it rather than the other way round.
 - fitting — new string, app terminology ("fitting", not "trial"):
   `"Namaste {first}! Reminder — aapki fitting {day} ko {time} baje hai. — {boutique}"`
 
 All money rendered via `Formatters.inr` (Content §5); never hand-formatted.
+
+### Degraded-input rule (mirrors the board's own convention)
+
+**Any `MorningBoard.Input` failure that feeds a draft kind suppresses that
+kind entirely** — never a partial draft:
+- `.payments` failed → **no payment drafts.** Non-negotiable: an empty
+  `receivedByOrder` makes every balance look like the full order total, so
+  the app would nudge customers for money they already paid.
+- `.orders` failed → no payment and no ready drafts.
+- `.jobCards` / `.events` failed → no ready drafts (the done-signal is
+  unknown; better silent than wrong).
+- `.appointments` failed → no fitting drafts.
+- reminder-log fetch failed → **no drafts at all** (without dedup the owner
+  re-sends).
+
+`build(...)` therefore takes `failedInputs: Set<MorningBoard.Input>` and
+applies these suppressions before any other rule.
 
 ## Unit 3 — `Services/RemindersService.swift`
 
@@ -188,22 +211,32 @@ enum PinPolicy {
     static let lockoutSeconds: TimeInterval = 30
 
     enum SetError: Equatable { case tooShort, tooLong, notNumeric, tooSimple }
-    /// `tooSimple` rejects all-same-digit (0000) and strict run (1234/4321)
-    /// PINs — Security §6 weak-credential rule.
+    /// Security §6 weak-credential rule. `tooSimple` rejects a PIN where
+    /// EITHER every digit is identical (0000, 111111) OR every adjacent
+    /// pair differs by exactly +1 (1234, 456789) or exactly −1 (4321).
+    /// Mixed sequences are fine: 1235 ✓, 112233 ✓, 1357 ✓.
     static func validate(_ pin: String) -> SetError?
 
     struct AttemptState: Equatable, Codable {
         var failures: Int = 0
         var lockedUntil: Date?
+        /// Monotonic across lockouts; only an OWNER unlock resets it.
+        /// Backstop for the attacker-controlled clock (see below).
+        var failuresSinceOwnerUnlock: Int = 0
     }
+    static let hardAttemptCap = 25   // reached → locked until an owner unlock
     /// Pure. Rules:
     /// - while locked (`isLocked`), an attempt is a NO-OP: state unchanged,
     ///   lockout is NOT extended (a wrong tap during cooldown shouldn't
     ///   restart the clock; the caller refuses the attempt anyway).
-    /// - correct → cleared state.
-    /// - incorrect → failures+1; on reaching maxAttempts, set
-    ///   lockedUntil = now + lockoutSeconds and reset failures to 0.
+    /// - correct → fully cleared state (including failuresSinceOwnerUnlock).
+    /// - incorrect → failures+1 AND failuresSinceOwnerUnlock+1; on reaching
+    ///   maxAttempts, set lockedUntil = now + lockoutSeconds and reset
+    ///   failures (but NOT failuresSinceOwnerUnlock) to 0.
     static func afterAttempt(correct: Bool, state: AttemptState, now: Date) -> AttemptState
+    /// Locked if lockedUntil is in the future OR failuresSinceOwnerUnlock
+    /// >= hardAttemptCap. The cap is clock-independent, so winding the
+    /// device clock forward cannot clear it.
     static func isLocked(_ state: AttemptState, now: Date) -> Bool
     static func secondsRemaining(_ state: AttemptState, now: Date) -> Int
 }
@@ -288,9 +321,14 @@ deferred, and named as the mitigation in SECURITY_REVIEW.md.**
 
 Also honest: a 4-digit PIN with a 30-second lockout after 5 attempts is
 brute-forceable in ~17 hours of continuous tapping. Mitigations chosen: 6
-digits allowed, weak PINs rejected, lockout persists across restarts, and
-every failed attempt is audit-logged. Escalating lockouts deferred (YAGNI at
-pilot scale) — recorded, not hidden.
+digits allowed, weak PINs rejected, lockout persists across restarts, every
+failed attempt is audit-logged, and a **clock-independent hard cap** (25
+failures since the last owner unlock) locks the device out entirely until an
+owner unlocks — because `lockedUntil` is wall-clock and **an assistant on a
+shared iPad can wind the device clock forward in iOS Settings to clear a
+timed lockout**. The cap is the answer to that; the timed lockout alone is
+not. Escalating lockout durations deferred (YAGNI at pilot scale) — recorded,
+not hidden.
 
 ## Unit 7 — UI
 
@@ -303,7 +341,9 @@ the two callbacks; `DashboardView` owns the state and passes them down.
 
 - Header: `Label("Reminders", systemImage: "bell.badge")` + count with
   correct plural forms — `1 reminder` / `2 reminders`, never `reminder(s)`
-  (Content §5).
+  (Content §5). **The count is computed from the post-filter list** (after
+  assistant-mode payment filtering), so the header can never claim more rows
+  than are shown.
 - Row: kind icon (`ruler` / `indianrupeesign.circle` / `checkmark.seal`),
   customer name, context line (order # · `Formatters.inr(amountDue)` ·
   fitting time), message preview `lineLimit(2)`, then **"Send on WhatsApp"**
@@ -379,11 +419,16 @@ the two callbacks; `DashboardView` owns the state and passes them down.
   (no consent → no draft; no number → no draft); logged-key exclusion; key
   format round-trips with lowercase UUIDs; sort + tie-break determinism;
   payment age boundary at exactly 7 days; payment excludes `.pending`;
-  ready excludes delivered; empty inputs → empty.
-- `PinPolicyTests`: 4 ok / 3 short / 7 long / non-numeric / `0000` /
-  `1234` rejected; 4 failures no lock; 5th locks; attempt while locked is a
-  no-op (lockout not extended); correct resets; lockout expiry;
-  `secondsRemaining`.
+  ready excludes delivered; empty inputs → empty; **degraded-input
+  suppression, one test per rule — especially `.payments` failed → zero
+  payment drafts** (the "nudge for money already paid" bug); no un-gated
+  draft message contains a rupee amount.
+- `PinPolicyTests`: 4 ok / 3 short / 7 long / non-numeric; `0000` and `1234`
+  and `4321` rejected; `1235`, `112233`, `1357` accepted; 4 failures no
+  lock; 5th locks; attempt while locked is a no-op (lockout not extended);
+  correct resets everything including `failuresSinceOwnerUnlock`; lockout
+  expiry; `secondsRemaining`; **hard cap: 25 failures → `isLocked` stays
+  true even with `now` far in the future** (clock-winding defence).
 - `RolePolicyTests`: owner sees all; assistant sees none; **exhaustiveness
   is enforced by asserting `Surface.allCases.count == 10`** so adding a
   surface fails until the count and its classification are reviewed (the
@@ -398,10 +443,18 @@ the two callbacks; `DashboardView` owns the state and passes them down.
 
 ## Error handling
 
-- Log fetch failure → section hidden + stale banner.
+- Log fetch failure → no drafts + stale banner (degraded-input rule, Unit 2).
 - `markDone` 23505 → success.
-- Keychain save failure → inline error; PIN not considered set; role change
-  refused rather than applied-but-unpersisted (fail closed).
+- **Keychain save failure — the two directions differ, and conflating them
+  is a security bug:**
+  - `unlockToOwner` (privilege *up*): **refuse.** No persisted owner role,
+    no owner session. Fail closed.
+  - `handOverToAssistant` (privilege *down*): **apply the in-memory
+    downgrade anyway**, then show a prominent warning — "Handed over, but
+    this device will return to owner mode if the app restarts." Refusing
+    here would be fail-*open*: the owner has already passed the iPad across
+    the table while it still shows every rupee.
+  - `setPin` failure → inline error; PIN not considered set.
 - Audit write failure → non-fatal, `ErrorBus`, role change still applies.
 
 ## Build order
