@@ -33,9 +33,11 @@
 		33F17557C4D481725C1DB23D /* LockGate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9B210FA66B4A290F6B8489 /* LockGate.swift */; };
 		36BDA2006336D7AF28A972F1 /* GSTReportExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 827FDFBB02BB23FC704F45B6 /* GSTReportExporter.swift */; };
 		3792A208A38CE693B5BE7929 /* Appointment.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0598C196A691999052AF60B /* Appointment.swift */; };
+		387E708FA3AA7AF063AAAC6F /* RolePolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1F60CDE5F862531B6D46BFD /* RolePolicyTests.swift */; };
 		3B82E0B70A3145D5FA02D2FB /* CustomerSpend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49A663770C8356F1A66D0028 /* CustomerSpend.swift */; };
 		3BB4B81055DD40E5345E5672 /* GSTINValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8EEE2A09A3DFE5D56E8C1C /* GSTINValidatorTests.swift */; };
 		3FCD2D638C3843D00F04E944 /* CustomerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E35FAAA1DE3580CE4CA2368 /* CustomerDetailView.swift */; };
+		456C1BD1DCFFFD9E05E08DD9 /* PinHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782BC2A1A41161423583B0FA /* PinHasher.swift */; };
 		45734C8BB078AD0F53E25379 /* WhatsAppShareHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9BFC7650136A2BB654FC04E /* WhatsAppShareHelperTests.swift */; };
 		4624C704DF46081638434B73 /* MoneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51B9B78A325D13321B07EE6 /* MoneyTests.swift */; };
 		477A637B79BC53952C16185F /* SlackBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = B1B2B36D2550F269C7C0C5A8 /* SlackBadge.swift */; };
@@ -92,10 +94,12 @@
 		A57C33986D5066343B805401 /* CustomersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 261C703C9FEECA7301EE7CF9 /* CustomersService.swift */; };
 		A7B120815ADD4F32F14389E6 /* Secrets.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = D11423D34A4D601FC3CAC605 /* Secrets.xcconfig.example */; };
 		A94D4F4D659D6F2EB37B01F8 /* JobCardComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBC9DBA55BD1E48E3F1FEB6A /* JobCardComposerView.swift */; };
+		AF040A10F7028EA9FEB57E77 /* PinHasherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A55FCCBBA84C05FC08D5189 /* PinHasherTests.swift */; };
 		B1E7A5ED2A56B43F13A7A0E1 /* OrderCreateView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B38BBCF4DB447E22829528F7 /* OrderCreateView.swift */; };
 		B1FE678C9DC5551C5081795A /* CustomerTimelineEventStyling.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5B6AE141D1CE0FBA708766E /* CustomerTimelineEventStyling.swift */; };
 		B4C9DBDE270D8246411DDE64 /* DesignDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67B75DFF054FA21FD73C7334 /* DesignDetailView.swift */; };
 		B4F0016F512542D8A62182EE /* Boutique360App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89EC55AD960A6888307EF31B /* Boutique360App.swift */; };
+		B53F893B4D7B30AD51D86080 /* PinPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759A9B1690B1D7515CF68EBC /* PinPolicyTests.swift */; };
 		B9F3B021F82FEA27F45A0870 /* InquiryFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643AE0A8C4538C9A0A664750 /* InquiryFormView.swift */; };
 		BB0F20D56721EB3C8110B0C4 /* DesignTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D159301960E73FAF6E4C90F8 /* DesignTokensTests.swift */; };
 		BC17F7673EF1E9CAC74FBFB6 /* OrderLocksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9F0A0BBEBCB4D0F056E1F99 /* OrderLocksService.swift */; };
@@ -105,6 +109,7 @@
 		C22890C38404872D7186A2EE /* ReminderDraftsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC35D4D2ACEA2B8D129A0F4D /* ReminderDraftsTests.swift */; };
 		C3CACA179A86BF2EF3EA736C /* GSTINValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01486DAEC142C4097E3822 /* GSTINValidator.swift */; };
 		C8E2551C217BFF528F3ED4CA /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D169D90967E0A6EC89F9B /* Config.swift */; };
+		C91333D7F51F39AA7CC606D4 /* RolePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6B90527760DDBDA506EC66 /* RolePolicy.swift */; };
 		CA7A8FD6F054BB00F00EBC09 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6FE16090EB97CBE5A71BBAC7 /* Supabase */; };
 		CBECB3C52F690A0BA9B6F2DF /* RemindersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B8B311865FE7C138D7A723 /* RemindersService.swift */; };
 		CC587B49D585BB3C46D21B0C /* Measurement.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCC52E91DEA4DD15C24EAA01 /* Measurement.swift */; };
@@ -125,6 +130,7 @@
 		DEEB7B37D7B0BFBA7B56FD1E /* AppEvents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 78511745DEAA05544D97B302 /* AppEvents.swift */; };
 		E0412F55188A0FF4475C2036 /* Inquiry.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBD8CB81E253099B4832AE9F /* Inquiry.swift */; };
 		E45C9C739519EAA82EB468FC /* BoutiqueContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5AC3CD27F4688007BB2AF109 /* BoutiqueContext.swift */; };
+		E7C1AF9721B7DB4DD20C5E54 /* PinPolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39D0CEF21798BEF3D283CB8C /* PinPolicy.swift */; };
 		E8786C1202C49600500E0930 /* LockSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA0C355C19CCF5E544B3F597 /* LockSheet.swift */; };
 		E8B6DE3121AB658DAECB34BB /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 98D3635D547A3831FD95F341 /* DashboardView.swift */; };
 		EDCFBBA44E275A13BB718494 /* TwilioNormalizeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE48B5A70951F6D5B3A94BD6 /* TwilioNormalizeTests.swift */; };
@@ -165,6 +171,7 @@
 		13E7CE976CB5309E17FA5A7B /* CustomerProfilesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerProfilesService.swift; sourceTree = "<group>"; };
 		17DBAF1C0E4D8E2F5346AC65 /* AppointmentFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentFormView.swift; sourceTree = "<group>"; };
 		17F512EB1A6C0EED66341868 /* AlterationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlterationsService.swift; sourceTree = "<group>"; };
+		1A55FCCBBA84C05FC08D5189 /* PinHasherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinHasherTests.swift; sourceTree = "<group>"; };
 		1C449608F074290180B2B427 /* ErrorBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBus.swift; sourceTree = "<group>"; };
 		1C814D6DDDC7AF446243A540 /* NotificationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsService.swift; sourceTree = "<group>"; };
 		1EE7AE14DC7655A5808B26EE /* CalendarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarView.swift; sourceTree = "<group>"; };
@@ -175,6 +182,7 @@
 		2F5036E60A9CF0E902B748A6 /* DesignFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignFormView.swift; sourceTree = "<group>"; };
 		35A188402BDB0D4379A39B2F /* JobCardPDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardPDFGenerator.swift; sourceTree = "<group>"; };
 		368E0430D424AD8B2D3BB7C5 /* CustomerProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerProfile.swift; sourceTree = "<group>"; };
+		39D0CEF21798BEF3D283CB8C /* PinPolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinPolicy.swift; sourceTree = "<group>"; };
 		3A61B87A34BA4C847248AA8D /* CustomersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomersListView.swift; sourceTree = "<group>"; };
 		3B00FCF5C94D1A41AFB521B6 /* Log.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Log.swift; sourceTree = "<group>"; };
 		3F0D87EDD2AA39EE77BC40E5 /* OrderLock.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderLock.swift; sourceTree = "<group>"; };
@@ -204,6 +212,8 @@
 		6E6566F16DD7D66E5D1755FE /* WhatsAppShareHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WhatsAppShareHelper.swift; sourceTree = "<group>"; };
 		7042FB90D8CA3275DF9AB71E /* StorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StorageService.swift; sourceTree = "<group>"; };
 		745AFC98ADFD99D1BFBED28F /* SupabaseService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupabaseService.swift; sourceTree = "<group>"; };
+		759A9B1690B1D7515CF68EBC /* PinPolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinPolicyTests.swift; sourceTree = "<group>"; };
+		782BC2A1A41161423583B0FA /* PinHasher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinHasher.swift; sourceTree = "<group>"; };
 		78511745DEAA05544D97B302 /* AppEvents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEvents.swift; sourceTree = "<group>"; };
 		789DE6A8A8FAB2334510972E /* Boutique.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Boutique.swift; sourceTree = "<group>"; };
 		794FBB04EB0EE2D819A44205 /* ModelDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelDecodingTests.swift; sourceTree = "<group>"; };
@@ -236,6 +246,7 @@
 		A7419FD8CFB36BD15950E398 /* CustomerSpendTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSpendTests.swift; sourceTree = "<group>"; };
 		ACA9CD6936DFD9F296D13514 /* ImportantDatesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDatesService.swift; sourceTree = "<group>"; };
 		B1B2B36D2550F269C7C0C5A8 /* SlackBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlackBadge.swift; sourceTree = "<group>"; };
+		B1F60CDE5F862531B6D46BFD /* RolePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RolePolicyTests.swift; sourceTree = "<group>"; };
 		B2D42D75CCEE8F362E9D8426 /* JobCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardPreviewView.swift; sourceTree = "<group>"; };
 		B38BBCF4DB447E22829528F7 /* OrderCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCreateView.swift; sourceTree = "<group>"; };
 		B3BC2DAB9F3A9E15EE732231 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
@@ -283,6 +294,7 @@
 		FCA05E72225F45775FE60623 /* ImportantDateFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDateFormView.swift; sourceTree = "<group>"; };
 		FCC52E91DEA4DD15C24EAA01 /* Measurement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Measurement.swift; sourceTree = "<group>"; };
 		FCDDEB6EF95DEBA783A69D77 /* DesignTokens.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignTokens.swift; sourceTree = "<group>"; };
+		FD6B90527760DDBDA506EC66 /* RolePolicy.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RolePolicy.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -317,8 +329,11 @@
 				8A49934CCE69186D66047F49 /* MorningBoardTests.swift */,
 				A0C8C90A6AF6F34265D74C8A /* OrderSlackTests.swift */,
 				0CE75C8A6318309AA0B9C9FE /* PaymentsServiceModelTests.swift */,
+				1A55FCCBBA84C05FC08D5189 /* PinHasherTests.swift */,
+				759A9B1690B1D7515CF68EBC /* PinPolicyTests.swift */,
 				DB82B2C0DAF757B5B37CC1C4 /* ReferencePromptTests.swift */,
 				FC35D4D2ACEA2B8D129A0F4D /* ReminderDraftsTests.swift */,
+				B1F60CDE5F862531B6D46BFD /* RolePolicyTests.swift */,
 				2184A70D6ED04D46C8289F81 /* StatusMachineTests.swift */,
 				EE48B5A70951F6D5B3A94BD6 /* TwilioNormalizeTests.swift */,
 				D9BFC7650136A2BB654FC04E /* WhatsAppShareHelperTests.swift */,
@@ -489,7 +504,10 @@
 				3B00FCF5C94D1A41AFB521B6 /* Log.swift */,
 				F6FBB3EB67076F070005DB38 /* MorningBoard.swift */,
 				B65938960FE851593B10AD49 /* OrderSlack.swift */,
+				782BC2A1A41161423583B0FA /* PinHasher.swift */,
+				39D0CEF21798BEF3D283CB8C /* PinPolicy.swift */,
 				E56BB3C26720D2D030C8F24E /* ReminderDrafts.swift */,
+				FD6B90527760DDBDA506EC66 /* RolePolicy.swift */,
 				6E6566F16DD7D66E5D1755FE /* WhatsAppShareHelper.swift */,
 			);
 			path = Utilities;
@@ -788,12 +806,15 @@
 				CC880316E58BB3BD3CBC5850 /* OrdersService.swift in Sources */,
 				D4B8B3D52DDA61929077A0D3 /* PaymentsSectionView.swift in Sources */,
 				1B442A269992631F22CAA512 /* PaymentsService.swift in Sources */,
+				456C1BD1DCFFFD9E05E08DD9 /* PinHasher.swift in Sources */,
+				E7C1AF9721B7DB4DD20C5E54 /* PinPolicy.swift in Sources */,
 				DB750B47E2B4AA19875E1C20 /* RazorpayClient.swift in Sources */,
 				88B0947BE7CFB88991C39FF6 /* ReferenceStudioView.swift in Sources */,
 				CEBD1121A8E76DEEE0AD9306 /* ReminderDrafts.swift in Sources */,
 				6C2846260A41B6B76688DFDE /* RemindersSectionView.swift in Sources */,
 				CBECB3C52F690A0BA9B6F2DF /* RemindersService.swift in Sources */,
 				A46DD4170D5B99FDF7999675 /* RenderView.swift in Sources */,
+				C91333D7F51F39AA7CC606D4 /* RolePolicy.swift in Sources */,
 				A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */,
 				7C20E9A08730F26AD5E8AFBB /* SendGridClient.swift in Sources */,
 				631A2B06BAA7191CB4DDB8AC /* SettingsView.swift in Sources */,
@@ -830,8 +851,11 @@
 				16AB9E5FDC258C0767FDAF69 /* MorningBoardTests.swift in Sources */,
 				F3D19282A5CB25C5B8504DE3 /* OrderSlackTests.swift in Sources */,
 				96C65521BE778AD5B16AC7F6 /* PaymentsServiceModelTests.swift in Sources */,
+				AF040A10F7028EA9FEB57E77 /* PinHasherTests.swift in Sources */,
+				B53F893B4D7B30AD51D86080 /* PinPolicyTests.swift in Sources */,
 				72DD05843BB7F59E3FD1889B /* ReferencePromptTests.swift in Sources */,
 				C22890C38404872D7186A2EE /* ReminderDraftsTests.swift in Sources */,
+				387E708FA3AA7AF063AAAC6F /* RolePolicyTests.swift in Sources */,
 				FFDB22488D6F4C3B7BFEA451 /* StatusMachineTests.swift in Sources */,
 				EDCFBBA44E275A13BB718494 /* TwilioNormalizeTests.swift in Sources */,
 				45734C8BB078AD0F53E25379 /* WhatsAppShareHelperTests.swift in Sources */,
