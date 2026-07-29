@@ -46,6 +46,8 @@ struct SettingsView: View {
                 LabeledContent("Role", value: ctx.staffRole?.capitalized ?? "—")
             }
 
+            StaffRoleSection()
+
             gstExportSection
             customerImportSection
 

@@ -36,6 +36,7 @@ enum SidebarSection: String, Hashable, CaseIterable, Identifiable {
 }
 
 struct AppShellView: View {
+    @EnvironmentObject private var roles: StaffRoleContext
     @State private var selection: SidebarSection? = {
         // DEV: -start-section <name> overrides default landing tab
         let args = CommandLine.arguments
@@ -54,6 +55,27 @@ struct AppShellView: View {
             }
             .navigationTitle("Boutique 360")
             .listStyle(.sidebar)
+            // R4b — the active role must never be ambiguous (Apple Design
+            // Principle 1). It lives in the sidebar rather than a detail
+            // toolbar so it survives every navigation push, and it only
+            // appears in assistant mode: owner is the resting state and a
+            // permanent "Owner" chip would just become invisible.
+            .safeAreaInset(edge: .bottom) {
+                if roles.role == .assistant {
+                    Button {
+                        selection = .settings
+                    } label: {
+                        Label("Assistant mode", systemImage: "person.badge.shield.checkmark")
+                            .font(.footnote.weight(.medium))
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                            .background(.orange.opacity(0.15), in: RoundedRectangle(cornerRadius: CornerRadius.chip))
+                    }
+                    .buttonStyle(.plain)
+                    .foregroundStyle(.orange)
+                    .padding(Spacing.medium)
+                    .accessibilityHint("Payments and invoices are hidden. Opens Settings to unlock as owner.")
+                }
+            }
         } detail: {
             NavigationStack {
                 switch selection {

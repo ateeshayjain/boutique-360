@@ -90,6 +90,7 @@
 		9A61C6F6ECFEBFC693957BE8 /* GSTReportExporterTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B7310374FF5322D321637748 /* GSTReportExporterTests.swift */; };
 		9D4DF386C70BBD9531103853 /* AlterationsSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 576D4A8FE13B65032686ECDD /* AlterationsSectionView.swift */; };
 		9DC4D33E1D65C76113EFFF57 /* EventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C88C68FCBDD5361E5592DB5A /* EventsService.swift */; };
+		9DF7B1C1EB2F459A1248DF4F /* StaffRoleSection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1859721413D28410B31C70AA /* StaffRoleSection.swift */; };
 		A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3B8F4DAA8944A162925136 /* RootView.swift */; };
 		A46DD4170D5B99FDF7999675 /* RenderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4551D6EF99333ED60155F040 /* RenderView.swift */; };
 		A57C33986D5066343B805401 /* CustomersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 261C703C9FEECA7301EE7CF9 /* CustomersService.swift */; };
@@ -122,6 +123,7 @@
 		D49FD1F5C9148B9E3BB42A10 /* ImageInputPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = EE00060E9A0163F499E59AB9 /* ImageInputPicker.swift */; };
 		D4B8B3D52DDA61929077A0D3 /* PaymentsSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596812C9E451E4F67282DEE2 /* PaymentsSectionView.swift */; };
 		D5C75A09B2E8609D5A23FC13 /* CustomerLinkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */; };
+		D6A9DD77E5F0F608956D9AC8 /* PinEntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51537B01691BFC84E3A6E3A /* PinEntrySheet.swift */; };
 		D74F92B0DD307B8704982DB9 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 523DA0A5E070A5E8B5D07DB0 /* Customer.swift */; };
 		D8D0B3C1D796238425E736FE /* TwilioClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224519E2F741ABBA0D3090E8 /* TwilioClient.swift */; };
 		DB2BEDA4DA670597B9138AC5 /* JobCardEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579590890B7FE39510E4E3F1 /* JobCardEventsService.swift */; };
@@ -172,6 +174,7 @@
 		13E7CE976CB5309E17FA5A7B /* CustomerProfilesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerProfilesService.swift; sourceTree = "<group>"; };
 		17DBAF1C0E4D8E2F5346AC65 /* AppointmentFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentFormView.swift; sourceTree = "<group>"; };
 		17F512EB1A6C0EED66341868 /* AlterationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlterationsService.swift; sourceTree = "<group>"; };
+		1859721413D28410B31C70AA /* StaffRoleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffRoleSection.swift; sourceTree = "<group>"; };
 		1A55FCCBBA84C05FC08D5189 /* PinHasherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinHasherTests.swift; sourceTree = "<group>"; };
 		1C449608F074290180B2B427 /* ErrorBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBus.swift; sourceTree = "<group>"; };
 		1C814D6DDDC7AF446243A540 /* NotificationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsService.swift; sourceTree = "<group>"; };
@@ -251,6 +254,7 @@
 		B2D42D75CCEE8F362E9D8426 /* JobCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardPreviewView.swift; sourceTree = "<group>"; };
 		B38BBCF4DB447E22829528F7 /* OrderCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCreateView.swift; sourceTree = "<group>"; };
 		B3BC2DAB9F3A9E15EE732231 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
+		B51537B01691BFC84E3A6E3A /* PinEntrySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinEntrySheet.swift; sourceTree = "<group>"; };
 		B51B9B78A325D13321B07EE6 /* MoneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoneyTests.swift; sourceTree = "<group>"; };
 		B65938960FE851593B10AD49 /* OrderSlack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderSlack.swift; sourceTree = "<group>"; };
 		B7310374FF5322D321637748 /* GSTReportExporterTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GSTReportExporterTests.swift; sourceTree = "<group>"; };
@@ -597,7 +601,9 @@
 		E1A457669F8FC083B6A200CB /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				B51537B01691BFC84E3A6E3A /* PinEntrySheet.swift */,
 				0BF947ADCF9CBE3A06D5C8C5 /* SettingsView.swift */,
+				1859721413D28410B31C70AA /* StaffRoleSection.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -809,6 +815,7 @@
 				CC880316E58BB3BD3CBC5850 /* OrdersService.swift in Sources */,
 				D4B8B3D52DDA61929077A0D3 /* PaymentsSectionView.swift in Sources */,
 				1B442A269992631F22CAA512 /* PaymentsService.swift in Sources */,
+				D6A9DD77E5F0F608956D9AC8 /* PinEntrySheet.swift in Sources */,
 				456C1BD1DCFFFD9E05E08DD9 /* PinHasher.swift in Sources */,
 				E7C1AF9721B7DB4DD20C5E54 /* PinPolicy.swift in Sources */,
 				DB750B47E2B4AA19875E1C20 /* RazorpayClient.swift in Sources */,
@@ -825,6 +832,7 @@
 				78AA949DF3EB07E3678D8CEC /* SketchCanvasView.swift in Sources */,
 				477A637B79BC53952C16185F /* SlackBadge.swift in Sources */,
 				0860D0C6EE8C6A6995A2B6C6 /* StaffRoleContext.swift in Sources */,
+				9DF7B1C1EB2F459A1248DF4F /* StaffRoleSection.swift in Sources */,
 				BD166544FC31E672D764DE35 /* StorageService.swift in Sources */,
 				4B4B4778A1D9B12862832D95 /* StyleSuggestionsSheet.swift in Sources */,
 				C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */,
