@@ -93,20 +93,19 @@ rollback;
     -d "{\"boutique_id\":\"$BID\",\"kind\":\"payment\",\"subject_id\":\"$(uuidgen | tr 'A-Z' 'a-z')\",\"for_date\":\"$(date +%F)\"}"
   ```
 
-  **Pass criteria:** HTTP **201** and a returned row. Then delete the probe
-  row via MCP `execute_sql`.
+  **Read this before interpreting the result:** the anon key carries
+  `role: anon`, while the 0030 policies target `authenticated`. **A 403 here
+  is therefore the EXPECTED outcome even in a perfectly healthy setup** —
+  record it and proceed. This step is a cheap early signal, not a gate.
 
-  **On 403 (`violates row-level security policy`): STOP.** Do not add a
-  service-role workaround, do not proceed to A2. Report to the human with
-  the exact response body — this is a project-wide RLS/session question (it
-  would affect every shipped boutique-scoped table equally), not an R4a
-  question.
+  | Result | Meaning | Action |
+  |---|---|---|
+  | **201** + row | Insert path works even for `anon` | Delete the probe row via MCP `execute_sql`, proceed |
+  | **403** `violates row-level security policy` | Expected — the probe's role, not necessarily a bug | Record verbatim, **proceed to A2** |
+  | **401**, 404, or a schema/column error | The table or grants are wrong | **STOP** — report to the human; do not guess |
 
-  Note the probe runs as role `anon`, while the policies target
-  `authenticated` — so a 403 here may reflect the probe's role rather than a
-  real app failure. That is why Task A3 Step 3 re-runs the round-trip
-  **through the app's own authenticated session**, which is the definitive
-  gate. This step is the cheap early signal; A3 Step 3 is the proof.
+  Task A3 Step 3 re-runs this **through the app's own authenticated
+  session** and is the definitive gate.
 
 - [ ] **Step 5: Commit**
 
