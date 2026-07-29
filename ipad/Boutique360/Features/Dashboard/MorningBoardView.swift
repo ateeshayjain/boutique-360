@@ -6,6 +6,13 @@ import SwiftUI
 struct MorningBoardView: View {
     let board: MorningBoard.Board
     let ordersById: [UUID: Order]
+    // R4a — the Reminders section renders between the needs-you list and the
+    // pipeline strip. It owns its own loading/empty states, so it is NOT
+    // gated on `drafts.isEmpty` here.
+    var drafts: [ReminderDrafts.Draft] = []
+    var remindersLoading: Bool = false
+    var onSendReminder: (ReminderDrafts.Draft) -> Void = { _ in }
+    var onMarkReminderDone: (ReminderDrafts.Draft) -> Void = { _ in }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -13,6 +20,8 @@ struct MorningBoardView: View {
             if !boardBlocked, !board.needsYou.isEmpty {
                 needsYouList
             }
+            RemindersSectionView(drafts: drafts, isLoading: remindersLoading,
+                                 onSend: onSendReminder, onMarkDone: onMarkReminderDone)
             pipelineStrip
         }
     }

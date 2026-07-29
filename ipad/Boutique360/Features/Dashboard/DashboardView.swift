@@ -23,6 +23,9 @@ struct DashboardView: View {
     // R2: exception-first morning board.
     @State private var board: MorningBoard.Board?
     @State private var ordersById: [UUID: Order] = [:]
+    // R4a: auto-drafted reminders. `loading` already tracks load() being in
+    // flight — no second flag needed.
+    @State private var reminderDrafts: [ReminderDrafts.Draft] = []
 
     var body: some View {
         ScrollView {
@@ -33,7 +36,19 @@ struct DashboardView: View {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {
                     if let board {
-                        MorningBoardView(board: board, ordersById: ordersById)
+                        MorningBoardView(
+                            board: board,
+                            ordersById: ordersById,
+                            drafts: reminderDrafts,
+                            remindersLoading: loading,
+                            onSendReminder: { draft in
+                                WhatsAppShareHelper.open(phone: draft.whatsappTarget,
+                                                         message: draft.message)
+                            },
+                            onMarkReminderDone: { draft in
+                                Task { await markReminderDone(draft) }
+                            }
+                        )
                     }
                     todaysRevenueCard
                     quickStatsGrid
@@ -308,6 +323,14 @@ struct DashboardView: View {
         let monthEnd = cal.date(byAdding: .day, value: 30, to: todayStart) ?? now
 
         // M4 fix: read boutique from BoutiqueContext (already RLS-validated).
+        // R4a: if the context hasn't finished loading yet (Dashboard's task can
+        // win the race against BoutiqueContext.refresh() right after sign-in),
+        // refresh it first. Otherwise the boutique NAME is nil and every
+        // reminder draft gets signed "— Boutique" — and unlike a blank header,
+        // that fallback would be SENT to a customer.
+        if BoutiqueContext.shared.boutique == nil {
+            await BoutiqueContext.shared.refresh()
+        }
         self.boutique = BoutiqueContext.shared.boutique
 
         // Fan out 5 reads in parallel, then merge results + track failures.
@@ -423,8 +446,59 @@ struct DashboardView: View {
 
         self.upcomingDates = dates
 
+        // ── R4a: one new query (the dedup log). Caller's contract — if it
+        // fails we build NO drafts, because without dedup the owner
+        // re-sends messages already sent. Must run BEFORE loadFailed is
+        // assigned so a failure reaches the stale-data banner.
+        let todayKey = Formatters.postgresDate.string(from: now)
+        let tomorrowKey = Formatters.postgresDate.string(
+            from: cal.date(byAdding: .day, value: 1, to: todayStart) ?? now)
+        // Drafts are only built when we know the boutique's real name: these
+        // messages get SENT, and one signed "— Boutique" is worse than no
+        // reminder at all. Same "better silent than wrong" rule as the
+        // degraded-input suppressions.
+        if let bid, let boutiqueName = self.boutique?.name, !boutiqueName.isEmpty {
+            do {
+                let logged = try await RemindersService.loggedKeys(
+                    boutiqueId: bid, from: todayKey, to: tomorrowKey)
+                self.reminderDrafts = ReminderDrafts.build(
+                    appointments: weekAppts,
+                    orders: activeOrders,
+                    jobCardsByOrder: jobCardsByOrder,
+                    latestEventByCard: latestEventByCard,
+                    receivedByOrder: receivedByOrder,
+                    customersById: self.customers,
+                    logged: logged,
+                    failedInputs: failures,
+                    boutiqueName: boutiqueName,
+                    today: now)
+            } catch {
+                self.reminderDrafts = []
+                anyFailed = true
+            }
+        } else {
+            self.reminderDrafts = []
+            if bid != nil { anyFailed = true }   // name missing ⇒ surface the banner
+        }
+
         self.loadFailed = anyFailed
         self.lastRefreshAt = Date()
+    }
+
+    /// R4a — record that a reminder was handled. Optimistic: the row leaves
+    /// the list immediately; a failed insert surfaces via ErrorBus and the
+    /// draft returns on the next refresh (the log is the source of truth).
+    @MainActor
+    private func markReminderDone(_ draft: ReminderDrafts.Draft) async {
+        guard let bid = BoutiqueContext.shared.boutiqueId else { return }
+        reminderDrafts.removeAll { $0.id == draft.id }
+        do {
+            try await RemindersService.markDone(boutiqueId: bid, kind: draft.kind,
+                                                subjectId: draft.subjectId,
+                                                forDate: draft.forDate)
+        } catch {
+            ErrorBus.shared.report("Couldn't save that reminder as done: \(error.localizedDescription)")
+        }
     }
 
     private func fetchUpcomingDates(until: Date) async -> [ImportantDate] {

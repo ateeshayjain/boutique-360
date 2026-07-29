@@ -56,6 +56,7 @@
 		62A2312C3C7BE2052A92F9FB /* WhatsAppShareHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E6566F16DD7D66E5D1755FE /* WhatsAppShareHelper.swift */; };
 		631A2B06BAA7191CB4DDB8AC /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0BF947ADCF9CBE3A06D5C8C5 /* SettingsView.swift */; };
 		6B6AACAB4EE04A4BCF261C14 /* CustomerSpendTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7419FD8CFB36BD15950E398 /* CustomerSpendTests.swift */; };
+		6C2846260A41B6B76688DFDE /* RemindersSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 987D12913C4653631A3DEF0D /* RemindersSectionView.swift */; };
 		6D2A26D6EA6DBC84A99173EA /* OrdersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */; };
 		6E921B0A36CE7103E5F7801D /* DesignsListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 531B614F104FBB0C1B8F63D6 /* DesignsListView.swift */; };
 		6F73FA4C49F74B4B68CB220A /* CustomerStyleProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 809AB65E410865D605DD1486 /* CustomerStyleProfileView.swift */; };
@@ -223,6 +224,7 @@
 		911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerLinkSheet.swift; sourceTree = "<group>"; };
 		93025C03E14A1542CC2A5238 /* Env.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Env.xcconfig; sourceTree = "<group>"; };
 		93794B16F0C3102D8AB87332 /* CustomerTimelineEventTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTimelineEventTests.swift; sourceTree = "<group>"; };
+		987D12913C4653631A3DEF0D /* RemindersSectionView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RemindersSectionView.swift; sourceTree = "<group>"; };
 		98D3635D547A3831FD95F341 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
 		9A023D2A9519853B5691FF65 /* CustomerNotifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerNotifier.swift; sourceTree = "<group>"; };
 		9A35A89FB3A8A1E2ADD1A999 /* SketchCanvasView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SketchCanvasView.swift; sourceTree = "<group>"; };
@@ -584,6 +586,7 @@
 			children = (
 				98D3635D547A3831FD95F341 /* DashboardView.swift */,
 				BE8C06BFD8E8B9AAD96E47B1 /* MorningBoardView.swift */,
+				987D12913C4653631A3DEF0D /* RemindersSectionView.swift */,
 			);
 			path = Dashboard;
 			sourceTree = "<group>";
@@ -788,6 +791,7 @@
 				DB750B47E2B4AA19875E1C20 /* RazorpayClient.swift in Sources */,
 				88B0947BE7CFB88991C39FF6 /* ReferenceStudioView.swift in Sources */,
 				CEBD1121A8E76DEEE0AD9306 /* ReminderDrafts.swift in Sources */,
+				6C2846260A41B6B76688DFDE /* RemindersSectionView.swift in Sources */,
 				CBECB3C52F690A0BA9B6F2DF /* RemindersService.swift in Sources */,
 				A46DD4170D5B99FDF7999675 /* RenderView.swift in Sources */,
 				A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */,
