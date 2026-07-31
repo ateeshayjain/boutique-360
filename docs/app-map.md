@@ -163,7 +163,7 @@ needs auth rework; see `spec-gaps-waves-1-6.md`.*
 
 | Integration | Transport | Gating | Notes |
 |---|---|---|---|
-| Supabase (Mumbai) | supabase-swift SDK | Always on | Postgres 17 · 28 migrations · RLS on every boutique-scoped table · Storage buckets (sketches, renders, references, customer-photos, vto-results, karigar-wip) · pg_cron 03:00 IST DPDP purge |
+| Supabase (Mumbai) | supabase-swift SDK | Always on | Postgres 17 · 35 migrations applied · RLS on every boutique-scoped table · Storage buckets (sketches, renders, references, customer-photos, vto-results, karigar-wip) · pg_cron 03:00 IST DPDP purge |
 | Karigar link (Edge Function `job-card-view`) | Mobile web, token-capability URL | Always on (verify_jwt off by design) | R4d: GET serves Hinglish job-card page; POST records started/silai-poori/taiyaar (+5MB WIP photo), rate-limited 30/day/card. `ready` zeroes work in slack. |
 | Gemini AI | REST, `x-goog-api-key` header | `GEMINI_API_KEY` | `gemini-2.5-flash-image` (render/VTO) + `gemini-2.5-flash` (briefs/suggestions); `AICostMeter` server-side $5/day ceiling |
 | WhatsApp | `wa.me` deep links | Consent flag | Owner reviews every message (ADR 0005); `customer.whatsappTarget` |
@@ -213,8 +213,8 @@ the competitive teardown:
 | R1 ✅ | **`event_date` + slack engine** — SHIPPED July 2026: `OrderSlack` engine (6 verdicts incl. overdue honesty guard), must-finish-by warning at creation, badges on list/detail | One primitive powers R2 and R3; prevents the week-11 late delivery | Journey lesson 1 |
 | R2 ✅ | **Exception-first morning board** — SHIPPED July 2026: 3 tiles + slack-sorted needs-you + 5-lane pipeline, per-input honest degradation. (Link-sent-unopened state deferred to R4a.) | The owner's question is "what goes wrong if I don't touch it today" | Morning-board design |
 | R3 ✅ | **Lock screen** — SHIPPED July 2026: order_locks + change_orders (DB-append-only), atomic lock_order + apply_change_order RPCs, LockSheet + ledger UI | The Look's one irreversible moment; stops spec disputes and date slips | CRM-design discussion |
-| R4a | **Auto-drafted reminders, one-tap approve** — trial/payment/ready messages drafted by status hooks, owner approves in bulk | Darzi AI fires these automatically; we keep review as a feature not a tax | Teardown §4.1 |
-| R4b | **PIN-scoped staff roles** — finance hidden from tailor/assistant PINs | Darzi shipped what we deferred; cheaper than full multi-auth RLS rework | Teardown §4.2 |
+| R4a ✅ | **Auto-drafted reminders, one-tap approve** — SHIPPED July 2026: pure `ReminderDrafts` engine (fitting/payment/ready), `reminder_log` idempotency, WhatsApp hand-off; sending never auto-marks done | Darzi AI fires these automatically; we keep review as a feature not a tax | Teardown §4.1 |
+| R4b ✅ | **PIN-scoped staff roles** — SHIPPED July 2026: owner/assistant, salted-SHA256 PIN in `ThisDeviceOnly` Keychain, lockout + clock-independent hard cap with device-auth escape, 10 gated surfaces, audit events. **UI boundary, not authorization** — see SECURITY_REVIEW.md §1 | Darzi shipped what we deferred; cheaper than full multi-auth RLS rework | Teardown §4.2 |
 | R4c ✅ | **Fabric-meters estimate on job cards** — SHIPPED July 2026: andaaza line in the Hinglish brief | Cheap, high daily utility | Teardown §4.3 |
 | R4d ✅ | **Karigar phone link** — SHIPPED July 2026: `job-card-view` Edge Function, magic-link page, progress events feed slack | Owner iPad + karigar phone, per surface split decision | Karigar-UX decision |
 | R5 | **Fabric inventory** — bolts, codes, meters in/out, issue-to-job-card | Fills the "Fabrics" sidebar slot; feeds real costing + the lock screen's in-stock check | Flow-map gap |

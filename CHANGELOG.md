@@ -4,6 +4,28 @@ Notable changes per release. Format roughly follows [Keep a Changelog](https://k
 
 ---
 
+## [Unreleased] — 2026-07-31 (Auto-drafted reminders + staff roles — R4a/R4b)
+
+### Added
+- **Auto-drafted reminders (R4a)** — the morning board now drafts fitting, balance and ready messages from real state. Pure `ReminderDrafts` engine; `reminder_log` (migration 0030) makes "mark done" idempotent against a 23505. Sending deliberately does **not** auto-mark done — the owner may cancel inside WhatsApp — and a one-line explainer says so. Degraded inputs suppress drafts rather than guessing; no draft is ever signed with a placeholder boutique name.
+- **Owner/assistant roles (R4b)** — hand the iPad to an assistant and payments, invoices, revenue, GST export, lock pricing and sensitive settings disappear. PIN is salted-SHA256 in a `WhenUnlockedThisDeviceOnly` Keychain item (excluded from backups), compared in constant time. Role and lockout persist across force-quit. Timed lockout plus a **clock-independent hard cap**, because a shared-iPad assistant can wind the device clock forward in Settings; the cap's only escape is Face ID / device passcode, never another PIN attempt. Every transition is audit-logged with no PIN material in the payload.
+- `SECURITY_REVIEW.md`, `docs/DATA_HANDLING.md`, `docs/RELEASE_CHECKLIST.md`.
+
+### Fixed
+- **RLS policies were dead on three tables.** `order_locks`, `change_orders` and `reminder_log` shipped with policies keyed on `current_setting('app.boutique_id', true)` — a session variable nothing in this codebase sets. **R3's Lock feature was non-functional in production.** It survived earlier smoke tests because those ran as `service_role` via MCP, which bypasses RLS entirely. Repaired by migration 0031 and verified as an authenticated user.
+- The DPDP purge cron runs at 03:00 IST, not the 02:30 IST stated in seven documents including the customer-facing privacy policy.
+- Privacy policy did not disclose the karigar (who receives a customer's first name and measurements), assistant mode, reminder history, or garment progress photos.
+
+### Known gaps
+- The R4b role gate is a **same-device UI boundary, not authorization** — see `SECURITY_REVIEW.md` §1.
+- Nine applied migrations are missing from `supabase/migrations/`, including `dpdp_purge_cron`.
+- R4b's nine manual QA steps are **not yet run** (blocked on local Xcode simulator setup).
+
+### Tests
+- 220 total (was 197): PinPolicy 12, PinHasher 5, RolePolicy 3, role/lockout persistence 3.
+
+---
+
 ## [Unreleased] — 2026-07-28 (Lock the look + change-orders — R3)
 
 ### Added

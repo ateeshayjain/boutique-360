@@ -62,7 +62,7 @@ Twilio SMS · Razorpay payment links. WhatsApp via `wa.me` links always works.
 
 - Project URL: `https://tdnwdlrkbrtoxjzcgusg.supabase.co`
 - Dashboard: https://supabase.com/dashboard/project/tdnwdlrkbrtoxjzcgusg
-- **29 migrations applied** · 32+ tables with RLS · 10 storage buckets
+- **35 migrations applied** · 32+ tables with RLS · 11 storage buckets
 - 2 Edge Functions: `purge-expired-tryons` (daily pg_cron DPDP purge) · `job-card-view` (karigar magic-link page, R4d)
 - Seed: 1 boutique ("Aditi Designer Studio") + 3 loyalty tiers
 
@@ -141,7 +141,7 @@ boutique-360/
 ├── audit-outputs/
 ├── supabase/
 │   ├── config.toml · seed.sql
-│   └── migrations/                ← 29 migrations (00NN_*.sql, forward-only)
+│   └── migrations/                ← 26 files; 35 applied (see SECURITY_REVIEW.md §9)
 ├── ipad/
 │   ├── project.yml                ← XcodeGen spec (source of truth)
 │   ├── Boutique360/               ← Swift source (Features / Services / Models / Utilities)
