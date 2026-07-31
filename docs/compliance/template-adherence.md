@@ -131,7 +131,7 @@ deleted a gate.
 | Runbooks | ⚠️ | Bad-deploy, Gemini-outage, multi-tenant onboarding exist; **no RLS-verification runbook** despite the §6 defect. Owner: unassigned |
 | Changelog | ✅ | `CHANGELOG.md` |
 | Privacy policy | ⚠️ | Refreshed this change; **still has placeholder operator name, GSTIN, contact, effective date** |
-| **LICENSE** | ❌ | **Absent.** Needs the real legal holder name — deliberately not invented |
+| **LICENSE** | ✅ | Proprietary / all-rights-reserved, © 2026 Ateeshay Jain |
 | Release process | ✅ | `docs/RELEASE_CHECKLIST.md` |
 | Store disclosure answers | ✅ | `docs/DATA_HANDLING.md` |
 
@@ -171,7 +171,6 @@ Covered by `docs/RELEASE_CHECKLIST.md`. Blocking items outstanding:
 | Gap | Severity | Owner |
 |---|---|---|
 | R4b manual QA not run | **Blocks R4b release** | blocked on `sudo xcode-select` |
-| LICENSE absent | Blocks release | **needs the legal holder name from the owner** |
 | App Store assets not started | Blocks release | unassigned |
 | Privacy policy placeholders + no public URL | Blocks release | unassigned |
 | Nine migrations missing from repo (incl. `dpdp_purge_cron`) | High — no reproducible schema | unassigned |
