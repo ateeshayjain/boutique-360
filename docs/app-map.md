@@ -163,7 +163,7 @@ needs auth rework; see `spec-gaps-waves-1-6.md`.*
 
 | Integration | Transport | Gating | Notes |
 |---|---|---|---|
-| Supabase (Mumbai) | supabase-swift SDK | Always on | Postgres 17 · 28 migrations · RLS on every boutique-scoped table · Storage buckets (sketches, renders, references, customer-photos, vto-results, karigar-wip) · pg_cron 02:30 IST DPDP purge |
+| Supabase (Mumbai) | supabase-swift SDK | Always on | Postgres 17 · 28 migrations · RLS on every boutique-scoped table · Storage buckets (sketches, renders, references, customer-photos, vto-results, karigar-wip) · pg_cron 03:00 IST DPDP purge |
 | Karigar link (Edge Function `job-card-view`) | Mobile web, token-capability URL | Always on (verify_jwt off by design) | R4d: GET serves Hinglish job-card page; POST records started/silai-poori/taiyaar (+5MB WIP photo), rate-limited 30/day/card. `ready` zeroes work in slack. |
 | Gemini AI | REST, `x-goog-api-key` header | `GEMINI_API_KEY` | `gemini-2.5-flash-image` (render/VTO) + `gemini-2.5-flash` (briefs/suggestions); `AICostMeter` server-side $5/day ceiling |
 | WhatsApp | `wa.me` deep links | Consent flag | Owner reviews every message (ADR 0005); `customer.whatsappTarget` |

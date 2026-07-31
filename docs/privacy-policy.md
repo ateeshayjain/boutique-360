@@ -42,7 +42,7 @@ The photo of yourself you provide for a virtual try-on is treated as sensitive p
 1. The boutique owner explicitly asks for your consent verbally, then records that consent (with the timestamp and your name) in the app before any processing.
 2. Your photo is sent **once** to Google's Gemini AI service to composite the garment onto you. Google's API terms state they do not retain image data after the response.
 3. The composited result is shown to you and may be shared with you via WhatsApp.
-4. **Both your original photo and the result are automatically deleted within 7 days** (a daily background process runs at 02:30 IST). The exception is if you explicitly ask the boutique to save the look to your style lookbook for future reference.
+4. **Both your original photo and the result are automatically deleted within 7 days** (a daily background process runs at 03:00 IST). The exception is if you explicitly ask the boutique to save the look to your style lookbook for future reference.
 5. You can ask the boutique to delete your photo immediately at any time, no questions asked.
 
 The processing legal basis under DPDP Section 6 is your explicit consent. You can revoke it at any time.

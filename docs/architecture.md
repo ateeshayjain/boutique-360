@@ -146,7 +146,7 @@ Defense in depth. RLS is the authoritative boundary, but a misconfigured policy 
 
 1. Consent timestamp captured at the moment of consent, not after upload.
 2. Storage paths persisted to `design_tryons` (not just URLs).
-3. Daily pg_cron @ 02:30 IST invokes Edge Function `purge-expired-tryons` to delete expired tryons (`purge_at < now()` AND `saved_to_lookbook = false`).
+3. Daily pg_cron @ 03:00 IST invokes Edge Function `purge-expired-tryons` to delete expired tryons (`purge_at < now()` AND `saved_to_lookbook = false`).
 4. Edge Function deletes both storage objects + DB row in one pass.
 
 ---

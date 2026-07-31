@@ -83,7 +83,7 @@ select cron.schedule(
 Current functions:
 | Name | Trigger | Purpose |
 |---|---|---|
-| `purge-expired-tryons` | pg_cron daily @ 21:00 UTC (02:30 IST) | DPDP customer-photo purge |
+| `purge-expired-tryons` | pg_cron daily @ 21:30 UTC (03:00 IST) | DPDP customer-photo purge |
 
 ---
 

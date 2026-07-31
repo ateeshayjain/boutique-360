@@ -104,7 +104,7 @@ Defined in `0020_rls_subquery_fix_and_staff_bootstrap.sql`.
 
 ### `purge-expired-tryons`
 
-Triggered: pg_cron daily at 21:00 UTC (02:30 IST).
+Triggered: pg_cron daily at 21:30 UTC (03:00 IST).
 
 Behavior:
 1. Select `design_tryons` where `purge_at < now()` AND `saved_to_lookbook = false`

@@ -197,7 +197,7 @@ flowchart LR
     F --> G[Insert design_tryons row with PATHS + consentAt + purge_at = now + 7d]
     G --> H[Result shown to owner + ShareLink]
     H --> I{saved_to_lookbook?}
-    I -->|no| J[Daily 02:30 IST pg_cron]
+    I -->|no| J[Daily 03:00 IST pg_cron]
     I -->|yes| K[Indefinite retention - owner choice]
     J --> L[Edge Function: purge-expired-tryons]
     L --> M[Delete storage objects in customer-photos + vto-results]

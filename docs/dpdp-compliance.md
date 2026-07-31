@@ -53,7 +53,7 @@ The consent record persists in `design_tryons.customer_consent_signed_at` (times
 
 | Data | Retention | Mechanism |
 |---|---|---|
-| Customer photo (VTO upload) | **7 days unless saved to lookbook** | `purge_at` column + `purge-expired-tryons` Edge Function on daily cron at 02:30 IST |
+| Customer photo (VTO upload) | **7 days unless saved to lookbook** | `purge_at` column + `purge-expired-tryons` Edge Function on daily cron at 03:00 IST |
 | VTO result image | Same 7-day window if linked to a purged tryon row | Edge Function deletes both objects in one pass |
 | Measurements, profile, contact | Indefinite (commercial relationship is ongoing) | Manual delete on customer request |
 | Orders, invoices, GST records | **8 years** (per GST law, supersedes DPDP) | Indefinite — required by Income Tax Act and GST Act |
