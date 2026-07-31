@@ -27,6 +27,8 @@ The boutique uses this app to remember your name, contact, measurements, and des
 | **Notes from your visits** (occasion, conversation context) | Pick up where we left off next time you visit | Same |
 | **A photo of you, used once for a virtual try-on** (if you consent at the time) | Show you how a design would look on you, before we make it | Supabase Storage (Mumbai region), **auto-deleted within 7 days** unless you ask us to save it to your style lookbook |
 | **Records of your orders, payments, and invoices** | Run our business. Required by Indian Income Tax + GST law. | Same |
+| **A record of reminders we've sent you** (which reminder, which day) | Avoid messaging you twice about the same fitting or balance | Same |
+| **Progress photos of your garment**, taken by the tailor | Track work in progress. These are photos of the clothing, not of you | Same |
 
 We **do not** collect:
 - Your bank account or card details (we use UPI / card terminals separately, not in this app)
@@ -52,6 +54,14 @@ The processing legal basis under DPDP Section 6 is your explicit consent. You ca
 ## Who can see your data
 
 - **The boutique owner** (single named operator) who uses the iPad app
+- **A boutique assistant**, if the owner hands them the iPad. Assistants see
+  your name, contact, measurements and order status, but payments, invoices
+  and pricing are hidden from them until an owner unlocks the app
+- **The karigar (tailor) making your outfit**, who receives a private web link
+  for your job card. That page shows **your first name only, plus the
+  measurements needed to make the garment** — never your phone number, email,
+  or address. The link is unguessable, can be revoked by the boutique, and the
+  karigar may upload progress photos *of the garment* through it
 - **Supabase, our hosting provider**, who stores the data encrypted on servers physically located in Mumbai (ap-south-1)
 - **Google's Gemini AI service**, *only* for the specific moment a virtual try-on or AI design render runs — see above
 - **The boutique's chartered accountant**, when monthly GST reports include your order / invoice information (statutory tax filing)
@@ -66,6 +76,7 @@ The processing legal basis under DPDP Section 6 is your explicit consent. You ca
 | Virtual try-on photo (yours + the result) | 7 days, or until you ask us to save it | Limit biometric data exposure |
 | Name, contact, measurements, preferences | While the commercial relationship is ongoing, or until you ask us to delete | Continuing service |
 | Order, payment, invoice records | 8 years | Indian Income Tax Act + GST Act requirements (overrides general retention) |
+| Reminder history, garment progress photos | While the commercial relationship is ongoing, or until you ask us to delete | Continuing service. **These are not on an automatic timer** — unlike try-on photos, they are deleted on request rather than on a schedule |
 
 ---
 
