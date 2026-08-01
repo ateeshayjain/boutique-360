@@ -240,7 +240,7 @@ only in the dashboard — see §11.
 Two live problems that had been invisible for two months because the SQL
 existed only in the Supabase dashboard, where nobody diffs it.
 
-### 11.1 The AI cost ceiling blocks every AI call — **all AI features are down**
+### 11.1 The AI cost ceiling blocked every AI call — **FIXED 2026-08-01**
 
 `ai_usage_daily` was created with RLS enabled and a **SELECT policy only**,
 while `record_ai_usage` is declared `security invoker`. So the function's
@@ -277,17 +277,34 @@ third instance. The correct pattern already existed in this codebase two
 migrations earlier — `next_sequence_value` in 0022 is `security definer` with
 a pinned `search_path` and an explicit grant.
 
-**Proposed fix (not yet applied — needs approval, it is a production schema
-change):** make `record_ai_usage` `security definer` with
-`set search_path = public, pg_temp`, and validate
+**Fixed** by migrations `0032` and `0033`. `record_ai_usage` is now
+`security definer` with `set search_path = public, pg_temp`, and validates
 `p_boutique_id = current_boutique_id()` inside the function. Adding INSERT and
-UPDATE policies instead would work but would defeat the feature's stated
-purpose — the doc comment says the counter is "tamper-proof from the iPad",
-and a client with UPDATE rights on `ai_usage_daily` could simply zero its own
-counter. `security definer` keeps writes exclusive to the function.
+UPDATE policies instead would have worked but would have defeated the feature's
+stated purpose — the counter is meant to be "tamper-proof from the iPad", and a
+client with UPDATE rights on `ai_usage_daily` could zero its own usage.
+`security definer` keeps writes exclusive to the function, so the SELECT-only
+policy remains exactly right: clients read their usage, never write it.
 
-Separately, `AICostMeter.checkCeiling` should distinguish a genuine cap breach
-(Postgres error code `P0001`) from any other failure.
+`AICostMeter.checkCeiling` now distinguishes a genuine cap breach (`P0001`)
+from an infrastructure fault, and says which one happened. The old catch-all
+is what let this outage masquerade as a spending limit for two months.
+
+**Verified as the authenticated demo user** (not via MCP, which bypasses RLS):
+
+| Case | Result |
+|---|---|
+| Normal call | `200` — `{"calls_count":1,"cost_estimate_usd":0.001,"daily_cap_usd":5.0}` |
+| Recording against another boutique | `403` — "Cannot record AI usage for another boutique" |
+| Cap breach | `400` — `P0001` "Daily AI limit of $5.00 reached ($99.00 used today)" |
+
+`0033` also fixed a message bug inherited from `0025d`: Postgres `RAISE` has no
+printf precision, so `$%.2f` rendered as `$5.0.2f`. Invisible while the RPC
+403'd before ever reaching the raise. The verification row was deleted;
+`ai_usage_daily` is back to zero rows.
+
+**Still unverified:** no real Gemini call has been made end-to-end through the
+repaired path — the RPC is proven, the full AI feature is not.
 
 ### 11.2 Production is running on a placeholder GSTIN
 

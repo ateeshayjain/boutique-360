@@ -1,4 +1,6 @@
 import Foundation
+import Supabase   // PostgrestError — needed to tell a real cap breach (P0001)
+                  // apart from an infrastructure fault.
 
 /// Per-boutique daily cost ceiling for AI calls. Server-side counter via
 /// `record_ai_usage` RPC so the limit is tamper-proof from the iPad — a malicious
@@ -39,16 +41,29 @@ enum AICostMeter {
                 .execute()
             Log.ai.debug("AI call accepted: cost $\(costEstimate, privacy: .public)")
         } catch {
-            // The Postgres function raises with code P0001 + a message containing
-            // the cap. Propagate as a user-readable error.
-            Log.ai.error("AI cost ceiling reached for boutique \(bid.uuidString, privacy: .public): \(error.localizedDescription, privacy: .public)")
-            throw NSError(
-                domain: "AICostMeter",
-                code: 429,
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Daily AI cost ceiling reached — try again after midnight or raise the cap in Settings."
-                ]
-            )
+            // 2026-07-31: this catch used to report EVERY failure as a cost
+            // ceiling breach. `record_ai_usage` had been 403ing since it
+            // shipped (RLS — see migration 0032), so every AI call failed and
+            // the owner was told they'd hit a spending cap they had never
+            // reached, and to wait until midnight, which fixed nothing.
+            //
+            // Only P0001 means the cap was genuinely reached; that is the
+            // contract with the Postgres function. Anything else is a fault
+            // and must say so, or the next infrastructure break will hide
+            // behind the same misleading message.
+            let isGenuineCeiling = (error as? PostgrestError)?.code == "P0001"
+            Log.ai.error("record_ai_usage failed (ceiling=\(isGenuineCeiling, privacy: .public)) for boutique \(bid.uuidString, privacy: .public): \(error.localizedDescription, privacy: .private)")
+
+            if isGenuineCeiling {
+                throw NSError(domain: "AICostMeter", code: 429, userInfo: [
+                    NSLocalizedDescriptionKey:
+                        "Daily AI limit reached — try again after midnight, or raise the cap in Settings."
+                ])
+            }
+            throw NSError(domain: "AICostMeter", code: 500, userInfo: [
+                NSLocalizedDescriptionKey:
+                    "Couldn't check the AI usage limit, so the request was not sent. This is a fault, not a spending cap — retry, and if it persists the AI features need attention."
+            ])
         }
     }
 }
