@@ -33,6 +33,8 @@ struct DashboardView: View {
             VStack(alignment: .leading, spacing: 24) {
                 headerSection
                 if loadFailed { staleDataBanner }
+                // Asks once, owner-only, self-hiding once a GSTIN exists.
+                GSTINPromptCard()
                 if loading {
                     ProgressView().frame(maxWidth: .infinity)
                 } else {

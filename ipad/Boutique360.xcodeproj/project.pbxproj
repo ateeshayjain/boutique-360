@@ -38,6 +38,7 @@
 		3B82E0B70A3145D5FA02D2FB /* CustomerSpend.swift in Sources */ = {isa = PBXBuildFile; fileRef = 49A663770C8356F1A66D0028 /* CustomerSpend.swift */; };
 		3BB4B81055DD40E5345E5672 /* GSTINValidatorTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD8EEE2A09A3DFE5D56E8C1C /* GSTINValidatorTests.swift */; };
 		3FCD2D638C3843D00F04E944 /* CustomerDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E35FAAA1DE3580CE4CA2368 /* CustomerDetailView.swift */; };
+		4024CCA3AFCB015F3162E705 /* GSTINPromptCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C84B27C47433F8CC57ED963 /* GSTINPromptCard.swift */; };
 		456C1BD1DCFFFD9E05E08DD9 /* PinHasher.swift in Sources */ = {isa = PBXBuildFile; fileRef = 782BC2A1A41161423583B0FA /* PinHasher.swift */; };
 		45734C8BB078AD0F53E25379 /* WhatsAppShareHelperTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9BFC7650136A2BB654FC04E /* WhatsAppShareHelperTests.swift */; };
 		4624C704DF46081638434B73 /* MoneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51B9B78A325D13321B07EE6 /* MoneyTests.swift */; };
@@ -201,6 +202,7 @@
 		498791B4D1735BE393917F2E /* Formatters.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Formatters.swift; sourceTree = "<group>"; };
 		49A663770C8356F1A66D0028 /* CustomerSpend.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerSpend.swift; sourceTree = "<group>"; };
 		4BD68DFCE40193478DFA3D1A /* DesignsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignsService.swift; sourceTree = "<group>"; };
+		4C84B27C47433F8CC57ED963 /* GSTINPromptCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GSTINPromptCard.swift; sourceTree = "<group>"; };
 		4D9B210FA66B4A290F6B8489 /* LockGate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockGate.swift; sourceTree = "<group>"; };
 		523DA0A5E070A5E8B5D07DB0 /* Customer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Customer.swift; sourceTree = "<group>"; };
 		527CCCBA1350D9CD63BBC5B1 /* CustomerTimelineEvent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTimelineEvent.swift; sourceTree = "<group>"; };
@@ -621,6 +623,7 @@
 			isa = PBXGroup;
 			children = (
 				98D3635D547A3831FD95F341 /* DashboardView.swift */,
+				4C84B27C47433F8CC57ED963 /* GSTINPromptCard.swift */,
 				BE8C06BFD8E8B9AAD96E47B1 /* MorningBoardView.swift */,
 				987D12913C4653631A3DEF0D /* RemindersSectionView.swift */,
 			);
@@ -783,6 +786,7 @@
 				11106FCE314038E586A51BAB /* ErrorBus.swift in Sources */,
 				9DC4D33E1D65C76113EFFF57 /* EventsService.swift in Sources */,
 				56CFB9E4973ECABB108E88EB /* Formatters.swift in Sources */,
+				4024CCA3AFCB015F3162E705 /* GSTINPromptCard.swift in Sources */,
 				C3CACA179A86BF2EF3EA736C /* GSTINValidator.swift in Sources */,
 				36BDA2006336D7AF28A972F1 /* GSTReportExporter.swift in Sources */,
 				8880119B63E872ED0384F0D4 /* GarmentTemplate.swift in Sources */,
