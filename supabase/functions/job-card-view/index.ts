@@ -127,17 +127,17 @@ async function renderPage(card: any): Promise<Response> {
     ? Object.entries(card.measurements_json as Record<string, number>)
         .sort(([a], [b]) => a.localeCompare(b))
         .map(([k, v]) =>
-          `<tr><td>${esc(k.replaceAll("_", " "))}</td><td><b>${v}</b></td></tr>`)
+          `<tr><td>${esc(k.replaceAll("_", " "))}</td><td><b>${esc(String(v))}</b></td></tr>`)
         .join("")
     : "";
 
   const fabrics = Array.isArray(card.fabric_list_json)
     ? card.fabric_list_json.map((f: any) =>
-        `<li>${esc(f.name ?? "")}${f.color ? ` (${esc(f.color)})` : ""} — ${f.quantityMeters ?? f.quantity_meters ?? "?"} m</li>`).join("")
+        `<li>${esc(f.name ?? "")}${f.color ? ` (${esc(f.color)})` : ""} — ${esc(String(f.quantityMeters ?? f.quantity_meters ?? "?"))} m</li>`).join("")
     : "";
 
   const eventRows = (events ?? []).map((e: any) =>
-    `<li>${LABELS[e.event] ?? e.event} · ${new Date(e.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</li>`).join("");
+    `<li>${LABELS[e.event] ?? esc(String(e.event))} · ${new Date(e.created_at).toLocaleString("en-IN", { timeZone: "Asia/Kolkata", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</li>`).join("");
 
   const buttons = EVENTS.map((ev) => `
     <form method="post" action="${esc(cardPath(card))}/event" enctype="multipart/form-data" style="margin:0 0 12px">
@@ -158,7 +158,7 @@ async function renderPage(card: any): Promise<Response> {
   <h1 style="font-size:24px;margin:0 0 4px">Job ${esc(card.job_number ?? "")}</h1>
   <p style="margin:0 0 12px;color:#555">${esc(card.garment_type ?? "")}${card.occasion ? ` · ${esc(card.occasion)}` : ""}${firstName ? ` · ${esc(firstName)} ji ke liye` : ""}</p>
   ${card.due_date ? `<p style="font-size:22px;font-weight:700;background:#fff3cd;padding:10px 14px;border-radius:10px">Due date: ${esc(card.due_date)}</p>` : ""}
-  ${heroUrl ? `<img src="${heroUrl}" alt="Design" style="width:100%;border-radius:12px;margin:12px 0">` : ""}
+  ${heroUrl ? `<img src="${esc(heroUrl)}" alt="Design" style="width:100%;border-radius:12px;margin:12px 0">` : ""}
   ${fabrics ? `<h2 style="font-size:19px;margin:16px 0 6px">Kapda</h2><ul style="margin:0;padding-left:20px">${fabrics}</ul>` : ""}
   ${measurements ? `<h2 style="font-size:19px;margin:16px 0 6px">Naap (inches)</h2><table style="width:100%;border-collapse:collapse">${measurements}</table>` : ""}
   ${card.hindi_brief ? `<h2 style="font-size:19px;margin:16px 0 6px">Brief</h2><div style="border:1px solid #ddd;border-radius:10px;padding:12px;white-space:pre-wrap">${esc(card.hindi_brief)}</div>` : ""}
@@ -178,5 +178,5 @@ function cardPath(card: any): string {
 
 function esc(s: string): string {
   return String(s).replaceAll("&", "&amp;").replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    .replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;");
 }
