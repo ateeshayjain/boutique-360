@@ -178,9 +178,13 @@ enum GeminiService {
         req.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await URLSession.shared.data(for: req)
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+        // Bound outside the guard: inside a guard's else branch the bound
+        // value is out of scope, and we need the status code to pick copy.
+        let http = response as? HTTPURLResponse
+        guard let http, (200..<300).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? "<no body>"
-            throw GeminiError.badResponse("Brief gen failed: \(body.prefix(500))")
+            throw GeminiError.badResponse(
+                AISafety.userFacingAIError(status: http?.statusCode ?? 0, body: body))
         }
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
               let candidates = json["candidates"] as? [[String: Any]],
@@ -188,7 +192,9 @@ enum GeminiService {
               let parts = content["parts"] as? [[String: Any]],
               let text = parts.first?["text"] as? String
         else { throw GeminiError.decodeFailed }
-        return text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Sanitized before it reaches a PDF, a jsonb column, and the karigar's
+        // HTML page.
+        return AISafety.sanitizeModelOutput(text)
     }
 
     private static func generateImage(prompt: String, inputImages: [UIImage]) async throws -> UIImage {
@@ -223,7 +229,7 @@ enum GeminiService {
         guard let http = response as? HTTPURLResponse else { throw GeminiError.decodeFailed }
         guard (200..<300).contains(http.statusCode) else {
             let body = String(data: data, encoding: .utf8) ?? "<no body>"
-            throw GeminiError.badResponse("HTTP \(http.statusCode): \(body.prefix(500))")
+            throw GeminiError.badResponse(AISafety.userFacingAIError(status: http.statusCode, body: body))
         }
 
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
@@ -301,9 +307,12 @@ enum PromptTemplates {
         fabricList: [FabricLine], measurements: [String: Double]?,
         embellishments: String?, dueDate: String?, karigarName: String?
     ) -> String {
-        let greeting = karigarName.map { "\($0) bhai," } ?? "Bhai,"
-        let garment = garmentType ?? "dress"
-        let occasionStr = occasion.map { " ye \($0) ke liye hai." } ?? ""
+        // Security §8 — sanitize at the prompt builder, not at each call
+        // site, so a new caller cannot forget. Customer name/phone/email/
+        // address are never passed into this function at all.
+        let greeting = karigarName.map { "\(AISafety.sanitizePromptInput($0)) bhai," } ?? "Bhai,"
+        let garment = AISafety.sanitizePromptInput(garmentType ?? "dress")
+        let occasionStr = occasion.map { " ye \(AISafety.sanitizePromptInput($0)) ke liye hai." } ?? ""
         let dueStr = dueDate.map { " Due date \($0) hai, time pe ready hona chahiye." } ?? ""
         let measureStr: String = {
             guard let m = measurements, !m.isEmpty else { return "" }
@@ -323,8 +332,8 @@ enum PromptTemplates {
             }.joined(separator: "\n")
             return "\n\nFabric:\n\(lines)"
         }()
-        let embStr = embellishments.map { "\n\nEmbroidery / work: \($0)" } ?? ""
-        let notesStr = customerNotes.map { "\n\nCustomer note: \($0)" } ?? ""
+        let embStr = embellishments.map { "\n\nEmbroidery / work: \(AISafety.sanitizePromptInput($0))" } ?? ""
+        let notesStr = customerNotes.map { "\n\nCustomer note: \(AISafety.sanitizePromptInput($0))" } ?? ""
 
         return """
         You are writing a brief for a master tailor (karigar) in India. Karigars read Romanized Hindi (Hindi words in English script) faster than Devanagari on phone screens.

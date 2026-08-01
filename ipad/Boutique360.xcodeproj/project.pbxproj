@@ -103,6 +103,7 @@
 		B4C9DBDE270D8246411DDE64 /* DesignDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 67B75DFF054FA21FD73C7334 /* DesignDetailView.swift */; };
 		B4F0016F512542D8A62182EE /* Boutique360App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 89EC55AD960A6888307EF31B /* Boutique360App.swift */; };
 		B53F893B4D7B30AD51D86080 /* PinPolicyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 759A9B1690B1D7515CF68EBC /* PinPolicyTests.swift */; };
+		B6CDE034C8213896AE73C55E /* AISafety.swift in Sources */ = {isa = PBXBuildFile; fileRef = BE7DBF6811966DC31EE94C07 /* AISafety.swift */; };
 		B9F3B021F82FEA27F45A0870 /* InquiryFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 643AE0A8C4538C9A0A664750 /* InquiryFormView.swift */; };
 		BB0F20D56721EB3C8110B0C4 /* DesignTokensTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = D159301960E73FAF6E4C90F8 /* DesignTokensTests.swift */; };
 		BC17F7673EF1E9CAC74FBFB6 /* OrderLocksService.swift in Sources */ = {isa = PBXBuildFile; fileRef = D9F0A0BBEBCB4D0F056E1F99 /* OrderLocksService.swift */; };
@@ -112,6 +113,7 @@
 		C22890C38404872D7186A2EE /* ReminderDraftsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC35D4D2ACEA2B8D129A0F4D /* ReminderDraftsTests.swift */; };
 		C3CACA179A86BF2EF3EA736C /* GSTINValidator.swift in Sources */ = {isa = PBXBuildFile; fileRef = BB01486DAEC142C4097E3822 /* GSTINValidator.swift */; };
 		C8E2551C217BFF528F3ED4CA /* Config.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B5D169D90967E0A6EC89F9B /* Config.swift */; };
+		C8E552140130F78AD9D0EF95 /* AISafetyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7A5E16312B3CB44BFECAFE9 /* AISafetyTests.swift */; };
 		C91333D7F51F39AA7CC606D4 /* RolePolicy.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD6B90527760DDBDA506EC66 /* RolePolicy.swift */; };
 		CA7A8FD6F054BB00F00EBC09 /* Supabase in Frameworks */ = {isa = PBXBuildFile; productRef = 6FE16090EB97CBE5A71BBAC7 /* Supabase */; };
 		CBECB3C52F690A0BA9B6F2DF /* RemindersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1B8B311865FE7C138D7A723 /* RemindersService.swift */; };
@@ -263,6 +265,7 @@
 		BB01486DAEC142C4097E3822 /* GSTINValidator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GSTINValidator.swift; sourceTree = "<group>"; };
 		BBD8CB81E253099B4832AE9F /* Inquiry.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Inquiry.swift; sourceTree = "<group>"; };
 		BD8EEE2A09A3DFE5D56E8C1C /* GSTINValidatorTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GSTINValidatorTests.swift; sourceTree = "<group>"; };
+		BE7DBF6811966DC31EE94C07 /* AISafety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISafety.swift; sourceTree = "<group>"; };
 		BE8C06BFD8E8B9AAD96E47B1 /* MorningBoardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBoardView.swift; sourceTree = "<group>"; };
 		BE9B6823C2C38656FC4E0D5D /* AuthService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthService.swift; sourceTree = "<group>"; };
 		BF745E6724DE0A69610EC6FE /* SignInView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInView.swift; sourceTree = "<group>"; };
@@ -286,6 +289,7 @@
 		E5B6AE141D1CE0FBA708766E /* CustomerTimelineEventStyling.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerTimelineEventStyling.swift; sourceTree = "<group>"; };
 		E62D7FAC992BCFA6EEE2E5BB /* EnumDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumDecodingTests.swift; sourceTree = "<group>"; };
 		E6C019879B1A0DF3D6BDBE1B /* OrderDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderDetailView.swift; sourceTree = "<group>"; };
+		E7A5E16312B3CB44BFECAFE9 /* AISafetyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISafetyTests.swift; sourceTree = "<group>"; };
 		E96BC2A0EE59D1E6860B3587 /* InvoicePDFGenerator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InvoicePDFGenerator.swift; sourceTree = "<group>"; };
 		E9C966277C0ED455E9F23E7F /* RoleStatePersistenceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleStatePersistenceTests.swift; sourceTree = "<group>"; };
 		EA0C355C19CCF5E544B3F597 /* LockSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSheet.swift; sourceTree = "<group>"; };
@@ -320,6 +324,7 @@
 		005EAAF302FFB8881E7D7155 /* Boutique360Tests */ = {
 			isa = PBXGroup;
 			children = (
+				E7A5E16312B3CB44BFECAFE9 /* AISafetyTests.swift */,
 				E18ED923174A4F69A02A4C12 /* ConfigTests.swift */,
 				0AB14826B981C515F7BD3830 /* CustomerImportServiceTests.swift */,
 				A7419FD8CFB36BD15950E398 /* CustomerSpendTests.swift */,
@@ -503,6 +508,7 @@
 		97CF0F95FD63CBF6A087884E /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				BE7DBF6811966DC31EE94C07 /* AISafety.swift */,
 				78511745DEAA05544D97B302 /* AppEvents.swift */,
 				49A663770C8356F1A66D0028 /* CustomerSpend.swift */,
 				FCDDEB6EF95DEBA783A69D77 /* DesignTokens.swift */,
@@ -733,6 +739,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				2D3DBAC66176C1D21D911150 /* AICostMeter.swift in Sources */,
+				B6CDE034C8213896AE73C55E /* AISafety.swift in Sources */,
 				28ED8754B511B3D8AEE21673 /* Alteration.swift in Sources */,
 				9D4DF386C70BBD9531103853 /* AlterationsSectionView.swift in Sources */,
 				5C8A789C1F54CF86C8CD2D1B /* AlterationsService.swift in Sources */,
@@ -849,6 +856,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C8E552140130F78AD9D0EF95 /* AISafetyTests.swift in Sources */,
 				5ABA0C7F23F05BAE1CDDF0C8 /* ConfigTests.swift in Sources */,
 				232EA73DDC6B8671B2211409 /* CustomerImportServiceTests.swift in Sources */,
 				6B6AACAB4EE04A4BCF261C14 /* CustomerSpendTests.swift in Sources */,
