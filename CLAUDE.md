@@ -12,8 +12,8 @@
 - **Stack:** Swift / SwiftUI (**iOS 17+**, iPad-only) · PencilKit (sketch) · PDFKit (invoice/job-card) · **XcodeGen** (`ipad/project.yml` is the source of truth) · XCTest.
 - **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions (`purge-expired-tryons`, `job-card-view`) + pg_cron. **35 migrations** applied (26 in `supabase/migrations/` — see SECURITY_REVIEW.md §9). RLS on every boutique-scoped table.
 - **AI:** Google Gemini (`gemini-2.5-flash-image` for render/VTO, `gemini-2.5-flash` for text). Per-boutique daily cost ceiling enforced server-side.
-- **Scale:** ~110 Swift files · 26 test files · **220 tests** (pure-logic + Codable only, ~2s).
-- **State:** iPad app feature-complete + stable, R1/R2/R3/R4c/R4d shipped (slack engine, morning board, lock + change-orders, fabric-meters brief, karigar phone link). **iPad-native is the strategy** — web surfaces retired from the roadmap (July 2026; see README). Work happens on local `main`; remote push target is `origin boutique-360-ipad-app`.
+- **Scale:** ~111 Swift files · 27 test files · **234 tests** (pure-logic + Codable only). Measured 2026-07-31: ~300s of test time, ~13 min wall including build + simulator boot — **not the "~2s" this file used to claim**. Scope with `-only-testing:` while iterating; run the full suite before committing.
+- **State:** iPad app feature-complete + stable, R1/R2/R3/R4a/R4b/R4c/R4d shipped (slack engine, morning board, lock + change-orders, auto-drafted reminders, owner/assistant roles, fabric-meters brief, karigar phone link). **iPad-native is the strategy** — web surfaces retired from the roadmap (July 2026; see README). Work happens on local `main`; remote push target is `origin boutique-360-ipad-app`.
 - **Secrets:** `ipad/Boutique360/Configuration/Secrets.xcconfig` (GEMINI_API_KEY) is **gitignored** — never commit it. `Env.xcconfig` (Supabase URL + anon key) is tracked (anon key is RLS-protected, safe to ship).
 
 ---
@@ -26,10 +26,13 @@ boutique-360/
 │   ├── project.yml                 # XcodeGen spec — SOURCE OF TRUTH for the Xcode project
 │   ├── Boutique360/
 │   │   ├── Configuration/          # Config.swift reads Env.xcconfig + Secrets.xcconfig (gitignored)
-│   │   ├── Models/                 # 12 Codable structs mirroring Postgres rows
-│   │   ├── Services/               # 29 stateless `enum` namespaces (CRUD + AI + storage)
+│   │   ├── Models/                 # 13 Codable structs mirroring Postgres rows
+│   │   ├── Services/               # 35 files / 36 types — stateless `enum` namespaces
 │   │   ├── Features/               # SwiftUI views, one folder per area
-│   │   └── Utilities/              # Formatters, ErrorBus, Log, DesignTokens, WhatsAppShareHelper, GSTINValidator, AppEvents
+│   │   └── Utilities/              # 16 files: Formatters, ErrorBus, Log, DesignTokens, WhatsAppShareHelper,
+│   │                               #   GSTINValidator, AppEvents + the pure engines (OrderSlack, MorningBoard,
+│   │                               #   LockGate, ReminderDrafts, PinPolicy, RolePolicy, PinHasher,
+│   │                               #   CustomerSpend, AISafety)
 │   └── Boutique360Tests/           # XCTest (pure logic + Codable round-trip)
 ├── supabase/migrations/            # forward-only SQL (00NN_*.sql); apply via Supabase MCP
 ├── docs/                           # see §6 — architecture.md, api-rpcs.md, adr/, runbooks/, etc.
@@ -43,7 +46,8 @@ boutique-360/
   - `Design 1—* DesignRender 1—* DesignTryOn` (tryon = customer photo, **7-day auto-purge**) · `Design/Order → JobCard`
   - `CustomerTimelineEvent` is a **derived value type** (not a table) — aggregated client-side by `CustomerTimelineService`.
 - **Pattern:** MVVM-lite. Views own `@State`; `Services` are stateless `enum`s with `async throws` functions; `BoutiqueContext` is the one shared `@MainActor ObservableObject` (current boutique + staff, set at sign-in).
-- **Full detail:** `docs/architecture.md` (module map, Service catalogue, 8 core design rules) and `docs/architecture-diagrams.md` (C4).
+- **Pure-logic core:** every non-trivial decision lives in a pure `Utilities/` type, not in the view that renders it — that is why the suite is worth anything (tests are pure-logic-only, so logic left in a view is untestable). See `docs/architecture.md` § The pure-logic core.
+- **Full detail:** `docs/architecture.md` (module map, Service catalogue, pure-logic core, 8 core design rules) and `docs/architecture-diagrams.md` (C4).
 
 ---
 
@@ -74,6 +78,7 @@ boutique-360/
 - **GST:** orders carry `subtotal`, `gst_amount`, and per-line `gst_rate`. Boutique has a `default_gst_rate` (5% typical apparel). Invoice generation reads stored `gstRate`, not a hardcoded constant. **Intra-state assumed** (CGST+SGST split); inter-state (IGST) is a known gap — the GST CSV export surfaces a spot-check warning for shipped orders.
 - **GSTIN:** 15-char checksummed format; validate with `GSTINValidator` at form submit. Empty is allowed (invoices just disabled).
 - **DPDP Act 2023 (legal, not optional):** customer VTO photos are sensitive data. Consent timestamp captured **at the moment of consent** (before the Gemini call), persisted to `design_tryons`. Photos auto-purge after **7 days** via the `purge-expired-tryons` Edge Function (daily pg_cron 03:00 IST) unless `saved_to_lookbook`. PII never logged. See `docs/dpdp-compliance.md`.
+- **AI safety (2026-07-31 audit):** every free-text field interpolated into a Gemini prompt goes through `AISafety.sanitizePromptInput` **inside the prompt builder**, not at the call site — so a new caller can't forget. Model output goes through `AISafety.sanitizeModelOutput` before it reaches a PDF, a jsonb column, or the karigar's HTML page. **Never surface a raw upstream API error body** to the owner (it can carry key fragments) — use `AISafety.userFacingAIError`.
 - **AI cost ceiling:** every Gemini call goes through `AICostMeter.checkCeiling` → `record_ai_usage` RPC (server-side, tamper-proof). Default $5/boutique/day. Image gen ≈ $0.04/call, text ≈ $0.001.
 - **WhatsApp:** uses `wa.me` deep links (no Business API). Text messages only; images shared via SwiftUI `ShareLink`. Owner reviews every message before sending. India phone normalization in `WhatsAppShareHelper`. Use `customer.whatsappTarget` (NOT `customer.phone`) — falls back to phone when no separate WA # is set.
 - **Email / SMS / Razorpay are credential-gated.** Pattern: `Config.<service>Enabled` boolean, button shown with discoverable hint when disabled (`"add SENDGRID_API_KEY to enable"`), never silently hidden. New external-API integrations MUST follow this pattern — see Wave 3/4 in `docs/spec-gaps-waves-1-6.md`.
@@ -113,7 +118,9 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | `Double ==` to check "fully paid" | `Money.equalAtPaise` (sub-paise FP drift shows a phantom balance) |
 | New `@Model`/table, forgot the Swift struct or RPC param | model struct ↔ migration ↔ RPC must all change together |
 | Added a `.swift`, build can't find it | `cd ipad && xcodegen generate` |
+| Searched for a type by filename and concluded it doesn't exist | **Grep by type name.** `DesignTryOnsService`, `LookbooksService`, `PromptTemplates` and `JSON` are all co-located in other files — I made exactly this mistake auditing the architecture doc |
 | View calls `SupabaseService.client.from(...)` directly | route through a `*Service` (layer rule — grep proves Features/ has zero direct SDK calls) |
+| "Verified" RLS through the Supabase MCP | MCP runs as `service_role`, which **bypasses RLS entirely**. This is how R3's Lock feature shipped non-functional. Verify as an authenticated user, and probe with an INSERT — a SELECT with no matching policy returns 200 and `[]`, not an error |
 | Gemini key in URL query (`?key=`) | `x-goog-api-key` header (URLs get logged) |
 | `Int.random` for human-facing numbers | `next_sequence_value` RPC (birthday-paradox collisions) |
 | `customer == nil` hard-blocks VTO | route through `CustomerLinkSheet` to attach one |
@@ -135,6 +142,7 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | Storage upload + signed URLs + bucket enum | `Services/StorageService.swift` |
 | AI render / VTO / tailor brief / style suggestions + prompts | `Services/GeminiService.swift` |
 | AI cost ceiling | `Services/AICostMeter.swift` |
+| AI prompt/output sanitization + PII redaction | `Utilities/AISafety.swift` |
 | Email (SendGrid) / SMS (Twilio) | `Services/SendGridClient.swift`, `Services/TwilioClient.swift` |
 | Unified WA + Email + SMS dispatch (DPDP consent enforced here) | `Services/CustomerNotifier.swift` |
 | Razorpay payment-link generation | `Services/RazorpayClient.swift` |
