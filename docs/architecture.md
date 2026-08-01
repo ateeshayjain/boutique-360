@@ -1,5 +1,8 @@
 # Architecture — Boutique 360
 
+*Verified against the code 2026-07-31 (post R4a/R4b). Counts below are real
+file counts, not estimates — if you change them, re-count.*
+
 ## Stack at a glance
 
 | Layer | Tech | Why |
@@ -27,34 +30,45 @@ ipad/Boutique360/
 │   ├── Order (+OrderItem, NewOrder, NewOrderItem, AnyCodable)
 │   ├── Inquiry, Design (+Lookbook), DesignRender (+DesignTryOn)
 │   ├── JobCard (+FabricLine, StageProgress)
+│   ├── OrderLock (+ChangeOrder, PriceBreakup)   ← R3
 │   ├── Alteration, Appointment
 │   └── CustomerTimelineEvent       ← unified value type for journey feed
-├── Services/                       ← Stateless namespaces wrapping Supabase
+├── Services/                       ← 35 files / 36 types (some co-located)
 │   ├── SupabaseService             ← shared client
 │   ├── AuthService                 ← ObservableObject, holds Session
 │   ├── BoutiqueContext             ← ObservableObject, current boutique + staff role
+│   ├── StaffRoleContext            ← R4b: owner/assistant + persisted lockout
 │   ├── *Service                    ← per-resource CRUD (Customers, Orders, ...)
 │   ├── StorageService              ← upload + signedURL discipline
 │   ├── GeminiService               ← image + text generation
-│   ├── KeychainStore               ← session persistence
+│   ├── KeychainStore               ← session + PIN/role persistence
+│   ├── CustomerNotifier            ← unified WA/Email/SMS; DPDP consent gate
+│   ├── SendGridClient / TwilioClient / RazorpayClient   ← credential-gated
 │   ├── InvoicePDFGenerator         ← A4 GST invoice
 │   ├── JobCardPDFGenerator         ← A4 karigar brief (structured + Hinglish)
 │   ├── GSTReportExporter           ← monthly CSV for CA
 │   ├── CustomerTimelineService     ← aggregates 7 sources into timeline events
 │   ├── CustomerImportService       ← CSV parser + batch insert
 │   └── NotificationsService        ← local 8am briefing + appt reminders
-├── Features/                       ← One folder per area; SwiftUI views
+├── Features/                       ← 45 view files across 13 folders
 │   ├── Root, Shell, Auth
-│   ├── Dashboard, Customers, Inquiries, Designs, Orders
-│   ├── Calendar, Dates, Measurements, JobCards, Settings
-└── Utilities/
+│   ├── Dashboard (3), Customers (8), Inquiries (2), Designs (10), Orders (10)
+│   ├── Calendar (2), Dates (1), Measurements (1), JobCards (2), Settings (3)
+└── Utilities/                      ← 16 files; the pure engines live here
     ├── Formatters                  ← inr (en_IN lakh), postgresDate, iso8601
     ├── WhatsAppShareHelper         ← wa.me URL builder + opener
-    ├── GSTINValidator              ← structural regex
+    ├── GSTINValidator              ← structural regex + checksum
     ├── ErrorBus                    ← @MainActor toast pipeline
     ├── AppEvents                   ← Notification.Name extensions
-    └── DesignTokens                ← Spacing / CornerRadius / AnimationToken
+    ├── DesignTokens                ← Spacing / CornerRadius / AnimationToken
+    ├── Log                         ← os.Logger categories + privacy specifiers
+    └── (pure decision engines — see "The pure-logic core" below)
 ```
+
+**Types that don't match their filename** (grep by name, not by file):
+`DesignTryOnsService` and `PromptTemplates` live in `DesignRendersService.swift`
+and `GeminiService.swift`; `LookbooksService` in `DesignsService.swift`;
+`JSON` in `EventsService.swift`.
 
 ### Service catalogue
 
@@ -83,8 +97,68 @@ ipad/Boutique360/
 | GSTReportExporter | orders, customers | n/a | SettingsView export |
 | CustomerTimelineService | aggregates 7 sources | n/a | CustomerDetailView Journey section |
 | NotificationsService | (UNNotificationCenter) | n/a | DashboardView prime, AppointmentFormView |
+| LookbooksService | design_lookbooks | n/a | DesignsListView (declared in `DesignsService.swift`) |
+| EventsService | events | n/a | OrderTimelineView; `record` writes the R4b audit trail |
+| **Wave 3/4 — credential-gated integrations** | | | |
+| CustomerNotifier | (delegates) | n/a | **The single DPDP consent audit point** — every email/SMS send path goes through it, so the consent check exists once |
+| SendGridClient | n/a (SendGrid API) | n/a | CustomerNotifier. Disabled without `SENDGRID_API_KEY` |
+| TwilioClient | n/a (Twilio API) | n/a | CustomerNotifier. Disabled without `TWILIO_*` |
+| RazorpayClient | n/a (Razorpay API) | n/a | PaymentsSectionView. Hosted page → no PCI scope on device |
+| **R3 — lock the look** | | | |
+| OrderLocksService | order_locks, change_orders | lock_order, apply_change_order | LockSheet, LockSummarySheet. Both RPCs enforce their preconditions server-side |
+| **R4a — reminders** | | | |
+| RemindersService | reminder_log | n/a | RemindersSectionView. Idempotent `markDone` via a typed 23505 catch |
+| **R4b — staff roles** | | | |
+| StaffRoleContext | events (audit only) | n/a | AppShellView, SettingsView, every gated surface. Role + lockout persist in the Keychain |
+| **R4d — karigar link** | | | |
+| JobCardEventsService | job_card_events | n/a | JobCardPreviewView, OrdersListView (feeds slack) |
 
-**Architecture rule:** views call services; services call Supabase or third-party APIs; services do not call views. Verified by `grep -rn "SupabaseService.client" Features/` returning **zero** matches as of 2026-05-28.
+**Architecture rule:** views call services; services call Supabase or third-party APIs; services do not call views. Verified by `grep -rn "SupabaseService.client" Features/` returning **zero** matches as of 2026-07-31.
+
+---
+
+## The pure-logic core
+
+The most load-bearing architectural decision in this codebase, and the one
+least visible from the folder structure: **every non-trivial decision is
+extracted into a pure function in `Utilities/`, separate from the view that
+renders it.** Views fetch and display; these types decide.
+
+That split is why the test suite is worth anything. Tests are pure-logic and
+Codable-only by policy (no network — see `docs/testing-guide.md`), so logic
+that stays inside a view is logic that cannot be tested. **120 of the 234
+tests target the engines below** (counted 2026-07-31); the remainder cover
+Codable round-trips, status machines, formatters and helpers — also pure, by
+the same rule.
+
+| Engine | Decides | Shipped |
+|---|---|---|
+| `Formatters` | ₹ lakh grouping, POSIX+IST dates | — |
+| `Money` (in `Formatters.swift`) | paise rounding, `equalAtPaise` — never `Double ==` on currency | — |
+| `GSTINValidator` | 15-char checksum | — |
+| `CustomerSpend` | lifetime / average / 12-month spend | Wave 2 |
+| `OrderSlack` | days of slack per order; drives the at-risk sort | R1 |
+| `MorningBoard` | the whole exception-first board, incl. per-input degradation | R2 |
+| `LockGate` | whether an order may be locked (advance → event → breakup) | R3 |
+| `ReminderDrafts` | which reminders exist today and their exact copy | R4a |
+| `PinPolicy` | PIN grammar + the failed-attempt state machine | R4b |
+| `RolePolicy` | which of 10 surfaces an assistant may see | R4b |
+| `PinHasher` | salted SHA-256, constant-time compare | R4b |
+| `AISafety` | PII redaction, prompt sanitization, model-output sanitization | 2026-07-31 audit |
+
+Two consequences worth knowing before you edit them:
+
+- **`RolePolicy.Surface` is pinned by a test.** Adding a case fails
+  `RolePolicyTests.testSurfaceCountIsPinned` until someone consciously decides
+  where it is enforced. That is deliberate friction.
+- **`PinPolicy.afterAttempt` is a no-op while locked.** A consequence nobody
+  designed but everyone should know: the 25-failure hard cap is unreachable by
+  rapid tapping — an adversary must sit through five separate 30s cooldowns.
+
+**Where the pure core stops.** `RolePolicy` decides *whether* a surface is
+visible; nothing tests that it is actually *consulted* at all 17 call sites.
+Delete a gate and the suite stays green. See `SECURITY_REVIEW.md` §1 — the
+role gate is a UI boundary, not authorization.
 
 ---
 
