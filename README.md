@@ -19,18 +19,22 @@ future, but no owner-facing web app.
 
 | Doc | What it covers |
 |---|---|
-| [docs/app-map.md](docs/app-map.md) | **Screen-by-screen map** — 33 views, journeys, department hats, integrations, data spine, roadmap |
+| [docs/app-map.md](docs/app-map.md) | **Screen-by-screen map** — 45 view files, journeys, department hats, integrations, data spine, roadmap |
 | [docs/customer-journey-3-month.md](docs/customer-journey-3-month.md) | The "Priya" journey — 4 orders, varied lifecycles, lessons → backlog |
 | [docs/competitive/darzi-ai-teardown.md](docs/competitive/darzi-ai-teardown.md) | Teardown of the closest competitor; threats to absorb + confirmed moat |
 | [docs/spec-gaps-waves-1-6.md](docs/spec-gaps-waves-1-6.md) | The 6-wave spec-coverage build (address/WA#, spend report, Email/SMS, Razorpay, templates, AI suggestions) |
 | [docs/user-journeys.md](docs/user-journeys.md) | Day-in-the-life scenarios — 8 journeys grounded in the owner persona |
 | [docs/user-flows.md](docs/user-flows.md) | Mermaid diagrams — auth, magic moment, status updates, DPDP lifecycle |
-| [docs/architecture.md](docs/architecture.md) | Stack, module map, core design rules + Service catalogue |
+| [docs/architecture.md](docs/architecture.md) | Stack, module map, Service catalogue, **the pure-logic core**, 8 core design rules |
 | [docs/architecture-diagrams.md](docs/architecture-diagrams.md) | C4 model diagrams |
 | [docs/adr/](docs/adr/) | Architecture Decision Records (5) — *why* the foundational choices |
 | [docs/observability.md](docs/observability.md) | Logging, metrics, alerting — shipped vs deferred |
 | [docs/testing-guide.md](docs/testing-guide.md) | How to run + add tests; what we deliberately don't test |
 | [docs/runbooks/](docs/runbooks/) | Bad-deploy rollback, Gemini outage, multi-tenant onboarding |
+| [SECURITY_REVIEW.md](SECURITY_REVIEW.md) | **Security posture + threat model + declared gaps** (dated pass, 2026-07-31) |
+| [docs/compliance/template-adherence.md](docs/compliance/template-adherence.md) | Section-by-section verdicts against the seven quality checklists |
+| [docs/DATA_HANDLING.md](docs/DATA_HANDLING.md) | App Store / Play data-disclosure answers, grounded in real flows |
+| [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md) | Cut a release top-to-bottom; rollback paths |
 | [docs/privacy-policy.md](docs/privacy-policy.md) | DPDP-compliant customer-facing policy |
 | [docs/deployment.md](docs/deployment.md) | Environments, schema workflow, Edge Functions, TestFlight |
 | [docs/dpdp-compliance.md](docs/dpdp-compliance.md) | DPDP Act 2023 posture |
@@ -85,7 +89,8 @@ cp Boutique360/Configuration/Secrets.xcconfig.example Boutique360/Configuration/
 # Edit Secrets.xcconfig — GEMINI_API_KEY required for AI; SendGrid/Twilio/Razorpay optional
 xcodegen generate
 open Boutique360.xcodeproj
-# Cmd+R to run; add `-auto-demo` launch arg to auto-sign-in as demo
+# Cmd+R to run. DEBUG-only launch args: `-auto-demo` (auto-sign-in as demo),
+#   `-start-section <name>` (land on a tab other than dashboard)
 ```
 
 See [docs/deployment.md](docs/deployment.md) for full setup.
@@ -95,8 +100,14 @@ See [docs/deployment.md](docs/deployment.md) for full setup.
 ## Testing
 
 Unit tests cover pure logic (formatters, validators, parsers, state machines,
-money math, spend aggregation, phone normalization). **175 test cases, all
-green, under a second.**
+money math, spend aggregation, phone normalization) plus the decision engines
+— slack, morning board, lock gate, reminder drafts, PIN policy, role policy,
+AI safety. **234 test cases, all green.**
+
+Measured 2026-07-31: **~300s of test time, ~13 min wall** including build and
+simulator boot — the suite is *not* the "under a second" this README used to
+claim. Scope with `-only-testing:Boutique360Tests/<Suite>` while iterating;
+run the whole thing before committing.
 
 ```bash
 cd ipad
@@ -123,7 +134,11 @@ Sequenced in [docs/app-map.md §7](docs/app-map.md); rationale in the
 - ✅ **R1 — `event_date` + slack engine** — shipped July 2026 (OrderSlack verdicts, must-finish-by warning, badges)
 - ✅ **R2 — exception-first morning board** — shipped July 2026 (tiles + needs-you + pipeline, honest degradation)
 - ✅ **R3 — Lock screen** — shipped July 2026 (lock_order + apply_change_order RPCs, LockSheet, append-only CO ledger)
-- ⏭️ **R4 — competitive absorbs**: auto-drafted reminders with one-tap approve · PIN-scoped staff roles · ✅ fabric-meters estimate (R4c, shipped) · ✅ karigar phone link (R4d, shipped)
+- ✅ **R4 — competitive absorbs** — all four shipped July 2026:
+  - ✅ **R4a** auto-drafted reminders with one-tap approve (`ReminderDrafts` engine, `reminder_log` idempotency)
+  - ✅ **R4b** owner/assistant roles (hashed PIN, persisted lockout + device-auth escape, 17 gated surfaces) — **a same-device UI boundary, not authorization**; see [SECURITY_REVIEW.md](SECURITY_REVIEW.md) §1
+  - ✅ **R4c** fabric-meters estimate in the Hinglish brief
+  - ✅ **R4d** karigar phone link (`job-card-view` Edge Function)
 - ⏭️ **R5 — fabric inventory** (bolts, codes, meters in/out → fills the "Fabrics" sidebar slot)
 - ⏭️ **R6 — karigar ledger** (material issued, piece-rate dues, alteration-rate quality metric)
 - ⏭️ TestFlight → App Store
@@ -135,7 +150,7 @@ Sequenced in [docs/app-map.md §7](docs/app-map.md); rationale in the
 ```
 boutique-360/
 ├── README.md                      ← this file
-├── CHANGELOG.md · CLAUDE.md
+├── CHANGELOG.md · CLAUDE.md · LICENSE · SECURITY_REVIEW.md
 ├── docs/                          ← see Documentation table above
 │   └── competitive/               ← market teardowns
 ├── audit-outputs/
@@ -145,7 +160,7 @@ boutique-360/
 ├── ipad/
 │   ├── project.yml                ← XcodeGen spec (source of truth)
 │   ├── Boutique360/               ← Swift source (Features / Services / Models / Utilities)
-│   └── Boutique360Tests/          ← 175 XCTest cases
+│   └── Boutique360Tests/          ← 234 XCTest cases (27 files)
 ├── scripts/
 └── .gitignore
 ```
