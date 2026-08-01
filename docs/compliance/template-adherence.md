@@ -137,7 +137,7 @@ Fixes applied during this audit are marked **[fixed]** and listed in §Fixes.
 ### §2 Input validation & sanitization
 | Item | | Evidence |
 |---|---|---|
-| Text inputs validated for length/format | ⚠️ | GSTIN checksummed (`GSTINValidator`), phone normalised, PIN validated. **Free-text fields (notes, descriptions) have no length cap** before hitting the DB |
+| Text inputs validated for length/format | ⚠️ | GSTIN structure **+ mod-36 check character** (`GSTINValidator`; checksum added 2026-08-01 — it was structure-only before, which is how a placeholder GSTIN reached production invoices), phone normalised, PIN validated. **Free-text fields (notes, descriptions) have no length cap** before hitting the DB |
 | Numeric inputs bounded | ⚠️ | Money uses paise rounding + breakup reconciliation; no explicit min/max on every numeric field |
 | File uploads validated for type, size, content | ✅ | `job-card-view/index.ts:76–84` — 5 MB cap, JPEG/PNG allow-list, extension derived from validated MIME (not the filename), UUID filename |
 | SQL injection prevented (parameterized only) | ✅ | PostgREST/RPC parameter binding throughout; no string-concatenated SQL |
@@ -196,7 +196,7 @@ Fixes applied during this audit are marked **[fixed]** and listed in §Fixes.
 | Regression tests for fixed bugs | ⚠️ | Some (LockGate, clock-winding). The dead-RLS bug has **no regression test** |
 | Tests run in CI on every PR | ✅ | `.github/workflows/ipad-tests.yml` |
 | Code coverage tracked with a threshold | ❌ | Not measured |
-| Tests deterministic, isolated, fast | ✅ | 234 tests; pure-logic suite runs in seconds |
+| Tests deterministic, isolated, fast | ✅ | 239 tests; ~2s warm |
 
 ### §9 Release readiness
 Covered under the Release checklist below.
@@ -354,7 +354,7 @@ Covered under the Release checklist below.
 | 8 | Release build, no warnings, no test code | ⚠️ | Builds clean; Release config not exercised |
 | 9 | Fresh-install QA | ❌ | Not done |
 | 9 | Accessibility spot-check | ❌ | Not done |
-| 9 | Automated suite green in CI on the release commit | ✅ | 234 tests |
+| 9 | Automated suite green in CI on the release commit | ✅ | 239 tests |
 | 10 | Staged rollout via TestFlight | ❌ | Not started |
 | 11 | Tag the release | ❌ | No tags yet |
 | 12 | Rollback path known | ✅ | `docs/RELEASE_CHECKLIST.md` §8 — app rollback cheap, migrations effectively irreversible |
