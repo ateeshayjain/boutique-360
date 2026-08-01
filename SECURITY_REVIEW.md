@@ -206,52 +206,18 @@ Stated plainly rather than papered over. Each needs an owner before release.
 | Escalating lockout durations | Brute-force window wider than ideal | deferred (YAGNI at pilot scale) |
 | Tamper-evident audit log | Audit not trustworthy against §1 actor | deferred |
 | RLS verification runbook | The §6 defect class could recur undetected | unassigned |
-| Migrations `0020`–`0024` applied to production but **absent from `supabase/migrations/`** | The repo is not a complete record of the schema; a rebuild from source would not reproduce production | unassigned — see note below |
 | R4b manual QA (9 steps) not executed | Persistence of the role gate across force-quit is **unverified on device** | blocked on Xcode simulator setup |
 
-**On the missing migrations:** the database reports **35 applied migrations**;
-`supabase/migrations/` contains **26 files**. Nine applied migrations exist
-only in the remote database:
+**On the missing migrations — RESOLVED 2026-07-31.** All 35 applied
+migrations are now in `supabase/migrations/`. The nine that existed only in the
+remote database were backfilled verbatim from
+`supabase_migrations.schema_migrations`, each with a header marking it a record
+of SQL that has already run rather than a migration to apply. Files `0025a`–
+`0025d` slot between 0025 and 0026 because renumbering already-shipped files
+would be worse than a suffix.
 
-| Applied migration | In repo? |
-|---|---|
-| `0020_rls_subquery_and_staff_bootstrap` | ❌ |
-| `0021_week1_operational` | ❌ |
-| `0022_storage_paths_and_order_lines` | ❌ |
-| `0023_boutique_invoice_fields` | ❌ |
-| `0024_job_cards` | ❌ |
-| `dpdp_purge_cron` | ❌ |
-| `audit_fixes_phase2` | ❌ |
-| `order_rpc_gst_rate` | ❌ |
-| `audit_phase3_constraints_costceil` | ❌ |
-
-This is primarily a disaster-recovery and reproducibility problem: the repo
-cannot rebuild production. But one entry raises it above housekeeping —
-**`dpdp_purge_cron` is the 7-day VTO photo purge schedule**, a control this
-project relies on for DPDP Act compliance and describes in
-`docs/dpdp-compliance.md` and the privacy policy. **Its definition is not in
-source control**, so it cannot be reviewed in a diff, cannot be restored from
-the repo, and could be altered or dropped in the dashboard without any trace
-in git. **Purge health — verified during this review (2026-07-31):** the job exists,
-is active, and is working. `cron.job` shows `dpdp-purge-tryons`
-(`active = true`); `cron.job_run_details` shows **64 runs, all `succeeded`,
-most recent 2026-07-30 21:30 UTC**. So the control is operating — it is the
-*definition* that is unversioned, not the behaviour that is broken.
-
-**Documentation defect found while verifying:** the cron schedule is
-`30 21 * * *` UTC, which is **03:00 IST — not the 02:30 IST stated in
-`CLAUDE.md` and `docs/dpdp-compliance.md`.** Harmless operationally, but a
-compliance document that misstates a compliance control's schedule is exactly
-the kind of drift this review exists to catch. Corrected in the docs as part
-of this change.
-
-One limit on that verification: a `succeeded` cron run proves the Edge
-Function was *invoked* and returned cleanly. It does not prove rows and
-storage objects were actually deleted. An end-to-end purge test — seed a
-try-on dated 8 days ago, confirm it disappears — has **not** been run.
-
-**Recommended action** (not taken in this review): dump the nine migrations
-from the remote database into `supabase/migrations/` as backfilled files.
+Backfilling surfaced two defects that had been invisible while the SQL lived
+only in the dashboard — see §11.
 
 ---
 
@@ -266,3 +232,79 @@ from the remote database into `supabase/migrations/` as backfilled files.
 - **The nine manual QA steps for R4b have not been run** (see §9), so the
   claim "the role gate survives a force-quit" rests on unit tests of the
   persistence primitives plus code reading, not on observed device behaviour.
+
+---
+
+## 11. Defects surfaced by the migration backfill (2026-07-31)
+
+Two live problems that had been invisible for two months because the SQL
+existed only in the Supabase dashboard, where nobody diffs it.
+
+### 11.1 The AI cost ceiling blocks every AI call — **all AI features are down**
+
+`ai_usage_daily` was created with RLS enabled and a **SELECT policy only**,
+while `record_ai_usage` is declared `security invoker`. So the function's
+INSERT runs as the authenticated user against a table with no INSERT policy.
+
+**Verified as the authenticated demo user (not via MCP, which bypasses RLS):**
+
+```
+POST /rest/v1/rpc/record_ai_usage  →  HTTP 403
+{"code":"42501","message":"new row violates row-level security policy
+                           for table \"ai_usage_daily\""}
+```
+
+`ai_usage_daily` contains **zero rows** — the counter has never recorded a
+single call since it was created on 2026-05-28.
+
+**Impact.** `AICostMeter.checkCeiling` runs *before* every Gemini request, so
+every AI feature fails: design render, virtual try-on, the Hinglish tailor
+brief, and style suggestions — the product's core differentiator.
+
+**The error message makes it worse.** `checkCeiling` catches *any* error from
+the RPC and rethrows a fixed string:
+
+> "Daily AI cost ceiling reached — try again after midnight or raise the cap
+> in Settings."
+
+So the owner is told they have hit a spending cap they have never reached, and
+advised to wait until midnight, which changes nothing. A catch-all that
+translates every failure into one specific diagnosis is worse than no message.
+
+**Root cause** is identical to the dead policies repaired by 0031: an RLS
+policy set that was never exercised as an authenticated user. This is the
+third instance. The correct pattern already existed in this codebase two
+migrations earlier — `next_sequence_value` in 0022 is `security definer` with
+a pinned `search_path` and an explicit grant.
+
+**Proposed fix (not yet applied — needs approval, it is a production schema
+change):** make `record_ai_usage` `security definer` with
+`set search_path = public, pg_temp`, and validate
+`p_boutique_id = current_boutique_id()` inside the function. Adding INSERT and
+UPDATE policies instead would work but would defeat the feature's stated
+purpose — the doc comment says the counter is "tamper-proof from the iPad",
+and a client with UPDATE rights on `ai_usage_daily` could simply zero its own
+counter. `security definer` keeps writes exclusive to the function.
+
+Separately, `AICostMeter.checkCeiling` should distinguish a genuine cap breach
+(Postgres error code `P0001`) from any other failure.
+
+### 11.2 Production is running on a placeholder GSTIN
+
+Migration `0023_boutique_invoice_fields` seeded a placeholder GSTIN and
+address onto the pilot boutique. Checked 2026-07-31 — they are still there:
+
+| Field | Live value |
+|---|---|
+| `gstin` | `07AAAAA0000A1Z5` (dummy: `AAAAA0000A` PAN pattern) |
+| `address` | `Shop 12, Lajpat Nagar, New Delhi 110024` |
+| `place_of_supply` | `Delhi` |
+
+Because the app treats a non-empty GSTIN as "invoicing enabled", **any GST
+invoice generated today carries a fabricated GSTIN and a placeholder address**
+on a statutory tax document. The `coalesce` in the migration means a real
+value entered in Settings is never overwritten — but nobody has entered one.
+
+**Action required by the owner, not by code:** enter the real GSTIN, address
+and place of supply in Settings → Boutique before issuing another invoice, and
+check whether any invoice already sent to a customer needs reissuing.

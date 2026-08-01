@@ -390,7 +390,6 @@ Covered under the Release checklist below.
 5. Authorization is client-side only — the role gate is not enforced server-side
 6. No customer-deletion flow, despite the privacy policy promising deletion; `orders.customer_id` RESTRICT blocks it for any customer with orders
 7. No data-export/portability flow (DPDP right)
-8. Nine applied migrations missing from the repo, including `dpdp_purge_cron`
 9. No security tests: nothing fails if a role gate is deleted
 10. No crash reporting or error monitoring
 
