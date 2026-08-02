@@ -67,7 +67,7 @@ struct MorningBoardView: View {
                 Text(value)
                     .font(.title3.weight(.semibold))
                     .monospacedDigit()
-                    .minimumScaleFactor(0.6)
+                    .minimumScaleFactor(0.7)   // a11y floor: shrinking a total is losing the total
                     .lineLimit(1)
                     .foregroundStyle(tint)
                 Text(caption).font(.caption2).foregroundStyle(.secondary)

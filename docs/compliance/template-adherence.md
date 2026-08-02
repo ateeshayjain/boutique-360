@@ -2,10 +2,11 @@
 
 **Date:** 2026-07-31
 **Covers:** the iPad app, Supabase backend, and Edge Functions, after R4a/R4b.
-**Sources:** the seven checklists — Apple Design Framework (Complete Standard
-v1.0), Content & Localization, Documentation, Performance & Reliability,
-Release & App Store Submission, Security & Privacy, and the Software Testing
-& Code Quality checklist.
+**Sources:** eleven checklists — Accessibility, Apple Design Framework
+(Complete Standard v1.0), Content & Localization, Documentation, Performance &
+Reliability, Post-Launch Operations, Release & App Store Submission, Security
+& Privacy, Sync & Multi-Device, Upgrade Path, and Software Testing & Code
+Quality.
 
 **Method:** each section audited against the code, not against intent. Claims
 name a file, line, or query. **Nothing is ✅ on the strength of intent** — a
@@ -362,6 +363,165 @@ Covered under the Release checklist below.
 
 ---
 
+## Accessibility Checklist  *(added 2026-08-01)*
+
+The most demanding of the eleven, and the one this project scores worst on.
+The checklist's own framing is the reason: *"Accessibility failures are
+invisible to the people who build the app and total to the people they
+exclude."* Nothing here has been tested with a screen reader or a contrast
+meter — the ✅ rows are code-level facts, not evidence of use.
+
+### §1 Contrast
+| Item | | Evidence |
+|---|---|---|
+| Text ≥4.5:1 (3:1 for large) | ❌ | **Never measured.** Semantic colours make it *likely* — that is not evidence |
+| Non-text UI ≥3:1 | ❌ | Never measured. Status pills, slack badges and pipeline lanes carry meaning by colour |
+| Verified in BOTH appearances, programmatically | ❌ | No contrast assertion exists; dark mode never opened |
+| Filled elements use PAIRED foreground colours | ✅ | Verified: **zero** `foregroundStyle(.white)` in `Features/` — no hardcoded white on a brand colour, which is one of the checklist's stop-the-release flags |
+| Text over images has a scrim | N/A | No text over imagery |
+
+### §2 Dynamic Type
+| Item | | Evidence |
+|---|---|---|
+| Busiest three screens at AX5 | ❌ | Never exercised at any accessibility size |
+| Semantic styles, fixed sizes listed with a reason | ⚠️ | Two fixed sizes, both decorative empty-state glyphs: `DesignsListView:159`, `AppShellView:105` |
+| `minimumScaleFactor` floor ≥0.7 | ✅ **[fixed]** | Was ❌ — `DashboardView:122` (revenue total) and `MorningBoardView:70` (tile value) used 0.6. Both are money, which the checklist calls out by name: "shrinking a total is losing the total." Raised to 0.7 |
+| Numbers users act on stay readable at AX | ⚠️ | Floor is now compliant; **not verified at AX5** |
+| Container heights not hardcoded | ✅ | No fixed-height containers around text |
+
+### §3 Touch targets
+| Item | | Evidence |
+|---|---|---|
+| Every tappable ≥44×44pt incl. padding | ⚠️ | True on all R4a/R4b surfaces (`.frame(minHeight: 44)`); older screens unaudited |
+| Destructive actions spaced or confirmed | ✅ | Sign-out uses `confirmationDialog` |
+| **Multi-button rows use per-button styles** | ✅ | **Checked specifically** — the reminders row has two buttons and each carries its own `.buttonStyle(.bordered)` (`RemindersSectionView:92,102`), so one tap fires one action. This is the failure the checklist warns produces "every tap fires all of them" |
+| Gestures have button equivalents | ✅ | No long-press-only or swipe-only actions |
+
+### §4 Screen reader
+| Item | | Evidence |
+|---|---|---|
+| Icon-only controls labelled by what they DO | ⚠️ | New surfaces yes ("Dismiss — don't ask again"); older screens unaudited |
+| Rows read as one sentence | ✅ | `accessibilityElement(children: .combine)` + composed labels on board, orders, reminders |
+| Charts expose a text summary | ⚠️ | `CustomerSpendSummaryView` has a Swift Charts bar chart; the KPI tiles carry the numbers, but there is **no explicit chart summary and the chart is not hidden** from the reader |
+| Decorative images hidden | ⚠️ | 8 `accessibilityHidden` uses; not systematically audited |
+| Custom controls declare traits | ⚠️ | `.isHeader` used; not systematic |
+| **One full screen-reader pass per release** | ❌ | **Never run.** VoiceOver has never been used on this app |
+
+### §5 Motion, sound & state
+| Item | | Evidence |
+|---|---|---|
+| Reduce Motion honoured | ✅ | Both animation sites app-wide; `ErrorBus:68` swaps movement for a cross-fade |
+| No info by haptic/sound alone | ✅ | No haptic- or audio-only signals |
+| Nothing flashes >3×/sec | ✅ | No flashing content |
+| Time-limited flows generous | ✅ | Only the PIN cooldown (30s), which is deliberate and displayed |
+
+### §6 Process
+| Item | | Evidence |
+|---|---|---|
+| Contrast assertions in the automated suite, both appearances | ❌ | None |
+| New colours enter via tokens with pairings | ⚠️ | `DesignTokens` covers spacing/radius/animation but **not colour pairings**; views use semantic system colours directly |
+| A11y findings fixed at functional-bug priority | ⚠️ | Stated here; no track record yet |
+
+**Red-flag status:** two of the five stop-the-release flags are live — a chart
+with no textual equivalent, and "looks fine" as the only contrast evidence.
+
+---
+
+## Sync & Multi-Device Checklist  *(added 2026-08-01)*
+
+**Largely N/A by architecture, with one real exception.** There is no
+device-to-device sync: a single iPad is the only editing client, and Postgres
+is the single source of truth with no local store to reconcile. Most of this
+checklist presumes CloudKit-style replication that does not exist here.
+
+The exception is genuine and worth naming: **the karigar's phone is a second
+writer.** It POSTs progress events into `job_card_events` through the
+`job-card-view` Edge Function while the owner's iPad reads the same rows.
+
+| § | Item | | Evidence |
+|---|---|---|---|
+| A | Debug and store builds hit different environments | ❌ | **One Supabase project serves both.** Same finding as Security §4 |
+| A | Mechanical gate blocks release when prod schema lags | ❌ | No gate. Migrations are applied by hand via MCP |
+| A | Deploy step is a named, dated action with an owner | ⚠️ | `RELEASE_CHECKLIST.md` §4 covers it; no owner named |
+| A | Schema changes additive with defaults | ✅ | Forward-only, `add column if not exists` throughout |
+| A | Every synced field round-trips through a test | ⚠️ | Codable round-trips exist per model; not per field |
+| A | Unknown enum values from newer versions degrade safely | ❌ | **Not tested.** `OrderStatus`, `JobCardStatus` etc. would throw on an unknown raw value — a real cross-version risk once two app versions exist |
+| B | Conflict policy written per record type | ❌ | Unwritten. Postgres last-write-wins by default |
+| B | Concurrently-mintable records use deterministic IDs | ✅ | `next_sequence_value` RPC is race-safe; `reminder_log` has a natural key |
+| B | No screen mints a record on appear | ✅ | Records are created on explicit action |
+| C | Durable outbox surviving app kill | ❌ | **No offline queue at all** — a failed write is surfaced and lost |
+| C | Failures classified transient/conflict/permanent | ⚠️ | Surfaced via `ErrorBus`, not classified; no retry |
+| C | Airplane-mode convergence tested | N/A | No offline editing to converge |
+| D | Sharing lifecycle (invite/revoke/leave) | N/A | No multi-account sharing |
+| E | Two-phone QA matrix | ⚠️ | The one real pair — owner iPad + karigar phone — has **never been exercised together** |
+| F | User-reachable re-sync | N/A | Pull-to-refresh re-reads server truth |
+
+**Honest summary:** the architecture sidesteps most sync hazards by having no
+local store. What it does *not* sidestep — a second writer on the karigar's
+phone, and enum decoding across app versions — is untested.
+
+---
+
+## Upgrade Path Checklist  *(added 2026-08-01)*
+
+**The app has never shipped**, so "upgrade in place" has no history to break
+yet. That makes most rows *not yet applicable* rather than passing — and the
+checklist's own warning applies: these are exactly the items that are cheap now
+and expensive after the first release.
+
+| § | Item | | Evidence |
+|---|---|---|---|
+| 1 | Versioned local store with a migration plan | N/A | **No local persistence.** No Core Data/SwiftData store; the server is the only store. This removes the entire class of local-migration risk |
+| 1 | Aged-data snapshot | N/A | Same reason |
+| 2 | Prod schema deployed BEFORE the build needing it | ⚠️ | Practised (migrations applied first) but not gated |
+| 2 | New FIELDS re-arm the deploy gate | ❌ | No gate exists to re-arm |
+| 2 | App tolerates server knowing LESS | ❌ | **Untested.** A missing column would surface as a decode failure |
+| 2 | App tolerates server knowing MORE | ⚠️ | Models decode named keys, so unknown *columns* are ignored — but unknown **enum values** are not (see Sync A) |
+| 3 | Unknown enum raw value degrades safely | ❌ | Same gap. This is the single highest-value pre-release fix on this checklist |
+| 3 | Version-skew QA pass | ❌ | Not possible yet — no previous release exists |
+| 4 | Installable archive of the previous release | ❌ | None. Worth starting **at the first TestFlight build**, not later |
+| 4 | Upgrade matrix over aged data | ❌ | Not yet applicable |
+| 5 | Version from ONE source of truth, test-enforced | ❌ | `CFBundleShortVersionString`/`CFBundleVersion` live in `Info.plist`, which **XcodeGen regenerates** — the checklist's "generated files can silently revert version keys" risk applies directly, and no test asserts the built artifact's version |
+| 5 | Build number increments every upload | ⚠️ | In `RELEASE_CHECKLIST.md` §2; not automated |
+| 5 | Changelog separates user-visible from internal | ⚠️ | `CHANGELOG.md` mixes both |
+
+---
+
+## Post-Launch Operations Checklist  *(added 2026-08-01)*
+
+**Nothing here is in place, because the app has not launched.** Recorded in
+full rather than skipped: the checklist exists precisely because these get
+deferred until an incident forces them.
+
+| § | Item | | Evidence |
+|---|---|---|---|
+| 1 | Phased release ON | ❌ | Not configured |
+| 1 | Halt criteria decided in advance | ❌ | None written |
+| 1 | Rollback story named for the release | ⚠️ | `RELEASE_CHECKLIST.md` §8 names it generally: app rollback cheap, **migrations effectively irreversible** |
+| 1 | Server prerequisites verified done | ⚠️ | In the checklist; verified by hand |
+| 1 | Previous release archived + installable | ❌ | None |
+| 2 | Crash reports checked daily first week | ❌ | **No crash reporting exists at all** — nothing to check |
+| 2 | Store reviews triaged on a schedule | ❌ | Not launched |
+| 2 | In-app failure surfaces treated as monitoring | ⚠️ | `ErrorBus` + stale-data banner exist; nobody is watching them |
+| 2 | First-48-hours smoke pass on a production install | ❌ | Not defined |
+| 3 | Severity ladder written down | ❌ | None |
+| 3 | Known-issue communication path | ❌ | None |
+| 3 | Expedited-review criteria known | ❌ | Not researched |
+| 3 | Post-incident → checklist line or test | ⚠️ | Practised in this session (RLS defect → CLAUDE.md landmine + register row); not a standing rule |
+| 4 | Support channel real and monitored | ❌ | **Not established.** The privacy policy's contact fields are still placeholders |
+| 4 | Diagnostic playbooks for top three symptoms | ⚠️ | `docs/runbooks/` covers bad deploy + Gemini outage; nothing for "invoice won't generate" or "AI says limit reached" — the two most likely real reports |
+| 4 | User can produce diagnostics unaided | ⚠️ | Settings shows app version + Supabase host; no export |
+| 5 | Confirmed bug → regression test before the fix ships | ⚠️ | Followed for pure-logic bugs; **the three RLS defects have no regression test** because nothing tests RLS |
+| 6 | Schema-deploy runbook executable at midnight | ⚠️ | `RELEASE_CHECKLIST.md` §4 + `deployment.md`; not rehearsed |
+| 6 | Export/backup verified working every release | ❌ | GST CSV export exists; no verification step |
+| 6 | Deletion paths re-verified each release | ❌ | **No deletion path exists** (Security §11) |
+| 6 | Privacy labels re-read when a data type is added | ⚠️ | Done this session; not a standing step |
+
+**The one that matters most:** no crash reporting. Ship without it and the
+first week's evidence is whatever the owner happens to mention.
+
+---
+
 ## Fixes applied in this audit
 
 | # | Finding | Severity | Fix |
@@ -387,6 +547,8 @@ Covered under the Release checklist below.
 4. Export compliance + age rating unanswered
 
 **High**
+4b. **No crash reporting** — ship without it and week-one evidence is whatever the owner happens to mention (Post-Launch §2)
+4c. **Unknown enum raw values are not tolerated** — an `OrderStatus` from a newer app version throws on decode. Cheap now, expensive after the first release (Sync A / Upgrade §3)
 5. Authorization is client-side only — the role gate is not enforced server-side
 6. No customer-deletion flow, despite the privacy policy promising deletion; `orders.customer_id` RESTRICT blocks it for any customer with orders
 7. No data-export/portability flow (DPDP right)
@@ -396,7 +558,10 @@ Covered under the Release checklist below.
 **Medium**
 11. No integration or service-layer tests
 12. No profiler pass; no measurement of startup, memory, or scroll
-13. Accessibility never audited: contrast unmeasured, VoiceOver never run, dark mode never tested
+13. **Accessibility never audited** — contrast unmeasured in either appearance, VoiceOver never run, dark mode never opened, no AX5 pass. Two stop-the-release flags live: a chart with no textual equivalent, and "looks fine" as the only contrast evidence
+13b. No support channel, severity ladder, or halt criteria (Post-Launch §1, §3, §4)
+13c. Version is not test-enforced against the built artifact, and XcodeGen regenerates the plist that holds it (Upgrade §5)
+13d. Owner iPad + karigar phone have never been exercised as a pair (Sync E)
 14. No dependency scanning; git history never secret-scanned
 15. Single environment — no dev/prod credential separation
 16. No retry/backoff or circuit breakers

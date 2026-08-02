@@ -119,7 +119,7 @@ struct DashboardView: View {
                     Text(Formatters.inr(todayRevenue))
                         .font(.system(.largeTitle, design: .rounded).weight(.bold))
                         .monospacedDigit()
-                        .minimumScaleFactor(0.6)
+                        .minimumScaleFactor(0.7)   // a11y floor: shrinking a total is losing the total
                         .lineLimit(1)
                     Spacer()
                     HStack(spacing: 14) {
