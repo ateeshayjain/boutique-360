@@ -1,7 +1,9 @@
 import Foundation
 
-enum GarmentType: String, Codable, CaseIterable, Identifiable {
+enum GarmentType: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case blouse, kurti, lehenga, bottom, saree, suit, other
+    /// Upgrade-path fallback: `other` already means exactly this.
+    static let decodingFallback: GarmentType = .other
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
 

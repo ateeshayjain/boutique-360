@@ -1,7 +1,9 @@
 import Foundation
 
-enum AlterationStatus: String, Codable, CaseIterable, Identifiable {
+enum AlterationStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case requested, in_progress, completed, cancelled
+    /// Upgrade-path fallback: open, not completed.
+    static let decodingFallback: AlterationStatus = .requested
     var id: String { rawValue }
     var label: String {
         switch self {

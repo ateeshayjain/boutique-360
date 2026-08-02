@@ -12,7 +12,7 @@
 - **Stack:** Swift / SwiftUI (**iOS 17+**, iPad-only) · PencilKit (sketch) · PDFKit (invoice/job-card) · **XcodeGen** (`ipad/project.yml` is the source of truth) · XCTest.
 - **Backend:** Supabase Cloud (`tdnwdlrkbrtoxjzcgusg`, **ap-south-1 Mumbai**) — Postgres 17 + Auth (magic-link) + Storage + Edge Functions (`purge-expired-tryons`, `job-card-view`) + pg_cron. **35 migrations** applied, all 35 in `supabase/migrations/` (nine backfilled 2026-07-31; files `0025a`–`0025d` slot between 0025 and 0026 rather than renumbering shipped files). RLS on every boutique-scoped table.
 - **AI:** Google Gemini (`gemini-2.5-flash-image` for render/VTO, `gemini-2.5-flash` for text). Per-boutique daily cost ceiling enforced server-side.
-- **Scale:** ~111 Swift files · 28 test files · **239 tests** (pure-logic + Codable only). Measured 2026-08-01: **~2s warm** (execution only, simulator already booted). A **cold** run — clean build + simulator boot — took ~5 min of test time and ~13 min wall, most of it build and launch overhead attributed to the first test. Both numbers are real; quote the one that matches your situation.
+- **Scale:** ~113 Swift files · 30 test files · **255 tests** (pure-logic + Codable only). Measured 2026-08-01: **~2s warm** (execution only, simulator already booted). A **cold** run — clean build + simulator boot — took ~5 min of test time and ~13 min wall, most of it build and launch overhead attributed to the first test. Both numbers are real; quote the one that matches your situation.
 - **State:** iPad app feature-complete + stable, R1/R2/R3/R4a/R4b/R4c/R4d shipped (slack engine, morning board, lock + change-orders, auto-drafted reminders, owner/assistant roles, fabric-meters brief, karigar phone link). **iPad-native is the strategy** — web surfaces retired from the roadmap (July 2026; see README). Work happens on local `main`; remote push target is `origin boutique-360-ipad-app`.
 - **Secrets:** `ipad/Boutique360/Configuration/Secrets.xcconfig` (GEMINI_API_KEY) is **gitignored** — never commit it. `Env.xcconfig` (Supabase URL + anon key) is tracked (anon key is RLS-protected, safe to ship).
 
@@ -29,10 +29,10 @@ boutique-360/
 │   │   ├── Models/                 # 13 Codable structs mirroring Postgres rows
 │   │   ├── Services/               # 35 files / 36 types — stateless `enum` namespaces
 │   │   ├── Features/               # SwiftUI views, one folder per area
-│   │   └── Utilities/              # 16 files: Formatters, ErrorBus, Log, DesignTokens, WhatsAppShareHelper,
+│   │   └── Utilities/              # 17 files: Formatters, ErrorBus, Log, DesignTokens, WhatsAppShareHelper,
 │   │                               #   GSTINValidator, AppEvents + the pure engines (OrderSlack, MorningBoard,
 │   │                               #   LockGate, ReminderDrafts, PinPolicy, RolePolicy, PinHasher,
-│   │                               #   CustomerSpend, AISafety)
+│   │                               #   CustomerSpend, AISafety) + DecodableWithFallback
 │   └── Boutique360Tests/           # XCTest (pure logic + Codable round-trip)
 ├── supabase/migrations/            # forward-only SQL (00NN_*.sql); apply via Supabase MCP
 ├── docs/                           # see §6 — architecture.md, api-rpcs.md, adr/, runbooks/, etc.
@@ -143,6 +143,7 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | AI render / VTO / tailor brief / style suggestions + prompts | `Services/GeminiService.swift` |
 | AI cost ceiling | `Services/AICostMeter.swift` |
 | AI prompt/output sanitization + PII redaction | `Utilities/AISafety.swift` |
+| Unknown enum values from a newer app version | `Utilities/DecodableWithFallback.swift` — conform + declare `decodingFallback`. `OrderStatus.unknown` is a real case with no transitions |
 | Email (SendGrid) / SMS (Twilio) | `Services/SendGridClient.swift`, `Services/TwilioClient.swift` |
 | Unified WA + Email + SMS dispatch (DPDP consent enforced here) | `Services/CustomerNotifier.swift` |
 | Razorpay payment-link generation | `Services/RazorpayClient.swift` |
@@ -152,7 +153,7 @@ for scalar in text.unicodeScalars { let ch = Character(scalar); … }
 | Lock validation (pure) + lock/CO service | `Utilities/LockGate.swift`, `Services/OrderLocksService.swift` |
 | Auto-drafted reminders (pure, tested) + UI | `Utilities/ReminderDrafts.swift`, `Features/Dashboard/RemindersSectionView.swift`, `Services/RemindersService.swift` |
 | PIN rules + lockout state machine (pure) | `Utilities/PinPolicy.swift` |
-| Which surfaces an assistant may not see | `Utilities/RolePolicy.swift` (add a `Surface` case → a pinned test fails until you gate it) |
+| Which surfaces an assistant may not see | `Utilities/RolePolicy.swift` (add a `Surface` case → a pinned test fails until you gate it; `RoleGateWiringTests` fails if a view stops calling `canSee`) |
 | PIN hashing (salted SHA256, constant-time) | `Utilities/PinHasher.swift` |
 | Current role + lockout + device-auth recovery | `Services/StaffRoleContext.swift` |
 | Security posture, threat model, declared gaps | `SECURITY_REVIEW.md` |

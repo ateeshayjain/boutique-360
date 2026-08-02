@@ -70,7 +70,9 @@ struct OrdersListView: View {
             ToolbarItem(placement: .topBarLeading) {
                 Picker("Filter", selection: $filter) {
                     Text("All").tag(OrderStatus?.none)
-                    ForEach(OrderStatus.allCases) { s in
+                    // selectableCases, not allCases — `.unknown` is a decode outcome,
+                    // never a filter a person would choose.
+                    ForEach(OrderStatus.selectableCases) { s in
                         Label(s.label, systemImage: s.systemImage).tag(OrderStatus?.some(s))
                     }
                 }
@@ -156,6 +158,7 @@ struct OrdersListView: View {
         case .delivered: .green
         case .cancelled: .gray
         case .returned: .red
+        case .unknown: .gray
         }
     }
 }
@@ -211,6 +214,7 @@ private struct OrderRow: View {
         case .pending: .orange; case .confirmed: .blue; case .packed: .indigo
         case .shipped: .purple; case .delivered: .green
         case .cancelled: .gray; case .returned: .red
+        case .unknown: .gray
         }
     }
 

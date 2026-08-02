@@ -1,7 +1,9 @@
 import Foundation
 
-enum InquiryStatus: String, Codable, CaseIterable, Identifiable {
+enum InquiryStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case new, consulting, measurements, quoted, confirmed
+    /// Upgrade-path fallback: earliest stage — never implies progress the pipeline hasn't made.
+    static let decodingFallback: InquiryStatus = .new
     case in_production, ready, delivered, lost
 
     var id: String { rawValue }

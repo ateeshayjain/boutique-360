@@ -193,11 +193,11 @@ Fixes applied during this audit are marked **[fixed]** and listed in §Fixes.
 | Error paths tested | ⚠️ | Pure-logic error paths yes; network error paths no |
 | Test names describe behavior | ✅ | Behavior-style naming throughout |
 | **Integration tests** | ❌ | None — no service-to-database, no API request/response, no auth-flow tests |
-| **Security tests** (authz escalation, injection payloads) | ❌ | None automated. The role gate has **no test that fails if a gate is deleted** |
+| **Security tests** (authz escalation, injection payloads) | ⚠️ **[fixed]** | Was ❌. `RoleGateWiringTests` now fails if any of the 13 gated files stops calling `RolePolicy.canSee`. Source-level, not a UI test — it proves the call exists in the file that renders the money, not that it wraps the right subtree |
 | Regression tests for fixed bugs | ⚠️ | Some (LockGate, clock-winding). The dead-RLS bug has **no regression test** |
 | Tests run in CI on every PR | ✅ | `.github/workflows/ipad-tests.yml` |
 | Code coverage tracked with a threshold | ❌ | Not measured |
-| Tests deterministic, isolated, fast | ✅ | 239 tests; ~2s warm |
+| Tests deterministic, isolated, fast | ✅ | 255 tests; ~3s warm |
 
 ### §9 Release readiness
 Covered under the Release checklist below.
@@ -355,7 +355,7 @@ Covered under the Release checklist below.
 | 8 | Release build, no warnings, no test code | ⚠️ | Builds clean; Release config not exercised |
 | 9 | Fresh-install QA | ❌ | Not done |
 | 9 | Accessibility spot-check | ❌ | Not done |
-| 9 | Automated suite green in CI on the release commit | ✅ | 239 tests |
+| 9 | Automated suite green in CI on the release commit | ✅ | 255 tests |
 | 10 | Staged rollout via TestFlight | ❌ | Not started |
 | 11 | Tag the release | ❌ | No tags yet |
 | 12 | Rollback path known | ✅ | `docs/RELEASE_CHECKLIST.md` §8 — app rollback cheap, migrations effectively irreversible |
@@ -402,7 +402,7 @@ meter — the ✅ rows are code-level facts, not evidence of use.
 |---|---|---|
 | Icon-only controls labelled by what they DO | ⚠️ | New surfaces yes ("Dismiss — don't ask again"); older screens unaudited |
 | Rows read as one sentence | ✅ | `accessibilityElement(children: .combine)` + composed labels on board, orders, reminders |
-| Charts expose a text summary | ⚠️ | `CustomerSpendSummaryView` has a Swift Charts bar chart; the KPI tiles carry the numbers, but there is **no explicit chart summary and the chart is not hidden** from the reader |
+| Charts expose a text summary | ✅ **[fixed]** | Correction to this row's earlier text: a summary DID exist (`accessibilityLabel` + `accessibilityValue`). The real gap was the missing `.accessibilityElement(children: .ignore)`, so VoiceOver walked 12 anonymous bars. Now hidden, and the summary leads with total / biggest month / trend before the month detail |
 | Decorative images hidden | ⚠️ | 8 `accessibilityHidden` uses; not systematically audited |
 | Custom controls declare traits | ⚠️ | `.isHeader` used; not systematic |
 | **One full screen-reader pass per release** | ❌ | **Never run.** VoiceOver has never been used on this app |
@@ -445,7 +445,7 @@ writer.** It POSTs progress events into `job_card_events` through the
 | A | Deploy step is a named, dated action with an owner | ⚠️ | `RELEASE_CHECKLIST.md` §4 covers it; no owner named |
 | A | Schema changes additive with defaults | ✅ | Forward-only, `add column if not exists` throughout |
 | A | Every synced field round-trips through a test | ⚠️ | Codable round-trips exist per model; not per field |
-| A | Unknown enum values from newer versions degrade safely | ❌ | **Not tested.** `OrderStatus`, `JobCardStatus` etc. would throw on an unknown raw value — a real cross-version risk once two app versions exist |
+| A | Unknown enum values from newer versions degrade safely | ✅ **[fixed]** | Was ❌. `DecodableWithFallback` on all 16 server-decoded enums, each fallback logged. `OrderStatus` gained a real `.unknown` case with no transitions rather than falling back to a status that would invite a wrong action |
 | B | Conflict policy written per record type | ❌ | Unwritten. Postgres last-write-wins by default |
 | B | Concurrently-mintable records use deterministic IDs | ✅ | `next_sequence_value` RPC is race-safe; `reminder_log` has a natural key |
 | B | No screen mints a record on appear | ✅ | Records are created on explicit action |
@@ -477,7 +477,7 @@ and expensive after the first release.
 | 2 | New FIELDS re-arm the deploy gate | ❌ | No gate exists to re-arm |
 | 2 | App tolerates server knowing LESS | ❌ | **Untested.** A missing column would surface as a decode failure |
 | 2 | App tolerates server knowing MORE | ⚠️ | Models decode named keys, so unknown *columns* are ignored — but unknown **enum values** are not (see Sync A) |
-| 3 | Unknown enum raw value degrades safely | ❌ | Same gap. This is the single highest-value pre-release fix on this checklist |
+| 3 | Unknown enum raw value degrades safely | ✅ **[fixed]** | See Sync §A. 14 tests, one per enum, plus a whole-row decode |
 | 3 | Version-skew QA pass | ❌ | Not possible yet — no previous release exists |
 | 4 | Installable archive of the previous release | ❌ | None. Worth starting **at the first TestFlight build**, not later |
 | 4 | Upgrade matrix over aged data | ❌ | Not yet applicable |

@@ -1,7 +1,9 @@
 import Foundation
 
-enum JobCardStatus: String, Codable, CaseIterable, Identifiable {
+enum JobCardStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case draft, issued, in_progress, ready, delivered, cancelled
+    /// Upgrade-path fallback: not yet issued to a karigar.
+    static let decodingFallback: JobCardStatus = .draft
     var id: String { rawValue }
     var label: String { rawValue.replacingOccurrences(of: "_", with: " ").capitalized }
 }

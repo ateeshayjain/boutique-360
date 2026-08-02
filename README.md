@@ -102,7 +102,7 @@ See [docs/deployment.md](docs/deployment.md) for full setup.
 Unit tests cover pure logic (formatters, validators, parsers, state machines,
 money math, spend aggregation, phone normalization) plus the decision engines
 — slack, morning board, lock gate, reminder drafts, PIN policy, role policy,
-AI safety. **239 test cases, all green.**
+AI safety. **255 test cases, all green.**
 
 Measured 2026-08-01: **~2 seconds warm** — execution only, with the simulator
 already booted. A **cold** run (clean build + simulator boot) takes ~5 min of
@@ -160,7 +160,7 @@ boutique-360/
 ├── ipad/
 │   ├── project.yml                ← XcodeGen spec (source of truth)
 │   ├── Boutique360/               ← Swift source (Features / Services / Models / Utilities)
-│   └── Boutique360Tests/          ← 239 XCTest cases (28 files)
+│   └── Boutique360Tests/          ← 255 XCTest cases (30 files)
 ├── scripts/
 └── .gitignore
 ```

@@ -1,7 +1,9 @@
 import Foundation
 
-enum RenderStatus: String, Codable, CaseIterable {
+enum RenderStatus: String, Codable, CaseIterable, DecodableWithFallback {
     case queued, done, failed
+    /// Upgrade-path fallback: never claim a render succeeded when we can't tell.
+    static let decodingFallback: RenderStatus = .failed
 }
 
 struct DesignRender: Identifiable, Codable, Hashable {

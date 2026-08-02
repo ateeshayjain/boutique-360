@@ -1,7 +1,9 @@
 import Foundation
 
-enum StylePersona: String, Codable, CaseIterable, Identifiable {
+enum StylePersona: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case traditional, fusion, modern, minimalist, maximalist
+    /// Upgrade-path fallback: neutral middle of the range.
+    static let decodingFallback: StylePersona = .fusion
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
     var systemImage: String {
@@ -15,20 +17,26 @@ enum StylePersona: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-enum BodyType: String, Codable, CaseIterable, Identifiable {
+enum BodyType: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case pear, apple, hourglass, rectangle, inverted_triangle
+    /// Upgrade-path fallback: neutral; drives suggestions only.
+    static let decodingFallback: BodyType = .rectangle
     var id: String { rawValue }
     var label: String { rawValue.replacingOccurrences(of: "_", with: " ").capitalized }
 }
 
-enum SkinTone: String, Codable, CaseIterable, Identifiable {
+enum SkinTone: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case fair, wheatish, dusky, deep
+    /// Upgrade-path fallback: neutral middle of the range.
+    static let decodingFallback: SkinTone = .wheatish
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
 }
 
-enum BudgetBand: String, Codable, CaseIterable, Identifiable {
+enum BudgetBand: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case value, mid, premium, luxury
+    /// Upgrade-path fallback: neutral; never assume luxury or value.
+    static let decodingFallback: BudgetBand = .mid
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
 }

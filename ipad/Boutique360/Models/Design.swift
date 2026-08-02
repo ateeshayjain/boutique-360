@@ -1,7 +1,9 @@
 import Foundation
 
-enum DesignStatus: String, Codable, CaseIterable, Identifiable {
+enum DesignStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case draft, rendered, shared_with_customer, approved, in_production, delivered, archived
+    /// Upgrade-path fallback: never implies shared-with-customer or approved.
+    static let decodingFallback: DesignStatus = .draft
     var id: String { rawValue }
     var label: String {
         switch self {
@@ -69,8 +71,10 @@ struct NewDesign: Encodable {
     let created_by_staff_id: UUID?
 }
 
-enum LookbookVisibility: String, Codable, CaseIterable, Identifiable {
+enum LookbookVisibility: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case staff_only, customer_shared, public_visible
+    /// Upgrade-path fallback: most private option — an unknown visibility must never widen exposure.
+    static let decodingFallback: LookbookVisibility = .staff_only
     var id: String { rawValue }
     var label: String {
         switch self {

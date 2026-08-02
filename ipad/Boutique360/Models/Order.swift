@@ -3,7 +3,7 @@ import Foundation
 /// H9 fix: typed enum replaces stringly-typed `fulfillment_method`.
 /// Forward-compat decoder falls back to .pickup if the DB returns an unknown
 /// value (e.g. a future "courier" option) — keeps existing reads working.
-enum FulfillmentMethod: String, Codable, CaseIterable, Identifiable, Hashable {
+enum FulfillmentMethod: String, Codable, CaseIterable, Identifiable, Hashable, DecodableWithFallback {
     case pickup, ship
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
@@ -13,17 +13,42 @@ enum FulfillmentMethod: String, Codable, CaseIterable, Identifiable, Hashable {
         case .ship:   "shippingbox"
         }
     }
-    init(from decoder: Decoder) throws {
-        let raw = try decoder.singleValueContainer().decode(String.self)
-        self = FulfillmentMethod(rawValue: raw) ?? .pickup
-    }
+    /// Upgrade-path fallback: matches the DB column default. This enum had a
+    /// hand-rolled version of this decoder before the protocol existed — the
+    /// idea was right, it just wasn't applied to the other fifteen enums, and
+    /// it fell back silently.
+    static let decodingFallback: FulfillmentMethod = .pickup
 }
 
-enum OrderStatus: String, Codable, CaseIterable, Identifiable {
+enum OrderStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case pending, confirmed, packed, shipped, delivered, cancelled, returned
+    /// A status written by a NEWER app version that this build doesn't know.
+    /// Deliberately a real case rather than a fallback to `.pending`: every
+    /// other status is a claim about a customer's money and garment, and
+    /// `.unknown` offers no transitions so nobody can act on a state they
+    /// cannot see. See `DecodableWithFallback`.
+    case unknown
+
+    static let decodingFallback: OrderStatus = .unknown
+
+    /// Excluded from `allCases` consumers that build pickers — you can never
+    /// deliberately *set* an order to unknown.
+    static var selectableCases: [OrderStatus] { allCases.filter { $0 != .unknown } }
+
+    /// Counts toward "work in progress" aggregations. Unknown does not: we
+    /// can't claim it's active any more than we can claim it's finished.
+    var isActive: Bool {
+        switch self {
+        case .pending, .confirmed, .packed, .shipped: true
+        case .delivered, .cancelled, .returned, .unknown: false
+        }
+    }
+
     var id: String { rawValue }
 
-    var label: String { rawValue.capitalized }
+    var label: String {
+        self == .unknown ? "Unknown status" : rawValue.capitalized
+    }
     var systemImage: String {
         switch self {
         case .pending:   "hourglass"
@@ -33,6 +58,7 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
         case .delivered: "checkmark.circle.fill"
         case .cancelled: "xmark.circle"
         case .returned:  "arrow.uturn.left.circle"
+        case .unknown:   "questionmark.circle"
         }
     }
     var tint: String {
@@ -44,6 +70,7 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
         case .delivered: "green"
         case .cancelled: "gray"
         case .returned:  "red"
+        case .unknown:   "gray"
         }
     }
     /// Allowed forward transitions (HIG: prevent invalid status menu items being shown enabled).
@@ -54,7 +81,8 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable {
         case .packed:         [.shipped, .cancelled]
         case .shipped:        [.delivered]
         case .delivered:      [.returned]
-        case .cancelled, .returned: []
+        // No transitions from a state this build doesn't understand.
+        case .cancelled, .returned, .unknown: []
         }
     }
 }

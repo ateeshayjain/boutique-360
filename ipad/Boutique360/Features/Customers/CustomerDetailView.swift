@@ -318,6 +318,7 @@ struct CustomerDetailView: View {
         case .delivered: .green
         case .cancelled: .gray
         case .returned:  .red
+        case .unknown:   .gray
         }
     }
 

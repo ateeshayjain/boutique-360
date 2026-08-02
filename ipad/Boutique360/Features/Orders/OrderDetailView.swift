@@ -316,6 +316,8 @@ struct OrderDetailView: View {
         case .delivered:           "Send ready/delivered note"
         case .cancelled:           "Send cancellation note"
         case .returned:            "Send return acknowledgement"
+        // Never name a state this build can't see.
+        case .unknown:             "Send a general update"
         }
     }
 
@@ -349,6 +351,10 @@ struct OrderDetailView: View {
             return "Hi \(firstName), your order \(current.orderNumber) has been cancelled as discussed. Any refund will be processed within 5-7 days. — \(boutiqueName)"
         case .returned:
             return "Hi \(firstName), we've received your return for \(current.orderNumber). Refund will be processed shortly. — \(boutiqueName)"
+        case .unknown:
+            // A status written by a newer app version. Say nothing about the
+            // order's state — a wrong claim here goes to a real customer.
+            return "Hi \(firstName), an update on your order \(current.orderNumber). — \(boutiqueName)"
         }
     }
 
@@ -373,6 +379,7 @@ struct OrderDetailView: View {
         case .pending: .orange; case .confirmed: .blue; case .packed: .indigo
         case .shipped: .purple; case .delivered: .green
         case .cancelled: .gray; case .returned: .red
+        case .unknown: .gray
         }
     }
 

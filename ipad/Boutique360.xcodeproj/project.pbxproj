@@ -10,6 +10,7 @@
 		00669ED5BB9BE9FF5614782C /* CustomerNotifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A023D2A9519853B5691FF65 /* CustomerNotifier.swift */; };
 		015AC3572CA55852CFD84F6F /* CustomersListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A61B87A34BA4C847248AA8D /* CustomersListView.swift */; };
 		05D8DB011D28105FFA388D78 /* ErrorBusTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1DFFBBD1FFE1E5F1709949A /* ErrorBusTests.swift */; };
+		06A2400136729207EEAF2083 /* RoleGateWiringTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23AD1EA15059A1250ED914E /* RoleGateWiringTests.swift */; };
 		0860D0C6EE8C6A6995A2B6C6 /* StaffRoleContext.swift in Sources */ = {isa = PBXBuildFile; fileRef = F130C3CAE3C4C1B689BC7C7C /* StaffRoleContext.swift */; };
 		0E23288E6896CAB3D178D5C9 /* GeminiService.swift in Sources */ = {isa = PBXBuildFile; fileRef = C97BB0D1E591FD5933A287C0 /* GeminiService.swift */; };
 		110E5EC55ADC1F4AB9E1DC57 /* Design.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BC2DAB9F3A9E15EE732231 /* Design.swift */; };
@@ -51,6 +52,7 @@
 		543FBF536AEF6CDB326F3833 /* BoutiqueService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 42C4CFDA669F1F48B1EC4C45 /* BoutiqueService.swift */; };
 		56BD952314C4D2F871545F14 /* CustomerFormView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 62698AE8EF9998C8AFC44AFE /* CustomerFormView.swift */; };
 		56CFB9E4973ECABB108E88EB /* Formatters.swift in Sources */ = {isa = PBXBuildFile; fileRef = 498791B4D1735BE393917F2E /* Formatters.swift */; };
+		5727F048C7128ACF9ADC185E /* EnumFallbackDecodingTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1915F7185E55A03AC6C55F6A /* EnumFallbackDecodingTests.swift */; };
 		5A33BF4256D3270CE0B1118E /* OrderLock.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F0D87EDD2AA39EE77BC40E5 /* OrderLock.swift */; };
 		5ABA0C7F23F05BAE1CDDF0C8 /* ConfigTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E18ED923174A4F69A02A4C12 /* ConfigTests.swift */; };
 		5BAAF970580377523EA91E6E /* NotificationsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C814D6DDDC7AF446243A540 /* NotificationsService.swift */; };
@@ -128,6 +130,7 @@
 		D4B8B3D52DDA61929077A0D3 /* PaymentsSectionView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 596812C9E451E4F67282DEE2 /* PaymentsSectionView.swift */; };
 		D5C75A09B2E8609D5A23FC13 /* CustomerLinkSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 911FDCEE8BF5173C9528C2E7 /* CustomerLinkSheet.swift */; };
 		D6A9DD77E5F0F608956D9AC8 /* PinEntrySheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B51537B01691BFC84E3A6E3A /* PinEntrySheet.swift */; };
+		D7250B2D1AB58636CBDBC749 /* DecodableWithFallback.swift in Sources */ = {isa = PBXBuildFile; fileRef = F8185C07C16F5DDC06C0F5A7 /* DecodableWithFallback.swift */; };
 		D74F92B0DD307B8704982DB9 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 523DA0A5E070A5E8B5D07DB0 /* Customer.swift */; };
 		D8D0B3C1D796238425E736FE /* TwilioClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 224519E2F741ABBA0D3090E8 /* TwilioClient.swift */; };
 		DB2BEDA4DA670597B9138AC5 /* JobCardEventsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 579590890B7FE39510E4E3F1 /* JobCardEventsService.swift */; };
@@ -179,6 +182,7 @@
 		17DBAF1C0E4D8E2F5346AC65 /* AppointmentFormView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppointmentFormView.swift; sourceTree = "<group>"; };
 		17F512EB1A6C0EED66341868 /* AlterationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlterationsService.swift; sourceTree = "<group>"; };
 		1859721413D28410B31C70AA /* StaffRoleSection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffRoleSection.swift; sourceTree = "<group>"; };
+		1915F7185E55A03AC6C55F6A /* EnumFallbackDecodingTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EnumFallbackDecodingTests.swift; sourceTree = "<group>"; };
 		1A55FCCBBA84C05FC08D5189 /* PinHasherTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PinHasherTests.swift; sourceTree = "<group>"; };
 		1C449608F074290180B2B427 /* ErrorBus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorBus.swift; sourceTree = "<group>"; };
 		1C814D6DDDC7AF446243A540 /* NotificationsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationsService.swift; sourceTree = "<group>"; };
@@ -256,6 +260,7 @@
 		ACA9CD6936DFD9F296D13514 /* ImportantDatesService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportantDatesService.swift; sourceTree = "<group>"; };
 		B1B2B36D2550F269C7C0C5A8 /* SlackBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlackBadge.swift; sourceTree = "<group>"; };
 		B1F60CDE5F862531B6D46BFD /* RolePolicyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RolePolicyTests.swift; sourceTree = "<group>"; };
+		B23AD1EA15059A1250ED914E /* RoleGateWiringTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RoleGateWiringTests.swift; sourceTree = "<group>"; };
 		B2D42D75CCEE8F362E9D8426 /* JobCardPreviewView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardPreviewView.swift; sourceTree = "<group>"; };
 		B38BBCF4DB447E22829528F7 /* OrderCreateView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrderCreateView.swift; sourceTree = "<group>"; };
 		B3BC2DAB9F3A9E15EE732231 /* Design.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Design.swift; sourceTree = "<group>"; };
@@ -302,6 +307,7 @@
 		F130C3CAE3C4C1B689BC7C7C /* StaffRoleContext.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffRoleContext.swift; sourceTree = "<group>"; };
 		F2C5E3128DEEB781A8374FAA /* JobCardsService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JobCardsService.swift; sourceTree = "<group>"; };
 		F6FBB3EB67076F070005DB38 /* MorningBoard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MorningBoard.swift; sourceTree = "<group>"; };
+		F8185C07C16F5DDC06C0F5A7 /* DecodableWithFallback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DecodableWithFallback.swift; sourceTree = "<group>"; };
 		FAE7418F4C807687DFC3BEFD /* OrdersListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrdersListView.swift; sourceTree = "<group>"; };
 		FC35D4D2ACEA2B8D129A0F4D /* ReminderDraftsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReminderDraftsTests.swift; sourceTree = "<group>"; };
 		FC73C87086D30EB4B20BEB12 /* StyleSuggestionsSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StyleSuggestionsSheet.swift; sourceTree = "<group>"; };
@@ -333,6 +339,7 @@
 				93794B16F0C3102D8AB87332 /* CustomerTimelineEventTests.swift */,
 				D159301960E73FAF6E4C90F8 /* DesignTokensTests.swift */,
 				E62D7FAC992BCFA6EEE2E5BB /* EnumDecodingTests.swift */,
+				1915F7185E55A03AC6C55F6A /* EnumFallbackDecodingTests.swift */,
 				A1DFFBBD1FFE1E5F1709949A /* ErrorBusTests.swift */,
 				CB11699DBDFE3D9332639D6A /* FormattersTests.swift */,
 				BD8EEE2A09A3DFE5D56E8C1C /* GSTINValidatorTests.swift */,
@@ -348,6 +355,7 @@
 				759A9B1690B1D7515CF68EBC /* PinPolicyTests.swift */,
 				DB82B2C0DAF757B5B37CC1C4 /* ReferencePromptTests.swift */,
 				FC35D4D2ACEA2B8D129A0F4D /* ReminderDraftsTests.swift */,
+				B23AD1EA15059A1250ED914E /* RoleGateWiringTests.swift */,
 				B1F60CDE5F862531B6D46BFD /* RolePolicyTests.swift */,
 				E9C966277C0ED455E9F23E7F /* RoleStatePersistenceTests.swift */,
 				2184A70D6ED04D46C8289F81 /* StatusMachineTests.swift */,
@@ -513,6 +521,7 @@
 				BE7DBF6811966DC31EE94C07 /* AISafety.swift */,
 				78511745DEAA05544D97B302 /* AppEvents.swift */,
 				49A663770C8356F1A66D0028 /* CustomerSpend.swift */,
+				F8185C07C16F5DDC06C0F5A7 /* DecodableWithFallback.swift */,
 				FCDDEB6EF95DEBA783A69D77 /* DesignTokens.swift */,
 				1C449608F074290180B2B427 /* ErrorBus.swift */,
 				498791B4D1735BE393917F2E /* Formatters.swift */,
@@ -775,6 +784,7 @@
 				015AC3572CA55852CFD84F6F /* CustomersListView.swift in Sources */,
 				A57C33986D5066343B805401 /* CustomersService.swift in Sources */,
 				E8B6DE3121AB658DAECB34BB /* DashboardView.swift in Sources */,
+				D7250B2D1AB58636CBDBC749 /* DecodableWithFallback.swift in Sources */,
 				110E5EC55ADC1F4AB9E1DC57 /* Design.swift in Sources */,
 				B4C9DBDE270D8246411DDE64 /* DesignDetailView.swift in Sources */,
 				F24279E4E45E18AA2EF22BBD /* DesignFormView.swift in Sources */,
@@ -867,6 +877,7 @@
 				5FA7CE73E3A9805485320355 /* CustomerTimelineEventTests.swift in Sources */,
 				BB0F20D56721EB3C8110B0C4 /* DesignTokensTests.swift in Sources */,
 				496750A87198099EACC4CB27 /* EnumDecodingTests.swift in Sources */,
+				5727F048C7128ACF9ADC185E /* EnumFallbackDecodingTests.swift in Sources */,
 				05D8DB011D28105FFA388D78 /* ErrorBusTests.swift in Sources */,
 				F887BC93E72781523EFFAE33 /* FormattersTests.swift in Sources */,
 				3BB4B81055DD40E5345E5672 /* GSTINValidatorTests.swift in Sources */,
@@ -882,6 +893,7 @@
 				B53F893B4D7B30AD51D86080 /* PinPolicyTests.swift in Sources */,
 				72DD05843BB7F59E3FD1889B /* ReferencePromptTests.swift in Sources */,
 				C22890C38404872D7186A2EE /* ReminderDraftsTests.swift in Sources */,
+				06A2400136729207EEAF2083 /* RoleGateWiringTests.swift in Sources */,
 				387E708FA3AA7AF063AAAC6F /* RolePolicyTests.swift in Sources */,
 				643231821BA572420314FE96 /* RoleStatePersistenceTests.swift in Sources */,
 				FFDB22488D6F4C3B7BFEA451 /* StatusMachineTests.swift in Sources */,

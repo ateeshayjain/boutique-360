@@ -1,7 +1,9 @@
 import Foundation
 
-enum AppointmentType: String, Codable, CaseIterable, Identifiable {
+enum AppointmentType: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case fitting, consultation, delivery, pickup, other
+    /// Upgrade-path fallback: `other` already means exactly this.
+    static let decodingFallback: AppointmentType = .other
     var id: String { rawValue }
     var label: String { rawValue.capitalized }
     var systemImage: String {
@@ -15,8 +17,10 @@ enum AppointmentType: String, Codable, CaseIterable, Identifiable {
     }
 }
 
-enum AppointmentStatus: String, Codable, CaseIterable, Identifiable {
+enum AppointmentStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFallback {
     case scheduled, completed, cancelled, no_show
+    /// Upgrade-path fallback: still on the calendar rather than silently completed.
+    static let decodingFallback: AppointmentStatus = .scheduled
     var id: String { rawValue }
     var label: String {
         switch self {

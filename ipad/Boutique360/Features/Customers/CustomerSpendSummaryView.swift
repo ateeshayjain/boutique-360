@@ -92,15 +92,44 @@ struct CustomerSpendSummaryView: View {
                     AxisGridLine()
                 }
             }
-            // Accessibility: read totals aloud rather than the chart description.
+            // A11y §4: "Charts expose a text summary (total, top item, trend
+            // direction) — the visual is hidden for the reader, the summary is
+            // not." Without `children: .ignore`, SwiftUI Charts exposes each
+            // BarMark separately and a reader walks 12 anonymous bars.
+            .accessibilityElement(children: .ignore)
             .accessibilityLabel("Spend by month, last 12 months")
-            .accessibilityValue(
-                summary.monthlyTotals
-                    .filter { $0.total > 0 }
-                    .map { "\($0.label) \(Formatters.inr($0.total))" }
-                    .joined(separator: ", ")
-            )
+            .accessibilityValue(chartAccessibilitySummary)
         }
+    }
+
+    /// Headline first (total, biggest month, direction), detail after — a
+    /// reader shouldn't have to sit through twelve figures to learn the shape.
+    private var chartAccessibilitySummary: String {
+        let months = summary.monthlyTotals.filter { $0.total > 0 }
+        guard !months.isEmpty else { return "No spend in the last 12 months." }
+
+        let total = months.reduce(0) { $0 + $1.total }
+        var parts = ["Total \(Formatters.inr(total)) across \(months.count) \(months.count == 1 ? "month" : "months")"]
+
+        if let top = months.max(by: { $0.total < $1.total }) {
+            parts.append("highest \(top.label) at \(Formatters.inr(top.total))")
+        }
+
+        // Trend: compare the most recent month against the mean of the rest.
+        if months.count >= 2, let latest = months.last {
+            let priorMean = months.dropLast().reduce(0) { $0 + $1.total } / Double(months.count - 1)
+            let direction: String
+            if Money.equalAtPaise(latest.total, priorMean) {
+                direction = "level with"
+            } else {
+                direction = latest.total > priorMean ? "above" : "below"
+            }
+            parts.append("most recent month \(direction) the earlier average")
+        }
+
+        parts.append("by month: " + months.map { "\($0.label) \(Formatters.inr($0.total))" }
+            .joined(separator: ", "))
+        return parts.joined(separator: ". ") + "."
     }
 
     private var footnote: some View {
