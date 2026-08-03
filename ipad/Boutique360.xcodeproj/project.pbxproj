@@ -98,6 +98,7 @@
 		A327DCAE4A1F9CEE7BAB3240 /* RootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C3B8F4DAA8944A162925136 /* RootView.swift */; };
 		A46DD4170D5B99FDF7999675 /* RenderView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4551D6EF99333ED60155F040 /* RenderView.swift */; };
 		A57C33986D5066343B805401 /* CustomersService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 261C703C9FEECA7301EE7CF9 /* CustomersService.swift */; };
+		A6C597C91AC258B919C6AC77 /* StatusColors.swift in Sources */ = {isa = PBXBuildFile; fileRef = 05B3F2648B1158975136D0BF /* StatusColors.swift */; };
 		A7B120815ADD4F32F14389E6 /* Secrets.xcconfig.example in Resources */ = {isa = PBXBuildFile; fileRef = D11423D34A4D601FC3CAC605 /* Secrets.xcconfig.example */; };
 		A94D4F4D659D6F2EB37B01F8 /* JobCardComposerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EBC9DBA55BD1E48E3F1FEB6A /* JobCardComposerView.swift */; };
 		AF040A10F7028EA9FEB57E77 /* PinHasherTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1A55FCCBBA84C05FC08D5189 /* PinHasherTests.swift */; };
@@ -167,6 +168,7 @@
 /* Begin PBXFileReference section */
 		00692156B845A7BDFB655E60 /* Boutique360.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Boutique360.entitlements; sourceTree = "<group>"; };
 		020C0D415830E4E07318D617 /* DesignRender.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DesignRender.swift; sourceTree = "<group>"; };
+		05B3F2648B1158975136D0BF /* StatusColors.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusColors.swift; sourceTree = "<group>"; };
 		05BB653B5E8BE96C70A1EB5A /* LockSummarySheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockSummarySheet.swift; sourceTree = "<group>"; };
 		0930E86CFA3C99E14B5DE528 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		0AB14826B981C515F7BD3830 /* CustomerImportServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomerImportServiceTests.swift; sourceTree = "<group>"; };
@@ -534,6 +536,7 @@
 				39D0CEF21798BEF3D283CB8C /* PinPolicy.swift */,
 				E56BB3C26720D2D030C8F24E /* ReminderDrafts.swift */,
 				FD6B90527760DDBDA506EC66 /* RolePolicy.swift */,
+				05B3F2648B1158975136D0BF /* StatusColors.swift */,
 				6E6566F16DD7D66E5D1755FE /* WhatsAppShareHelper.swift */,
 			);
 			path = Utilities;
@@ -857,6 +860,7 @@
 				477A637B79BC53952C16185F /* SlackBadge.swift in Sources */,
 				0860D0C6EE8C6A6995A2B6C6 /* StaffRoleContext.swift in Sources */,
 				9DF7B1C1EB2F459A1248DF4F /* StaffRoleSection.swift in Sources */,
+				A6C597C91AC258B919C6AC77 /* StatusColors.swift in Sources */,
 				BD166544FC31E672D764DE35 /* StorageService.swift in Sources */,
 				4B4B4778A1D9B12862832D95 /* StyleSuggestionsSheet.swift in Sources */,
 				C16025CE36C54E969C411784 /* SupabaseService.swift in Sources */,

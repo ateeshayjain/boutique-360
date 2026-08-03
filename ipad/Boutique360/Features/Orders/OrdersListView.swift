@@ -54,7 +54,7 @@ struct OrdersListView: View {
                                     } label: {
                                         Label("Mark \(next.label)", systemImage: next.systemImage)
                                     }
-                                    .tint(tintFor(next))
+                                    .tint(next.color)
                                 }
                             }
                         }
@@ -149,18 +149,6 @@ struct OrdersListView: View {
         }
     }
 
-    private func tintFor(_ s: OrderStatus) -> Color {
-        switch s {
-        case .pending: .orange
-        case .confirmed: .blue
-        case .packed: .indigo
-        case .shipped: .purple
-        case .delivered: .green
-        case .cancelled: .gray
-        case .returned: .red
-        case .unknown: .gray
-        }
-    }
 }
 
 private struct OrderRow: View {
@@ -174,7 +162,7 @@ private struct OrderRow: View {
         HStack(spacing: 12) {
             Image(systemName: order.status.systemImage)
                 .font(.title2)
-                .foregroundStyle(tint)
+                .foregroundStyle(order.status.color)
                 .frame(width: 32)
                 .accessibilityLabel("Status: \(order.status.label)")
             VStack(alignment: .leading, spacing: 2) {
@@ -199,7 +187,7 @@ private struct OrderRow: View {
                 if RolePolicy.canSee(.payments, role: roles.role) {
                     Text(formatINR(order.total)).font(.body.weight(.semibold)).monospacedDigit()
                 }
-                Text(order.status.label).font(.caption2).foregroundStyle(tint)
+                Text(order.status.label).font(.caption2).foregroundStyle(order.status.color)
             }
         }
         .padding(.vertical, 4)
@@ -209,14 +197,6 @@ private struct OrderRow: View {
             : "\(customerName), order \(order.orderNumber), \(order.status.label)")
     }
 
-    private var tint: Color {
-        switch order.status {
-        case .pending: .orange; case .confirmed: .blue; case .packed: .indigo
-        case .shipped: .purple; case .delivered: .green
-        case .cancelled: .gray; case .returned: .red
-        case .unknown: .gray
-        }
-    }
 
     private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 }

@@ -44,7 +44,7 @@ struct OrderDetailView: View {
                 LabeledContent("Status") {
                     Label(current.status.label, systemImage: current.status.systemImage)
                         .labelStyle(.titleAndIcon)
-                        .foregroundStyle(tint(current.status))
+                        .foregroundStyle(current.status.color)
                 }
                 LabeledContent("Fulfillment") {
                     let method = current.fulfillmentMethod ?? .pickup
@@ -374,14 +374,6 @@ struct OrderDetailView: View {
         }
     }
 
-    private func tint(_ s: OrderStatus) -> Color {
-        switch s {
-        case .pending: .orange; case .confirmed: .blue; case .packed: .indigo
-        case .shipped: .purple; case .delivered: .green
-        case .cancelled: .gray; case .returned: .red
-        case .unknown: .gray
-        }
-    }
 
     private func formatINR(_ v: Double) -> String { Formatters.inr(v) }
 

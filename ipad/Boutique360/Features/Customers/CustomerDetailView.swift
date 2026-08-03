@@ -280,7 +280,7 @@ struct CustomerDetailView: View {
     private func orderRow(_ o: Order) -> some View {
         HStack(spacing: 12) {
             Image(systemName: o.status.systemImage)
-                .foregroundStyle(orderColor(o.status))
+                .foregroundStyle(o.status.color)
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(o.orderNumber).font(.subheadline.weight(.medium))
@@ -299,8 +299,8 @@ struct CustomerDetailView: View {
                 Text(o.status.label)
                     .font(.caption2)
                     .padding(.horizontal, 8).padding(.vertical, 2)
-                    .background(orderColor(o.status).opacity(0.18))
-                    .foregroundStyle(orderColor(o.status))
+                    .background(o.status.color.opacity(0.18))
+                    .foregroundStyle(o.status.color)
                     .clipShape(Capsule())
             }
         }
@@ -309,18 +309,6 @@ struct CustomerDetailView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 
-    private func orderColor(_ s: OrderStatus) -> Color {
-        switch s {
-        case .pending:   .orange
-        case .confirmed: .blue
-        case .packed:    .indigo
-        case .shipped:   .purple
-        case .delivered: .green
-        case .cancelled: .gray
-        case .returned:  .red
-        case .unknown:   .gray
-        }
-    }
 
     private var measurementsSection: some View {
         VStack(alignment: .leading, spacing: 10) {

@@ -61,18 +61,6 @@ enum OrderStatus: String, Codable, CaseIterable, Identifiable, DecodableWithFall
         case .unknown:   "questionmark.circle"
         }
     }
-    var tint: String {
-        switch self {
-        case .pending:   "orange"
-        case .confirmed: "blue"
-        case .packed:    "indigo"
-        case .shipped:   "purple"
-        case .delivered: "green"
-        case .cancelled: "gray"
-        case .returned:  "red"
-        case .unknown:   "gray"
-        }
-    }
     /// Allowed forward transitions (HIG: prevent invalid status menu items being shown enabled).
     var nextOptions: [OrderStatus] {
         switch self {
