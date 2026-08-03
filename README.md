@@ -3,8 +3,15 @@
 **iPad-native CRM + AI design studio for a designer boutique in India.** One
 object — the *Look* — carried from inspiration to delivery: reference photo or
 Apple Pencil sketch → fabric → photoreal AI render → virtual try-on → order →
-Hinglish job card for the karigar → GST invoice → lookbook. In pilot, used
-daily against a live Supabase backend.
+Hinglish job card for the karigar → GST invoice → lookbook.
+
+**Status: pre-pilot, not yet in real use.** The backend is live and the app
+runs against it, but as of 2026-08-01 the database holds only setup-day seed
+data — and `design_renders`, `design_tryons`, `job_cards`, `order_locks` and
+`reminder_log` are all empty. The CRM half (customers, orders, payments,
+WhatsApp) has been exercised; the design-studio and karigar flows have never
+completed once. See [docs/compliance/template-adherence.md](docs/compliance/template-adherence.md)
+for what is proven versus merely written.
 
 **Strategy (July 2026):** iPad-native is the product, not a phase. The Indian
 tailoring-CRM market is crowded (Darzee, Boutique Page, Darzi AI — see
